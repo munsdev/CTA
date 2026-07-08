@@ -5,9 +5,12 @@
      2. finds every [data-the-quota] mount,
      3. loads engine.js, writes the markup into the mount, and inits it.
 
-   Webflow CMS embed is just:
+   Webflow CMS embed is just (pinned to a commit SHA, per the DC Lagoon
+   pattern -- a fresh SHA per deploy guarantees jsDelivr serves fresh):
      <div data-the-quota></div>
-     <script src="https://cdn.jsdelivr.net/gh/munsdev/CTA@main/games/the-quota/loader.js" defer></script>
+     <script src="https://cdn.jsdelivr.net/gh/munsdev/CTA@{sha}/games/the-quota/loader.js"></script>
+   The loader self-resolves `base` from its own src, so styles.css and
+   engine.js are fetched from the same pinned SHA automatically.
    ===================================================================== */
 !function () {
   var me = document.currentScript;
