@@ -30,7 +30,7 @@ window.HistoryOrHeadlines.init = function (root, base) {
     reward: {
       code:      'Urteil' /*CMS:reward-code*/,
       link:      ''       /*CMS:reward-link*/,
-      desc:      'You never mistook the Reich for the present' /*CMS:reward-desc*/,
+      desc:      'A perfect run' /*CMS:reward-desc*/,
       copiedMsg: 'Code copied'
     }
   };
@@ -113,11 +113,11 @@ window.HistoryOrHeadlines.init = function (root, base) {
       ct:'Retroactive legalization of killing',
       src:{ label:'Night of the Long Knives \u2014 the law of 3 July 1934', url:'https://en.wikipedia.org/wiki/Night_of_the_Long_Knives' } },
 
-    { tag:'Night & Fog',
-      fact:"A new order lets the government take people away and make them disappear. Families are told nothing \u2014 not where they are, not whether they are alive.",
+    { tag:'The Order',
+      fact:"The government puts it in writing: certain prisoners are to be taken away in secret, and their families are to be told nothing. Not where they went. Not whether they are alive.",
       hy:'1941', my:'2026', answer:'historic',
       truth:'1941 \u2014 Nazi Germany',
-      reveal:"The Night and Fog order of 1941, named for how people vanished. Eighty years later, men the U.S. deported to a prison in El Salvador disappeared from ICE's own online locator while their families were told nothing. The order is history. The echo is now.",
+      reveal:"The Night and Fog order of 1941, named for how people were to vanish. People do still disappear \u2014 men the U.S. deported to a prison in El Salvador dropped off ICE's own online locator while their families were told nothing. But no American order says to do it. That is the difference: one government wrote it down as policy, and one lets it happen anyway.",
       ct:'Enforced disappearance',
       src:{ label:'Human Rights Watch \u2014 Deportees forcibly disappeared', url:'https://www.hrw.org/news/2026/03/16/us/el-salvador-deportees-forcibly-disappeared' } },
 
@@ -147,10 +147,10 @@ window.HistoryOrHeadlines.init = function (root, base) {
       src:{ label:'Human Rights Watch \u2014 Torture of Venezuelan deportees', url:'https://www.hrw.org/news/2025/11/12/us/el-salvador-torture-of-venezuelan-deportees' } },
 
     { tag:'Forced Labor',
-      fact:"The people locked in the camps do the cooking, the cleaning and the laundry that keep the camps running. They are paid one dollar a day.",
-      hy:'1943', my:'2026', answer:'modern',
-      truth:'2026 \u2014 United States',
-      reveal:"A dollar a day is ICE's own written minimum. In 2026 the Supreme Court let a forced-labor lawsuit over it go ahead. Prisoners in Nazi camps were paid nothing at all \u2014 companies paid the SS instead, for the use of them. A dollar is not less than nothing. It is a different kind of number.",
+      fact:"The people locked in the camps do the cooking, the cleaning and the laundry that keep the camps running.",
+      hy:'1943', my:'2026', answer:'both',
+      truth:'Both eras',
+      reveal:"Both. The difference is the receipt. Prisoners in Nazi camps were paid nothing at all \u2014 companies paid the SS for the use of them. ICE pays a dollar a day, its own written minimum, and in 2026 the Supreme Court let a forced-labor lawsuit over it go ahead. A dollar is not less than nothing. It is a different kind of number.",
       ct:'Forced labor',
       src:{ label:'Colorado Newsline \u2014 Forced-labor lawsuit moves forward', url:'https://coloradonewsline.com/briefs/supreme-court-ice-forced-labor-lawsuit/' } },
 
@@ -171,7 +171,7 @@ window.HistoryOrHeadlines.init = function (root, base) {
       src:{ label:'Courthouse News \u2014 Inside 26 Federal Plaza', url:'https://www.courthousenews.com/inside-26-federal-plaza-trial-reveals-deplorable-conditions-at-ice-facility/' } },
 
     { tag:'The Ledger',
-      fact:"In a single month, immigration agents ignore 96 court orders. A judge counts every one and publishes the list.",
+      fact:"In a single month, the government's enforcement agents ignore 96 court orders. A judge counts every one and publishes the list.",
       hy:'1934', my:'2026', answer:'modern',
       truth:'2026 \u2014 United States',
       reveal:"Judge Patrick Schiltz \u2014 appointed by George W. Bush, once a clerk to Justice Scalia \u2014 wrote that the list should worry anyone who cares about the rule of law, whatever their politics. This card can only be modern. By 1934 Hitler's courts had been broken. Nobody was left to keep count.",
@@ -208,14 +208,14 @@ window.HistoryOrHeadlines.init = function (root, base) {
       hy:'1944', my:'2026', answer:'neither',
       truth:'Neither',
       reveal:"Neither. Nobody ever walked away on their own. It took the Nuremberg trials, from 1945 to 1949, to force a reckoning \u2014 and the modern one has not come at all. If you picked a year, you expected an apology that history has never once given.",
-      ct:'Willful blindness (you expected a voluntary apology)' },
+      ct:'You expected them to give up on their own' },
 
     { tag:'The Vote',
       fact:"After a public outcry, the country's lawmakers vote to cut off the camps' money and close them down.",
       hy:'1935', my:'2026', answer:'neither',
       truth:'Neither',
       reveal:"Never happened, either time. Germany's parliament voted itself into irrelevance in 1933. In 2025 Congress passed a bill with roughly $45 billion to build more detention. Both hopes \u2014 that the officials will quit, that the lawmakers will step in \u2014 belong to you, not to the record.",
-      ct:'Willful blindness (you expected the lawmakers to intervene)',
+      ct:'You expected the lawmakers to step in',
       src:{ label:'Common Dreams \u2014 $45 billion for detention expansion', url:'https://www.commondreams.org/news/geo-group-ice-profits' } }
   ];
 
@@ -243,7 +243,6 @@ window.HistoryOrHeadlines.init = function (root, base) {
 
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function pad2(n){ return (n<10?'0':'')+n; }
-  function roman(n){ var m=[['X',10],['IX',9],['V',5],['IV',4],['I',1]], r=''; for(var i=0;i<m.length;i++){ while(n>=m[i][1]){ r+=m[i][0]; n-=m[i][1]; } } return r; }
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 
   /* ---- settings ---- */
@@ -419,28 +418,28 @@ window.HistoryOrHeadlines.init = function (root, base) {
 
     if (clean){
       stampEl.classList.add('pass');
-      stampEl.textContent = 'Acquitted';
-      truthEl.textContent = 'You never mistook the Reich for the present.';
-      plainEl.textContent = 'You placed every file correctly \u2014 which means you could see the machinery for what it is, in whichever decade it happened to be running.';
+      stampEl.textContent = 'Passed';
+      truthEl.textContent = 'You never mistook Nazi Germany for the present.';
+      plainEl.textContent = 'You placed every card correctly \u2014 which means you could see the machinery for what it is, in whichever decade it happened to be running.';
       renderReward();
     } else {
       stampEl.classList.add('fail');
-      stampEl.textContent = 'Indicted \u00B7 ' + wrong.length;
-      truthEl.textContent = wrong.length===1 ? 'One count against you.' : wrong.length + ' counts against you.';
-      plainEl.textContent = "Each wrong answer means you couldn't tell the Reich from 2026 \u2014 which is precisely how it works the second time. Your charge sheet:";
+      stampEl.textContent = 'Failed';
+      truthEl.textContent = wrong.length===1 ? 'You missed one.' : 'You missed ' + wrong.length + '.';
+      plainEl.textContent = "Every miss is a card where you couldn't tell Nazi Germany from the United States today \u2014 which is precisely how it works the second time. Here is what you missed:";
       var html = '';
-      wrong.forEach(function(c, idx){
-        html += '<li><span class="ct">Count ' + roman(idx+1) + ' \u2014 ' + esc(c.ct) + '</span>' + esc(c.tag) + ' \u2014 ' + esc(c.file) + '</li>';
+      wrong.forEach(function(c){
+        html += '<li><span class="ct">' + esc(c.tag) + '</span>' + esc(c.ct) + ' \u2014 ' + esc(c.file) + '</li>';
       });
       chargesEl.innerHTML = html;
       rewardEl.hidden = true;
     }
 
-    receiptsEl.innerHTML = '<span>Placed <b>' + right + '/' + active.length + '</b></span>' +
-                           '<span>Verdict <b>' + (clean ? 'Acquitted' : 'Indicted') + '</b></span>';
+    receiptsEl.innerHTML = '<span>Correct <b>' + right + '/' + active.length + '</b></span>' +
+                           '<span>Result <b>' + (clean ? 'Passed' : 'Failed') + '</b></span>';
 
     progFill.style.width = '100%';
-    fileLabel.textContent = 'Verdict';
+    fileLabel.textContent = 'Result';
     result.hidden = false;
   }
 
