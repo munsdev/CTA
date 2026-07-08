@@ -46,10 +46,10 @@
           </div>
           <div class="hh-fb">
             <p class="hh-fact" data-el="fact"></p>
-            <p class="hh-ask">History, or headlines? Pick the year.</p>
+            <p class="hh-ask">Did this happen in Nazi Germany, or is it happening now?</p>
             <div class="hh-years">
-              <button class="hh-opt hh-yr" data-pick="historic"><span class="y" data-el="yrHist"></span><span class="e">Reich</span></button>
-              <button class="hh-opt hh-yr" data-pick="modern"><span class="y" data-el="yrMod"></span><span class="e">ICE / U.S.</span></button>
+              <button class="hh-opt hh-yr" data-pick="historic"><span class="y" data-el="yrHist"></span><span class="e">Nazi Germany</span></button>
+              <button class="hh-opt hh-yr" data-pick="modern"><span class="y" data-el="yrMod"></span><span class="e">U.S. today</span></button>
             </div>
             <div class="hh-alt">
               <button class="hh-opt hh-altb" data-pick="both">Both eras</button>
@@ -93,7 +93,7 @@
     <div class="hh-sheet">
       <div class="hh-eyebrow">History // Headlines</div>
       <div class="hh-title">History or Headlines</div>
-      <div class="hh-howto">One fact per file. Is it the Reich, or is it now? Call each one. Miss a parallel, and you'll answer for it at the end.</div>
+      <div class="hh-howto">Each card describes one real thing a government did. You decide: was this Nazi Germany, or is this the United States right now? Some are both. Some are neither.</div>
 
       <div class="hh-settings" data-el="settings" hidden>
         <div class="hh-set-row">
