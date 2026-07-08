@@ -11,6 +11,13 @@
    The loader self-resolves `base` from its own src, so styles.css and
    engine.js are fetched from the same pinned SHA automatically.
 
+   BOOT SEQUENCE — why the loading screen exists:
+   styles.css and the webfonts arrive asynchronously. Without a gate, the
+   markup paints unstyled for a beat and the player watches raw text reflow.
+   So: inline a minimal copy of the loader CSS synchronously, write the markup
+   with the game hidden underneath a "Loading" screen, and only reveal once
+   the stylesheet and fonts have both settled (or a 4s safety timeout fires).
+
    OPTIONAL PAGE CONTROLS — add to any Webflow element:
      data-hoh-reset     -> send the game back to its start screen
      gm-reset-button    -> same (house-wide convention)
@@ -21,8 +28,27 @@
   var base = "https://cdn.jsdelivr.net/gh/munsdev/CTA@main/games/history-or-headlines/";
   if (me && me.src) { var m = me.src.match(/^(.*\/games\/history-or-headlines\/)/); if (m) base = m[1]; }
 
+  var READY_TIMEOUT = 4000;   // never let a slow font hold the game hostage
+
+  /* Minimal copy of the loader's own styles, inlined before any markup is
+     written. Keyed off the mount attribute so it works before .gm-root lands. */
+  var BOOT_CSS =
+    '[data-history-or-headlines]{position:relative;min-height:260px;}' +
+    '[data-history-or-headlines]:not(.hh-ready) .hh-archive{visibility:hidden;}' +
+    '[data-history-or-headlines] .hh-loader{position:absolute;inset:0;z-index:80;display:flex;' +
+      'align-items:center;justify-content:center;background:#15171a;transition:opacity .35s ease;}' +
+    '[data-history-or-headlines] .hh-loader.is-gone{opacity:0;pointer-events:none;}' +
+    '[data-history-or-headlines] .hh-loader-txt{font-family:"Archivo Narrow",system-ui,sans-serif;' +
+      'font-weight:700;text-transform:uppercase;letter-spacing:.32em;font-size:12px;color:#8b8577;' +
+      'animation:hh-pulse 1.25s ease-in-out infinite;}' +
+    '@keyframes hh-pulse{0%,100%{opacity:.32}50%{opacity:1}}' +
+    '@media (prefers-reduced-motion:reduce){[data-history-or-headlines] .hh-loader-txt{animation:none;opacity:.75}}';
+
   function injectOnce(id, make) {
-    if (!document.getElementById(id)) { var el = make(); el.id = id; document.head.appendChild(el); }
+    var found = document.getElementById(id);
+    if (found) return found;
+    var el = make(); el.id = id; document.head.appendChild(el);
+    return el;
   }
 
   var MARKUP = `<div class="hh-archive">
@@ -119,14 +145,23 @@
       <div class="gm-receipts" data-el="receipts"></div>
       <ul class="hh-charges" data-el="charges"></ul>
       <div class="gm-reward" data-el="reward" hidden></div>
-      <button class="gm-btn ghost" data-el="btnReplay">Stand trial again</button>
+      <button class="gm-btn ghost" data-el="btnReplay">Play again</button>
     </div>
   </div>
 
   <div class="gm-toast" data-el="toast"></div>
+</div>
+
+<div class="hh-loader" data-el="loader">
+  <div class="hh-loader-txt">Loading</div>
 </div>`;
 
   function start() {
+    /* 1. Loader styles, synchronously — nothing paints unstyled. */
+    injectOnce('hoh-boot', function () {
+      var st = document.createElement('style'); st.textContent = BOOT_CSS; return st;
+    });
+
     injectOnce('hoh-fonts-pre', function () {
       var l = document.createElement('link'); l.rel = 'preconnect'; l.href = 'https://fonts.googleapis.com'; return l;
     });
@@ -135,19 +170,45 @@
       l.href = 'https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;700&family=Spline+Sans+Mono:wght@400;600&display=swap';
       return l;
     });
-    injectOnce('hoh-css', function () {
+    var cssLink = injectOnce('hoh-css', function () {
       var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = base + 'styles.css'; return l;
     });
 
     var targets = document.querySelectorAll('[data-history-or-headlines]');
     if (!targets.length) return;
 
+    /* 2. Markup goes in immediately, but hidden behind the loading screen. */
     function boot() {
       targets.forEach(function (t) {
         if (t.dataset.booted) return;
         t.classList.add('gm-root', 'hh');
         t.innerHTML = MARKUP;
         window.HistoryOrHeadlines.init(t, base);
+      });
+      whenReady(reveal);
+    }
+
+    /* 3. Reveal once the stylesheet and the fonts have settled. */
+    function whenReady(cb) {
+      var fired = false, pending = 2;
+      function done() { if (!fired && --pending <= 0) { fired = true; cb(); } }
+
+      if (cssLink.sheet) done();                       // already cached
+      else { cssLink.addEventListener('load', done); cssLink.addEventListener('error', done); }
+
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(done, done);
+      else done();
+
+      setTimeout(function () { if (!fired) { fired = true; cb(); } }, READY_TIMEOUT);
+    }
+
+    function reveal() {
+      targets.forEach(function (t) {
+        t.classList.add('hh-ready');
+        var ld = t.querySelector('.hh-loader');
+        if (!ld) return;
+        ld.classList.add('is-gone');
+        setTimeout(function () { ld.hidden = true; }, 400);
       });
     }
 
