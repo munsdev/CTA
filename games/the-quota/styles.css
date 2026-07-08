@@ -1,0 +1,280 @@
+/* =====================================================================
+   THE QUOTA — styles.css
+   The shared house shell (gm-*) re-skinned to The Quota's amber-on-slate
+   palette, plus this game's own engine styles (.sc-). Loaded by loader.js.
+   Everything is scoped to .gm-root.sc so it never touches the rest of the
+   page. To retheme from Webflow, fill the CMS slots below; leave them empty
+   and the @property defaults win.
+   ===================================================================== */
+
+/* --- @property defaults: empty/invalid CMS value falls back to these --- */
+@property --cms-primary { syntax:'<color>'; inherits:true; initial-value:#e8a33d; }
+@property --cms-surface { syntax:'<color>'; inherits:true; initial-value:#12161c; }
+@property --cms-ink     { syntax:'<color>'; inherits:true; initial-value:#d7dde4; }
+@property --cms-accent  { syntax:'<color>'; inherits:true; initial-value:#5b8c8c; }
+
+.gm-root.sc{
+  /* --- CMS THEME BLOCK: Webflow fills these; empty -> @property default --- */
+  --cms-primary:/*CMS:primary*/;
+  --cms-surface:/*CMS:surface*/;
+  --cms-ink:/*CMS:ink*/;
+  --cms-accent:/*CMS:accent*/;
+
+  /* working tokens */
+  --gm-primary:var(--cms-primary);
+  --gm-surface:var(--cms-surface);
+  --gm-ink:var(--cms-ink);
+  --gm-accent:var(--cms-accent);
+
+  /* derived ramp (tune the percentages here, once) */
+  --gm-primary-hi:color-mix(in srgb, var(--gm-primary) 82%, white);
+  --gm-primary-deep:color-mix(in srgb, var(--gm-primary) 60%, black);
+  --gm-surface-2:color-mix(in srgb, var(--gm-surface) 90%, white);
+  --gm-panel:color-mix(in srgb, var(--gm-surface) 84%, white);
+  --gm-line:color-mix(in srgb, var(--gm-surface) 74%, white);
+  --gm-dim:color-mix(in srgb, var(--gm-ink) 52%, var(--gm-surface));
+
+  /* semantic */
+  --gm-ok:#4a9d6a; --gm-warn:#e0b23e; --gm-bad:#d0492f;
+
+  /* geometry */
+  --gm-radius:3px; --gm-border:1px; --gm-pad:16px;
+
+  /* fonts — The Quota lineage (inherit Webflow tokens, then fall back) */
+  --gm-font-display:var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
+  --gm-font-body:var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
+
+  /* sc-local aliases mapped onto gm tokens so the engine CSS stays readable */
+  --sc-slate:var(--gm-surface); --sc-slate-2:var(--gm-surface-2); --sc-panel:var(--gm-panel);
+  --sc-line:var(--gm-line); --sc-ink:var(--gm-ink); --sc-dim:var(--gm-dim);
+  --sc-amber:var(--gm-primary); --sc-amber-deep:var(--gm-primary-deep);
+  --sc-alert:var(--gm-bad); --sc-ok:var(--gm-ok);
+
+  color:var(--gm-ink); font-family:var(--gm-font-body); font-size:16px; line-height:1.4;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  display:flex; justify-content:center; width:100%;
+  container-type:inline-size;
+}
+.gm-root.sc *{box-sizing:border-box; margin:0; padding:0;}
+
+/* --- shared buttons (gm-btn) --- */
+.gm-root.sc .gm-btn{
+  cursor:pointer; font-family:var(--gm-font-display); font-weight:700;
+  text-transform:uppercase; letter-spacing:.16em; font-size:clamp(13px,3.4cqw,15px);
+  color:var(--gm-surface); background:var(--gm-primary);
+  border:none; border-bottom:3px solid var(--gm-primary-deep);
+  padding:12px 26px; border-radius:var(--gm-radius);
+  transition:transform .05s, background .15s;
+}
+.gm-root.sc .gm-btn:hover{background:var(--gm-primary-hi);}
+.gm-root.sc .gm-btn:active{transform:translateY(2px); border-bottom-width:1px;}
+.gm-root.sc .gm-btn:focus-visible{outline:2px solid #fff; outline-offset:2px;}
+.gm-root.sc .gm-btn.ghost{
+  background:var(--gm-surface-2); color:var(--gm-primary);
+  border-bottom-color:color-mix(in srgb, var(--gm-surface) 55%, #000);
+}
+
+/* --- terminal shell --- */
+.gm-root.sc .sc-terminal{
+  position:relative; display:flex; flex-direction:column;
+  width:100%; background:var(--sc-slate-2);
+  border:1px solid var(--sc-line); border-radius:calc(var(--gm-radius) + 1px);
+  overflow:hidden; box-shadow:0 30px 80px -30px #000;
+}
+
+/* header */
+.gm-root.sc .sc-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  flex-wrap:wrap; padding:12px 16px; flex:none;
+  background:linear-gradient(180deg, var(--sc-panel), var(--sc-slate-2));
+  border-bottom:1px solid var(--sc-line);
+}
+.gm-root.sc .sc-id{display:flex; align-items:center; gap:10px; min-width:0;}
+.gm-root.sc .sc-dot{width:9px; height:9px; border-radius:50%; background:var(--sc-amber); box-shadow:0 0 10px var(--sc-amber); flex:none;}
+.gm-root.sc .sc-sys{
+  font-family:var(--gm-font-display); font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; font-size:clamp(12px,3.4cqw,15px); color:var(--sc-ink); white-space:nowrap;
+}
+.gm-root.sc .sc-meta{font-size:11px; color:var(--sc-dim); letter-spacing:.14em; text-align:right; text-transform:uppercase;}
+
+/* directive bar */
+.gm-root.sc .sc-directive{
+  padding:12px 16px; background:var(--sc-slate); flex:none;
+  border-bottom:1px solid var(--sc-line); font-size:12.5px; line-height:1.5; color:var(--sc-dim);
+}
+.gm-root.sc .sc-directive b{color:var(--sc-amber); font-weight:600;}
+.gm-root.sc .sc-badge{
+  display:inline-block; margin-right:8px; color:var(--sc-amber-deep);
+  border:1px solid var(--sc-amber-deep); border-radius:2px; padding:0 5px;
+  font-size:10px; letter-spacing:.16em; vertical-align:1px; text-transform:uppercase;
+}
+
+/* status strip + timer coin */
+.gm-root.sc .sc-status{
+  position:relative; display:flex; align-items:stretch; overflow:visible; flex:none;
+  border-bottom:1px solid var(--sc-line); background:var(--sc-slate-2);
+}
+.gm-root.sc .sc-cell{flex:1; min-width:0; display:flex; align-items:baseline; justify-content:center; gap:8px; padding:7px 10px;}
+.gm-root.sc .sc-clockcell{flex:0 0 66px; position:relative;}
+.gm-root.sc .sc-k{font-size:10px; letter-spacing:.16em; color:var(--sc-dim); text-transform:uppercase;}
+.gm-root.sc .sc-v{font-family:var(--gm-font-display); font-weight:700; font-size:17px; line-height:1;}
+
+.gm-root.sc .sc-timer{position:absolute; left:50%; top:50%; transform:translate(-50%,-52%); z-index:6; pointer-events:none;}
+.gm-root.sc .sc-ring-wrap{
+  position:relative; width:52px; height:52px; display:flex; align-items:center; justify-content:center;
+  border-radius:50%; background:var(--sc-panel); box-shadow:0 3px 10px -2px rgba(0,0,0,.55);
+}
+.gm-root.sc .sc-timer.sc-low .sc-ring-wrap{animation:sc-pulse .7s ease-in-out infinite;}
+.gm-root.sc .sc-ring{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg);}
+.gm-root.sc .sc-ring-track{fill:none; stroke:rgba(255,255,255,.10); stroke-width:7;}
+.gm-root.sc .sc-ring-prog{
+  fill:none; stroke:var(--sc-amber); stroke-width:7; stroke-linecap:round;
+  stroke-dasharray:276.46; stroke-dashoffset:0; transition:stroke-dashoffset .12s linear, stroke .3s ease;
+}
+.gm-root.sc .sc-timer.sc-low .sc-ring-prog{stroke:var(--sc-alert);}
+.gm-root.sc .sc-ring-num{position:relative; z-index:1; font-family:var(--gm-font-display); font-weight:700; font-size:20px; line-height:1; color:var(--sc-ink);}
+.gm-root.sc .sc-timer.sc-low .sc-ring-num{color:var(--sc-alert);}
+@keyframes sc-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+/* viewport (walking scene) */
+.gm-root.sc .sc-viewport{
+  position:relative; overflow:hidden; cursor:crosshair;
+  flex:1 1 300px; min-height:220px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 79px, rgba(255,255,255,.02) 79px 80px),
+    linear-gradient(180deg,#0d1116 0%,#151b22 62%,#0f141a 100%);
+}
+.gm-root.sc .sc-viewport::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:64px;
+  background:linear-gradient(180deg,#1c232c,#141a20); border-top:1px solid #2b333d;
+}
+.gm-root.sc .sc-scanline{
+  position:absolute; left:0; right:0; height:2px; top:0; z-index:5; opacity:.6; pointer-events:none;
+  background:linear-gradient(90deg, transparent, color-mix(in srgb,var(--sc-amber) 50%, transparent), transparent);
+  animation:sc-scan 3.4s linear infinite;
+}
+@keyframes sc-scan{0%{top:0}100%{top:100%}}
+
+/* center Start gate (ready state) */
+.gm-root.sc .sc-go{
+  position:absolute; inset:0; z-index:10;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  background:radial-gradient(ellipse at center, rgba(9,12,16,.55) 0%, rgba(9,12,16,.18) 45%, transparent 72%);
+}
+.gm-root.sc .sc-go[hidden]{display:none;}
+.gm-root.sc .sc-go .gm-btn{animation:sc-gopulse 1.7s ease-in-out infinite;}
+@keyframes sc-gopulse{
+  0%,100%{box-shadow:0 8px 26px -10px color-mix(in srgb,var(--sc-amber) 50%, transparent)}
+  50%{box-shadow:0 10px 36px -8px color-mix(in srgb,var(--sc-amber) 90%, transparent)}
+}
+
+/* figures */
+.gm-root.sc .sc-figure{position:absolute; bottom:26px; width:34px; height:78px; z-index:2; will-change:transform; transition:filter .1s;}
+.gm-root.sc .sc-figure svg{display:block; overflow:visible;}
+.gm-root.sc .sc-figure:hover .sc-halo{opacity:.9;}
+.gm-root.sc .sc-halo{opacity:0; fill:var(--sc-amber); transition:opacity .12s;}
+.gm-root.sc .sc-figure.sc-walk .sc-leg-a{animation:sc-legA .5s linear infinite;}
+.gm-root.sc .sc-figure.sc-walk .sc-leg-b{animation:sc-legB .5s linear infinite;}
+@keyframes sc-legA{0%,100%{transform:translateY(0) rotate(9deg)}50%{transform:translateY(0) rotate(-9deg)}}
+@keyframes sc-legB{0%,100%{transform:translateY(0) rotate(-9deg)}50%{transform:translateY(0) rotate(9deg)}}
+.gm-root.sc .sc-figure.sc-detaining{transition:opacity .18s ease; opacity:0;}
+
+/* detention tray */
+.gm-root.sc .sc-tray{display:flex; align-items:center; gap:14px; padding:12px 16px; border-top:1px solid var(--sc-line); background:var(--sc-slate); flex:none;}
+.gm-root.sc .sc-tray-lab{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--sc-dim); white-space:nowrap;}
+.gm-root.sc .sc-slots{display:flex; gap:10px; flex:1; min-width:0;}
+.gm-root.sc .sc-slot{
+  flex:1; height:58px; max-width:110px; position:relative; overflow:hidden;
+  border:1px dashed var(--sc-line); border-radius:3px; background:rgba(255,255,255,.015);
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.gm-root.sc .sc-num{position:absolute; top:5px; left:7px; font-size:9px; color:var(--sc-dim);}
+.gm-root.sc .sc-slot.sc-filled{border-style:solid; border-color:var(--sc-alert); background:color-mix(in srgb,var(--sc-alert) 9%, transparent);}
+.gm-root.sc .sc-slot.sc-filled .sc-num{color:var(--sc-alert);}
+.gm-root.sc .sc-slot svg{display:block;}
+
+/* controls footer */
+.gm-root.sc .sc-controls{padding:11px 16px; border-top:1px solid var(--sc-line); background:var(--sc-slate-2); flex:none;}
+.gm-root.sc .sc-hint{font-size:11px; color:var(--sc-dim); letter-spacing:.06em; line-height:1.4; text-align:center;}
+
+/* full-terminal overlay (intro + result) */
+.gm-root.sc .sc-panel{
+  position:absolute; inset:0; z-index:40; display:flex; overflow-y:auto;
+  background:radial-gradient(120% 120% at 50% 30%, rgba(9,12,16,.92), rgba(6,9,14,.975));
+  backdrop-filter:blur(2px);
+}
+.gm-root.sc .sc-panel[hidden]{display:none;}
+.gm-root.sc .sc-sheet{
+  margin:auto; display:flex; flex-direction:column; align-items:center; text-align:center;
+  gap:14px; padding:30px 26px; width:100%; max-width:460px;
+}
+.gm-root.sc .sc-sheet>*{max-width:100%;}
+
+/* intro */
+.gm-root.sc .sc-eyebrow{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.22em; font-size:11px; color:var(--sc-dim);}
+.gm-root.sc .sc-title{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:clamp(28px,10cqw,44px); line-height:1.05; color:var(--sc-amber);}
+.gm-root.sc .sc-howto{font-size:13px; line-height:1.6; color:var(--sc-dim);}
+
+/* result — shared gm-* result classes, themed for The Quota */
+.gm-root.sc .gm-stamp{
+  font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+  border:3px solid currentColor; border-radius:6px; padding:2px 16px;
+  font-size:clamp(26px,9cqw,40px); line-height:1.1; transform:rotate(-6deg);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.06);
+  animation:sc-stampIn .42s cubic-bezier(.2,1.5,.4,1) both;
+}
+.gm-root.sc .gm-stamp.pass{color:var(--gm-ok);}
+.gm-root.sc .gm-stamp.fail{color:var(--gm-bad);}
+@keyframes sc-stampIn{0%{opacity:0; transform:rotate(-6deg) scale(2.4)}60%{opacity:1}100%{opacity:1; transform:rotate(-6deg) scale(1)}}
+.gm-root.sc .gm-truth{font-family:var(--gm-font-display); font-weight:700; font-size:clamp(19px,6cqw,25px); letter-spacing:.01em; line-height:1.14; overflow-wrap:break-word;}
+.gm-root.sc .gm-plain{font-size:13px; line-height:1.6; color:var(--sc-dim); overflow-wrap:break-word; max-width:44ch;}
+.gm-root.sc .gm-receipts{display:flex; flex-wrap:wrap; gap:5px 20px; justify-content:center; font-size:clamp(12px,3.2cqw,15px); color:var(--sc-dim);}
+.gm-root.sc .gm-receipts b{color:var(--sc-ink); font-weight:700;}
+
+/* loss lineup */
+.gm-root.sc .sc-lineup{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+.gm-root.sc .sc-lineup:empty{display:none;}
+.gm-root.sc .sc-lineup svg{display:block; opacity:.9;}
+
+/* reward (graceful, shared) */
+.gm-root.sc .gm-reward{display:flex; flex-direction:column; gap:8px; align-items:center; margin-top:2px;}
+.gm-root.sc .gm-reward[hidden]{display:none;}
+.gm-root.sc .gm-reward-desc{font-size:12px; letter-spacing:.04em; color:var(--sc-amber-deep); text-transform:uppercase;}
+.gm-root.sc .gm-code{
+  display:flex; align-items:center; gap:10px; font-family:var(--gm-font-display); font-weight:700;
+  font-size:clamp(16px,4.4cqw,22px); letter-spacing:.14em; color:var(--sc-amber);
+  background:color-mix(in srgb, var(--sc-amber) 7%, transparent);
+  border:1px dashed var(--sc-amber); border-radius:var(--gm-radius); padding:8px 14px;
+}
+.gm-root.sc .gm-code button{
+  cursor:pointer; font-family:var(--gm-font-body); font-size:.6em; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--sc-amber); color:var(--sc-slate); border:none; border-radius:2px; padding:4px 9px;
+}
+
+/* toast */
+.gm-root.sc .gm-toast{
+  position:absolute; left:50%; bottom:16px; transform:translate(-50%,10px); z-index:60;
+  pointer-events:none; white-space:nowrap; max-width:90%;
+  background:var(--sc-ink); color:var(--sc-slate); font-family:var(--gm-font-display); font-weight:700;
+  text-transform:uppercase; letter-spacing:.1em; font-size:12px; padding:8px 14px; border-radius:var(--gm-radius);
+  opacity:0; transition:opacity .2s, transform .2s;
+}
+.gm-root.sc .gm-toast.show{opacity:1; transform:translate(-50%,0);}
+
+/* narrow container */
+@container (max-width:520px){
+  .gm-root.sc .sc-viewport{flex-basis:240px; min-height:200px;}
+  .gm-root.sc .sc-clockcell{flex-basis:58px;}
+  .gm-root.sc .sc-ring-wrap{width:46px; height:46px;}
+  .gm-root.sc .sc-ring-num{font-size:18px;}
+  .gm-root.sc .sc-slot{height:50px;}
+  .gm-root.sc .sc-tray{gap:10px; padding:10px 12px;}
+  .gm-root.sc .sc-sheet{padding:26px 20px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .gm-root.sc .sc-scanline{animation:none; opacity:.25;}
+  .gm-root.sc .sc-figure.sc-walk .sc-leg-a,.gm-root.sc .sc-figure.sc-walk .sc-leg-b{animation:none;}
+  .gm-root.sc .gm-stamp{animation:none;}
+  .gm-root.sc .sc-go .gm-btn{animation:none;}
+  .gm-root.sc .sc-timer.sc-low .sc-ring-wrap{animation:none;}
+}
