@@ -1,0 +1,298 @@
+/* =====================================================================
+   THEN OR NOW — styles.css
+   The shared house shell (gm-*) in this game's own palette — cold archival
+   bone/ink/oxblood on charcoal — plus its engine styles (.ng-).
+   Loaded by loader.js. Everything scoped to .gm-root.ng.
+   ===================================================================== */
+
+@property --cms-primary { syntax:'<color>'; inherits:true; initial-value:#d9d2c5; }
+@property --cms-surface { syntax:'<color>'; inherits:true; initial-value:#15171a; }
+@property --cms-ink     { syntax:'<color>'; inherits:true; initial-value:#e4e0d8; }
+@property --cms-accent  { syntax:'<color>'; inherits:true; initial-value:#8c3a2b; }
+
+.gm-root.ng{
+  /* --- CMS THEME BLOCK: Webflow fills these; empty -> @property default --- */
+  --cms-primary:/*CMS:primary*/;
+  --cms-surface:/*CMS:surface*/;
+  --cms-ink:/*CMS:ink*/;
+  --cms-accent:/*CMS:accent*/;
+
+  --gm-primary:var(--cms-primary);
+  --gm-surface:var(--cms-surface);
+  --gm-ink:var(--cms-ink);
+  --gm-accent:var(--cms-accent);
+
+  --gm-primary-hi:color-mix(in srgb, var(--gm-primary) 84%, white);
+  --gm-primary-deep:color-mix(in srgb, var(--gm-primary) 55%, black);
+  --gm-surface-2:color-mix(in srgb, var(--gm-surface) 92%, white);
+  --gm-panel:color-mix(in srgb, var(--gm-surface) 86%, white);
+  --gm-line:color-mix(in srgb, var(--gm-surface) 76%, white);
+  --gm-dim:color-mix(in srgb, var(--gm-ink) 48%, var(--gm-surface));
+
+  --gm-ok:#5f8f63; --gm-warn:#b98b3c; --gm-bad:#a8412f;
+
+  --gm-radius:2px; --gm-border:1px; --gm-pad:16px;
+
+  --gm-font-display:var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
+  --gm-font-body:var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
+
+  /* ng-local aliases onto gm tokens */
+  --ng-char:var(--gm-surface); --ng-char-2:var(--gm-surface-2); --ng-panel:var(--gm-panel);
+  --ng-line:var(--gm-line); --ng-ink:var(--gm-ink); --ng-dim:var(--gm-dim);
+  --ng-bone:var(--gm-primary); --ng-bone-deep:var(--gm-primary-deep);
+  --ng-ox:var(--gm-accent);
+  --ng-ok:var(--gm-ok); --ng-warn:var(--gm-warn); --ng-bad:var(--gm-bad);
+
+  color:var(--gm-ink); font-family:var(--gm-font-body); font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  display:flex; justify-content:center; width:100%;
+  height:100%; min-height:0;
+  container-type:inline-size;
+}
+.gm-root.ng *{box-sizing:border-box; margin:0; padding:0;}
+.gm-root.ng ::selection{background:var(--ng-bone); color:var(--ng-char);}
+
+/* --- shared buttons --- */
+.gm-root.ng .gm-btn{
+  cursor:pointer; font-family:var(--gm-font-display); font-weight:700;
+  text-transform:uppercase; letter-spacing:.14em; font-size:clamp(11px,3cqw,13px);
+  color:var(--gm-surface); background:var(--gm-primary);
+  border:none; border-bottom:3px solid var(--gm-primary-deep);
+  padding:11px 20px; border-radius:var(--gm-radius);
+  transition:transform .05s, background .15s, opacity .15s;
+}
+.gm-root.ng .gm-btn:hover{background:var(--gm-primary-hi);}
+.gm-root.ng .gm-btn:active{transform:translateY(2px); border-bottom-width:1px;}
+.gm-root.ng .gm-btn:focus-visible{outline:2px solid var(--gm-ink); outline-offset:2px;}
+.gm-root.ng .gm-btn:disabled{opacity:.3; cursor:default; transform:none;}
+.gm-root.ng .gm-btn.ghost{
+  background:var(--gm-surface-2); color:var(--gm-ink);
+  border-bottom-color:color-mix(in srgb, var(--gm-surface) 55%, #000);
+}
+
+/* --- archive shell --- */
+.gm-root.ng .ng-archive{
+  position:relative; display:flex; flex-direction:column;
+  width:100%; height:100%; min-height:0;
+  background:var(--ng-char); border:1px solid var(--ng-line);
+  border-radius:calc(var(--gm-radius) + 1px); overflow:hidden;
+  box-shadow:0 30px 80px -30px #000;
+}
+.gm-root.ng .ng-archive::before{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:30; opacity:.3;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.2) 0 1px, transparent 1px 3px);
+}
+
+/* header */
+.gm-root.ng .ng-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex:none;
+  padding:12px 16px; background:linear-gradient(180deg,var(--ng-panel),var(--ng-char-2));
+  border-bottom:1px solid var(--ng-line);
+}
+.gm-root.ng .ng-id{display:flex; align-items:center; gap:10px; min-width:0;}
+.gm-root.ng .ng-dot{width:9px; height:9px; border-radius:50%; background:var(--ng-ox); box-shadow:0 0 10px var(--ng-ox); flex:none;}
+.gm-root.ng .ng-sys{
+  font-family:var(--gm-font-display); font-weight:700; letter-spacing:.2em;
+  text-transform:uppercase; font-size:clamp(12px,3.2cqw,15px); white-space:nowrap;
+}
+.gm-root.ng .ng-meta{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ng-dim);}
+
+/* progress */
+.gm-root.ng .ng-progwrap{flex:none; padding:0; background:var(--ng-char-2); border-bottom:1px solid var(--ng-line);}
+.gm-root.ng .ng-prog{height:4px; background:color-mix(in srgb,var(--ng-char) 60%,#000);}
+.gm-root.ng .ng-prog>i{display:block; height:100%; width:0%; background:var(--ng-ox); transition:width .35s ease;}
+
+/* stage — one card, slides */
+.gm-root.ng .ng-stage{
+  position:relative; flex:1 1 auto; min-height:180px; overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb,var(--ng-ox) 7%, transparent), transparent 60%),
+    var(--ng-char);
+}
+.gm-root.ng .ng-card{
+  position:absolute; inset:0; overflow-y:auto; perspective:1600px;
+  padding:16px; transition:transform .34s cubic-bezier(.4,.1,.2,1), opacity .28s ease;
+}
+.gm-root.ng .ng-card.slide-out-left{transform:translateX(-108%); opacity:0;}
+.gm-root.ng .ng-card.slide-out-right{transform:translateX(108%); opacity:0;}
+.gm-root.ng .ng-card.slide-in-right{transform:translateX(108%); opacity:0; transition:none;}
+.gm-root.ng .ng-card.slide-in-left{transform:translateX(-108%); opacity:0; transition:none;}
+
+.gm-root.ng .ng-card-in{position:relative; display:grid; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,.15,.2,1);}
+.gm-root.ng .ng-card.flipped .ng-card-in{transform:rotateY(180deg);}
+.gm-root.ng .ng-face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border:1px solid var(--ng-line); background:var(--ng-char-2); border-radius:var(--gm-radius);
+}
+.gm-root.ng .ng-face-b{transform:rotateY(180deg);}
+
+/* card header strip */
+.gm-root.ng .ng-ch{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:8px 12px; background:var(--ng-panel); border-bottom:1px solid var(--ng-line);
+}
+.gm-root.ng .ng-ch-file{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.1em; font-size:11px; color:var(--ng-bone);}
+.gm-root.ng .ng-ch-tag{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ng-dim);}
+.gm-root.ng .ng-res{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:12px;}
+
+/* front */
+.gm-root.ng .ng-fb{padding:16px 14px;}
+.gm-root.ng .ng-fact{font-size:clamp(14px,3.6cqw,16px); line-height:1.55; color:var(--ng-ink);}
+.gm-root.ng .ng-ask{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.1em; font-size:10px; color:var(--ng-dim); margin:14px 0 10px;}
+.gm-root.ng .ng-years{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.gm-root.ng .ng-opt{font-family:inherit; cursor:pointer; transition:background .12s, color .12s, border-color .12s;}
+.gm-root.ng .ng-yr{background:var(--ng-char); border:1px solid var(--ng-bone-deep); color:var(--ng-ink); padding:12px 10px; text-align:center; border-radius:var(--gm-radius);}
+.gm-root.ng .ng-yr:hover,.gm-root.ng .ng-yr:focus-visible{background:var(--ng-bone); color:var(--ng-char); outline:none;}
+.gm-root.ng .ng-yr .y{font-family:var(--gm-font-display); font-weight:700; font-size:22px; line-height:1; display:block; letter-spacing:.02em;}
+.gm-root.ng .ng-yr .e{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ng-dim); margin-top:4px; display:block;}
+.gm-root.ng .ng-yr:hover .e,.gm-root.ng .ng-yr:focus-visible .e{color:var(--ng-char);}
+.gm-root.ng .ng-alt{display:flex; gap:10px; margin-top:10px;}
+.gm-root.ng .ng-altb{flex:1; background:var(--ng-panel); border:1px solid var(--ng-line); color:var(--ng-ink); padding:9px; font-size:12px; text-align:center; letter-spacing:.04em; border-radius:var(--gm-radius);}
+.gm-root.ng .ng-altb:hover,.gm-root.ng .ng-altb:focus-visible{border-color:var(--ng-bone-deep); color:var(--ng-bone); outline:none;}
+
+/* answered states */
+.gm-root.ng .ng-card.done .ng-opt{pointer-events:none;}
+.gm-root.ng .ng-opt.pick-win{background:var(--ng-ok); border-color:var(--ng-ok); color:#0e1712;}
+.gm-root.ng .ng-opt.pick-ok{background:var(--ng-warn); border-color:var(--ng-warn); color:#1a1405;}
+.gm-root.ng .ng-opt.pick-bad{background:var(--ng-bad); border-color:var(--ng-bad); color:#1c0f0e;}
+.gm-root.ng .ng-opt.line-win{border-color:var(--ng-ok); color:var(--ng-ok);}
+.gm-root.ng .ng-opt.line-ok{border-color:var(--ng-warn); color:var(--ng-warn);}
+.gm-root.ng .ng-opt.dim{opacity:.32;}
+.gm-root.ng .ng-opt.pick-win .e,.gm-root.ng .ng-opt.pick-ok .e,.gm-root.ng .ng-opt.pick-bad .e{color:inherit; opacity:.75;}
+.gm-root.ng .ng-opt.line-win .e,.gm-root.ng .ng-opt.line-ok .e{color:inherit; opacity:.7;}
+
+/* back */
+.gm-root.ng .ng-card.res-win .ng-face-b .ng-ch{background:var(--ng-ok); color:#0f1a12;}
+.gm-root.ng .ng-card.res-ok  .ng-face-b .ng-ch{background:var(--ng-warn); color:#1a1405;}
+.gm-root.ng .ng-card.res-bad .ng-face-b .ng-ch{background:var(--ng-bad); color:#1c0f0e;}
+.gm-root.ng .ng-face-b .ng-ch .ng-ch-tag,.gm-root.ng .ng-face-b .ng-res{color:inherit;}
+.gm-root.ng .ng-rb{padding:16px 14px;}
+.gm-root.ng .ng-truth-line{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.02em; font-size:15px; margin-bottom:10px;}
+.gm-root.ng .ng-card.res-win .ng-truth-line{color:var(--ng-ok);}
+.gm-root.ng .ng-card.res-ok  .ng-truth-line{color:var(--ng-warn);}
+.gm-root.ng .ng-card.res-bad .ng-truth-line{color:var(--ng-bad);}
+.gm-root.ng .ng-reveal{font-size:clamp(13px,3.4cqw,14px); line-height:1.6; color:var(--ng-ink);}
+.gm-root.ng .ng-foot{font-size:12px; color:var(--ng-dim); margin-top:8px; font-style:italic;}
+.gm-root.ng .ng-foot[hidden]{display:none;}
+
+/* per-card receipt link */
+.gm-root.ng .ng-src{
+  display:inline-block; margin-top:12px; font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ng-bone); text-decoration:none;
+  border-bottom:1px solid var(--ng-bone-deep); padding-bottom:2px;
+}
+.gm-root.ng .ng-src:hover{color:var(--ng-ink); border-bottom-color:var(--ng-ink);}
+.gm-root.ng .ng-src[hidden]{display:none;}
+
+/* inline text buttons */
+.gm-root.ng .ng-link{
+  display:block; margin-top:14px; background:none; border:0; cursor:pointer;
+  font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase;
+  letter-spacing:.06em; font-size:11px; color:var(--ng-dim); text-decoration:underline;
+}
+.gm-root.ng .ng-link:hover{color:var(--ng-bone);}
+.gm-root.ng .ng-link[hidden]{display:none;}
+
+/* nav */
+.gm-root.ng .ng-nav{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; flex:none;
+  padding:12px 16px; border-top:1px solid var(--ng-line); background:var(--ng-char-2);
+}
+.gm-root.ng .ng-dots{display:flex; gap:6px; flex:1; justify-content:center; flex-wrap:wrap;}
+.gm-root.ng .ng-dots i{
+  width:7px; height:7px; border-radius:50%; display:block;
+  background:color-mix(in srgb,var(--ng-char) 55%,#fff); opacity:.35; transition:opacity .2s, background .2s;
+}
+.gm-root.ng .ng-dots i.on{opacity:1; background:var(--ng-bone);}
+.gm-root.ng .ng-dots i.win{opacity:1; background:var(--ng-ok);}
+.gm-root.ng .ng-dots i.ok{opacity:1; background:var(--ng-warn);}
+.gm-root.ng .ng-dots i.bad{opacity:1; background:var(--ng-bad);}
+
+/* overlay panels */
+.gm-root.ng .ng-panel{
+  position:absolute; inset:0; z-index:40; display:flex; overflow-y:auto;
+  background:radial-gradient(120% 120% at 50% 25%, rgba(12,13,15,.93), rgba(8,9,11,.98));
+  backdrop-filter:blur(2px);
+}
+.gm-root.ng .ng-panel[hidden]{display:none;}
+.gm-root.ng .ng-sheet{
+  margin:auto; display:flex; flex-direction:column; align-items:center; text-align:center;
+  gap:14px; padding:30px 24px; width:100%; max-width:470px;
+}
+.gm-root.ng .ng-sheet>*{max-width:100%;}
+.gm-root.ng .ng-eyebrow{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.24em; font-size:11px; color:var(--ng-ox);}
+.gm-root.ng .ng-title{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:clamp(28px,10cqw,44px); line-height:1.04; color:var(--ng-bone);}
+.gm-root.ng .ng-howto{font-size:13px; line-height:1.6; color:var(--ng-dim);}
+
+/* shared result classes */
+.gm-root.ng .gm-stamp{
+  font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+  border:3px solid currentColor; border-radius:5px; padding:2px 16px;
+  font-size:clamp(24px,8.5cqw,38px); line-height:1.1; transform:rotate(-5deg);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.05);
+  animation:ng-stampIn .42s cubic-bezier(.2,1.5,.4,1) both;
+}
+.gm-root.ng .gm-stamp.pass{color:var(--gm-ok);}
+.gm-root.ng .gm-stamp.fail{color:var(--gm-bad);}
+@keyframes ng-stampIn{0%{opacity:0; transform:rotate(-5deg) scale(2.3)}60%{opacity:1}100%{opacity:1; transform:rotate(-5deg) scale(1)}}
+.gm-root.ng .gm-truth{font-family:var(--gm-font-display); font-weight:700; font-size:clamp(18px,5.6cqw,24px); line-height:1.16; overflow-wrap:break-word;}
+.gm-root.ng .gm-plain{font-size:13px; line-height:1.6; color:var(--ng-dim); max-width:46ch; overflow-wrap:break-word;}
+.gm-root.ng .gm-receipts{display:flex; flex-wrap:wrap; gap:5px 20px; justify-content:center; font-size:clamp(12px,3.2cqw,15px); color:var(--ng-dim);}
+.gm-root.ng .gm-receipts b{color:var(--ng-ink); font-weight:700;}
+
+/* charge sheet */
+.gm-root.ng .ng-charges{display:grid; gap:8px; width:100%; text-align:left; list-style:none;}
+.gm-root.ng .ng-charges:empty{display:none;}
+.gm-root.ng .ng-charges li{
+  border-left:3px solid var(--ng-bad); padding:7px 0 7px 12px; font-size:12.5px;
+  background:color-mix(in srgb,var(--ng-bad) 10%, transparent); color:var(--ng-dim);
+}
+.gm-root.ng .ng-charges li .ct{
+  display:block; font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase;
+  letter-spacing:.03em; font-size:11px; color:var(--ng-bad); margin-bottom:2px;
+}
+
+/* reward */
+.gm-root.ng .gm-reward{display:flex; flex-direction:column; gap:8px; align-items:center;}
+.gm-root.ng .gm-reward[hidden]{display:none;}
+.gm-root.ng .gm-reward-desc{font-size:12px; letter-spacing:.04em; color:var(--ng-dim); text-transform:uppercase;}
+.gm-root.ng .gm-code{
+  display:flex; align-items:center; gap:10px; font-family:var(--gm-font-display); font-weight:700;
+  font-size:clamp(16px,4.4cqw,22px); letter-spacing:.14em; color:var(--ng-bone);
+  background:color-mix(in srgb,var(--ng-bone) 6%, transparent);
+  border:1px dashed var(--ng-bone-deep); border-radius:var(--gm-radius); padding:8px 14px;
+}
+.gm-root.ng .gm-code button{
+  cursor:pointer; font-family:var(--gm-font-body); font-size:.6em; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--ng-bone); color:var(--ng-char); border:none; border-radius:2px; padding:4px 9px;
+}
+
+/* toast */
+.gm-root.ng .gm-toast{
+  position:absolute; left:50%; bottom:16px; transform:translate(-50%,10px); z-index:60;
+  pointer-events:none; white-space:nowrap; max-width:90%;
+  background:var(--ng-ink); color:var(--ng-char); font-family:var(--gm-font-display); font-weight:700;
+  text-transform:uppercase; letter-spacing:.1em; font-size:12px; padding:8px 14px; border-radius:var(--gm-radius);
+  opacity:0; transition:opacity .2s, transform .2s;
+}
+.gm-root.ng .gm-toast.show{opacity:1; transform:translate(-50%,0);}
+
+@container (max-width:520px){
+  .gm-root.ng .ng-meta{display:none;}
+  .gm-root.ng .ng-card{padding:12px;}
+  .gm-root.ng .ng-sheet{padding:26px 20px;}
+  .gm-root.ng .ng-nav{padding:10px 12px; gap:8px;}
+  .gm-root.ng .gm-btn{padding:10px 14px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .gm-root.ng .ng-card,.gm-root.ng .ng-card-in{transition:none !important;}
+  .gm-root.ng .gm-stamp{animation:none;}
+}
+
+/* --- Webflow wrapper chain (see The Quota) --------------------------- */
+.games-script{position:relative;}
+.games-script .w-embed,
+.games-script .w-richtext,
+.games-script [data-rt-embed-type]{
+  display:flex; flex-direction:column; height:100%; min-height:0;
+}
