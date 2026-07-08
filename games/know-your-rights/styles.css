@@ -121,7 +121,11 @@
 .gm-root.pr .pr-x{flex:none; cursor:pointer; background:transparent; border:none; color:var(--gm-dim); font-size:18px; line-height:1; padding:0 2px;}
 .gm-root.pr .pr-x:hover{color:var(--gm-ink);}
 
-.gm-root.pr .pr-bar-track{flex:none; height:6px; background:#0a0d16; border-bottom:2px solid var(--gm-line); overflow:hidden;}
+.gm-root.pr .pr-timer{flex:none; display:flex; align-items:center; gap:8px; padding:6px 10px 0; background:var(--gm-surface);}
+.gm-root.pr .pr-count{flex:none; min-width:2.2ch; text-align:right; font-family:var(--gm-font-display); font-weight:700; font-size:15px; line-height:1; color:var(--gm-dim); font-variant-numeric:tabular-nums;}
+.gm-root.pr .pr-count.hot{color:var(--gm-bad);}
+.gm-root.pr .pr-count.off{color:var(--gm-line);}
+.gm-root.pr .pr-bar-track{flex:1 1 auto; height:8px; background:#0a0d16; border:1px solid var(--gm-line); overflow:hidden;}
 .gm-root.pr .pr-bar{height:100%; width:0%; background:var(--gm-primary); transition:width .08s linear;}
 .gm-root.pr .pr-bar.hot{background:var(--gm-bad); animation:pr-hot .5s steps(1) infinite;}
 .gm-root.pr .pr-bar.off{background:var(--gm-line); opacity:.4;}
