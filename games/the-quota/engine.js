@@ -34,6 +34,30 @@ window.TheQuota.init = function (root, base) {
   };
   /* ════════════════════════════════════════════════════════════ */
 
+  /* Make the embed fill its Webflow column: walk up the wrapper chain and
+     turn each ancestor into a full-height flex column, stopping at the page
+     wrapper. If nothing above us has a real height, fall back to 80vh so the
+     game is never a 0px sliver. */
+  function fitToContainer() {
+    var el = root.parentElement;
+    for (var i = 0; el && i < 8; i++) {
+      var tag = (el.tagName || '').toUpperCase();
+      if (tag === 'BODY' || tag === 'HTML') break;
+      el.style.display = 'flex';
+      el.style.flexDirection = 'column';
+      el.style.minHeight = '0';
+      el.style.height = '100%';
+      if (el.classList && el.classList.contains('games-script')) break;
+      el = el.parentElement;
+    }
+    requestAnimationFrame(function () {
+      if (root.offsetHeight < 120) {
+        root.style.height = Math.max(420, Math.round(window.innerHeight * 0.8)) + 'px';
+      }
+    });
+  }
+  fitToContainer();
+
   var x = function (name) { return root.querySelector('[data-el="' + name + '"]'); };
 
   var viewport   = x('viewport');
