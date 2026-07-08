@@ -61,8 +61,11 @@
       <button class="pr-hud-btn" data-el="btnHint" type="button">Hint</button>
       <button class="pr-x" data-el="btnQuit" type="button" aria-label="Back to title">&#215;</button>
     </div>
-    <div class="pr-bar-track"><div class="pr-bar" data-el="bar"></div></div>
     <div class="pr-view"><canvas data-el="canvas" width="160" height="144" aria-hidden="true"></canvas></div>
+    <div class="pr-timer">
+      <span class="pr-count" data-el="count"></span>
+      <div class="pr-bar-track"><div class="pr-bar" data-el="bar"></div></div>
+    </div>
     <div class="pr-box" data-el="box">
       <div class="pr-line">
         <span class="pr-speaker" data-el="speaker">IMMIGRATION</span>
