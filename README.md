@@ -17,7 +17,7 @@ https://cdn.jsdelivr.net/gh/{user}/CTA@main/games/{slug}/engine.js
 
 - `dc-lagoon` — The DC Lagoon (Reflecting Pool project)
 - `the-quota` — The Quota (Casey The American)
-- `then-or-now` — (planned)
+- `then-or-now` — Then or Now (Casey The American)
 - `know-your-rights` — (planned)
 
 See `casey-minigame-contract-v1.md` for the shared shell/token architecture.
