@@ -534,7 +534,7 @@ window.KnowYourRights.init = function (root, base) {
   var elTitle=x('title'), elMenuList=x('menuList'), elGame=x('game'),
       elResult=x('result'), elSpeaker=x('speaker'), elText=x('text'),
       elMore=x('more'), elOpts=x('opts'),
-      elBar=x('bar'), elRec=x('btnRec'), elHint=x('btnHint'),
+      elBar=x('bar'), elCount=x('count'), elRec=x('btnRec'), elHint=x('btnHint'),
       elSceneName=x('sceneName'), elDots=x('beatDots'),
       elStamp=x('stamp'), elTruth=x('truth'), elPlain=x('plain'),
       elList=x('list'), elReward=x('reward'), elDiff=x('diffRow'), elLight=x('lightRow');
@@ -558,12 +558,13 @@ window.KnowYourRights.init = function (root, base) {
       var fn=pendingThen; pendingThen=null; if(fn) fn(); } }
 
   var timer={raf:null,t0:0,dur:0,timeouts:0};
-  function stopTimer(){ if(timer.raf){ cancelAnimationFrame(timer.raf); timer.raf=null; } elBar.style.width='0%'; elBar.className='pr-bar'; }
+  function stopTimer(){ if(timer.raf){ cancelAnimationFrame(timer.raf); timer.raf=null; } elBar.style.width='0%'; elBar.className='pr-bar'; elCount.textContent=''; elCount.className='pr-count'; }
   function startTimer(){ var secs=DIFF[difficulty];
-    if(!secs){ elBar.style.width='100%'; elBar.className='pr-bar off'; return; }
+    if(!secs){ elBar.style.width='100%'; elBar.className='pr-bar off'; elCount.textContent='\u221e'; elCount.className='pr-count off'; return; }
     timer.dur=secs*1000; timer.t0=performance.now();
-    (function tick(now){ var left=timer.dur-(now-timer.t0), frac=Math.max(0,left/timer.dur);
-      elBar.style.width=(frac*100)+'%'; elBar.className='pr-bar'+(left<=3000?' hot':'');
+    (function tick(now){ var left=timer.dur-(now-timer.t0), frac=Math.max(0,left/timer.dur), hot=left<=3000;
+      elBar.style.width=(frac*100)+'%'; elBar.className='pr-bar'+(hot?' hot':'');
+      elCount.textContent=Math.max(0,Math.ceil(left/1000)); elCount.className='pr-count'+(hot?' hot':'');
       if(left<=0){ timer.raf=null; onTimeout(); return; } timer.raf=requestAnimationFrame(tick); })(timer.t0); }
   function onTimeout(){ timer.timeouts++; S.risk+=CONFIG.timeoutPenalty;
     if (timer.timeouts>=CONFIG.maxTimeouts){ var b=curBeat(), r=b.rounds[Math.min(S.round,b.rounds.length-1)];
