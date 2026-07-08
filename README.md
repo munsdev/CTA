@@ -16,7 +16,7 @@ via jsDelivr:
 https://cdn.jsdelivr.net/gh/{user}/CTA@main/games/{slug}/engine.js
 
 - `dc-lagoon` — The DC Lagoon (Reflecting Pool project)
-- `the-quota` — (planned)
+- `the-quota` — The Quota (Casey The American)
 - `then-or-now` — (planned)
 - `know-your-rights` — (planned)
 
