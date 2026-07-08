@@ -53,6 +53,7 @@
   color:var(--gm-ink); font-family:var(--gm-font-body); font-size:16px; line-height:1.4;
   -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
   display:flex; justify-content:center; width:100%;
+  height:100%; min-height:0;
   container-type:inline-size;
 }
 .gm-root.sc *{box-sizing:border-box; margin:0; padding:0;}
@@ -77,7 +78,7 @@
 /* --- terminal shell --- */
 .gm-root.sc .sc-terminal{
   position:relative; display:flex; flex-direction:column;
-  width:100%; background:var(--sc-slate-2);
+  width:100%; height:100%; min-height:0; background:var(--sc-slate-2);
   border:1px solid var(--sc-line); border-radius:calc(var(--gm-radius) + 1px);
   overflow:hidden; box-shadow:0 30px 80px -30px #000;
 }
@@ -139,7 +140,7 @@
 /* viewport (walking scene) */
 .gm-root.sc .sc-viewport{
   position:relative; overflow:hidden; cursor:crosshair;
-  flex:1 1 300px; min-height:220px;
+  flex:1 1 auto; min-height:180px;
   background:
     repeating-linear-gradient(90deg, transparent 0 79px, rgba(255,255,255,.02) 79px 80px),
     linear-gradient(180deg,#0d1116 0%,#151b22 62%,#0f141a 100%);
@@ -263,7 +264,7 @@
 
 /* narrow container */
 @container (max-width:520px){
-  .gm-root.sc .sc-viewport{flex-basis:240px; min-height:200px;}
+  .gm-root.sc .sc-viewport{min-height:160px;}
   .gm-root.sc .sc-clockcell{flex-basis:58px;}
   .gm-root.sc .sc-ring-wrap{width:46px; height:46px;}
   .gm-root.sc .sc-ring-num{font-size:18px;}
@@ -277,4 +278,15 @@
   .gm-root.sc .gm-stamp{animation:none;}
   .gm-root.sc .sc-go .gm-btn{animation:none;}
   .gm-root.sc .sc-timer.sc-low .sc-ring-wrap{animation:none;}
+}
+
+/* --- Webflow wrapper chain -------------------------------------------
+   The CMS RichText field nests the embed a few levels deep. Each wrapper
+   must become a flex column with height:100% or the game can't inherit a
+   height to fill. `.games-script` is the page wrapper class. --------- */
+.games-script{position:relative;}
+.games-script .w-embed,
+.games-script .w-richtext,
+.games-script [data-rt-embed-type]{
+  display:flex; flex-direction:column; height:100%; min-height:0;
 }
