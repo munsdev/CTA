@@ -47,6 +47,7 @@
   -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
   display:flex; justify-content:center; width:100%;
   height:100%; min-height:0;
+  position:relative;
   container-type:inline-size;
 }
 .gm-root.hh *{box-sizing:border-box; margin:0; padding:0;}
@@ -336,4 +337,26 @@
 .games-script .w-richtext,
 .games-script [data-rt-embed-type]{
   display:flex; flex-direction:column; height:100%; min-height:0;
+}
+
+/* --- boot loader ------------------------------------------------------
+   Shown until styles.css AND the webfonts have landed, so the player never
+   sees unstyled markup. loader.js also inlines a minimal copy of these rules
+   before any markup is written, because this file itself arrives async. --- */
+.gm-root.hh .hh-loader{
+  position:absolute; inset:0; z-index:80;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--hh-char); transition:opacity .35s ease;
+}
+.gm-root.hh .hh-loader.is-gone{opacity:0; pointer-events:none;}
+.gm-root.hh .hh-loader[hidden]{display:none;}
+.gm-root.hh .hh-loader-txt{
+  font-family:var(--gm-font-display); font-weight:700;
+  text-transform:uppercase; letter-spacing:.32em; font-size:12px;
+  color:var(--hh-dim); animation:hh-pulse 1.25s ease-in-out infinite;
+}
+@keyframes hh-pulse{0%,100%{opacity:.32}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .gm-root.hh .hh-loader-txt{animation:none; opacity:.75;}
+  .gm-root.hh .hh-loader{transition:none;}
 }
