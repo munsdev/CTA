@@ -131,7 +131,13 @@
 .gm-root.pr .pr-bar.off{background:var(--gm-line); opacity:.4;}
 @keyframes pr-hot{0%,50%{opacity:1}51%,100%{opacity:.45}}
 
-.gm-root.pr .pr-view{flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; background:#05070d; overflow:hidden; border-bottom:2px solid var(--gm-line);}
+.gm-root.pr .pr-view{flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; background:#05070d; overflow:hidden; border-bottom:2px solid var(--gm-line); position:relative;}
+.gm-root.pr .pr-layers{position:absolute; inset:0; container-type:size; pointer-events:none;}
+.gm-root.pr .pr-layers[hidden]{display:none;}
+.gm-root.pr .pr-stack{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); aspect-ratio:10/9;
+  width:min(100%, calc(100cqh * 10 / 9)); height:auto;}
+.gm-root.pr .pr-stack img{position:absolute; inset:0; width:100%; height:100%; object-fit:fill; image-rendering:auto;}
+.gm-root.pr .pr-stack img.hide{display:none;}
 .gm-root.pr .pr-view canvas{display:block; width:100%; height:auto; max-height:100%; aspect-ratio:10/9; image-rendering:pixelated; image-rendering:crisp-edges;}
 
 .gm-root.pr .pr-box{flex:none; background:var(--gm-surface); padding:9px 10px 7px; cursor:pointer; user-select:none;}
