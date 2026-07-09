@@ -44,11 +44,6 @@
       <button type="button" data-diff="hard">Hard<i>5s</i></button>
       <button type="button" data-diff="practice">Practice<i>off</i></button>
     </div>
-    <div class="pr-difflabel">Time of day</div>
-    <div class="pr-diff two" data-el="lightRow">
-      <button type="button" data-light="day">Day</button>
-      <button type="button" data-light="night">Night</button>
-    </div>
     <div class="pr-menulist" data-el="menuList"></div>
     <div class="pr-menufoot">Educational. Not legal advice.</div>
   </div>
@@ -61,7 +56,7 @@
       <button class="pr-hud-btn" data-el="btnHint" type="button">Hint</button>
       <button class="pr-x" data-el="btnQuit" type="button" aria-label="Back to title">&#215;</button>
     </div>
-    <div class="pr-view"><canvas data-el="canvas" width="160" height="144" aria-hidden="true"></canvas></div>
+    <div class="pr-view"><canvas data-el="canvas" width="160" height="144" aria-hidden="true"></canvas><div class="pr-layers" data-el="layers" hidden aria-hidden="true"></div></div>
     <div class="pr-timer">
       <span class="pr-count" data-el="count"></span>
       <div class="pr-bar-track"><div class="pr-bar" data-el="bar"></div></div>
