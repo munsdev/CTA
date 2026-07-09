@@ -58,7 +58,7 @@ window.KnowYourRights.init = function (root, base) {
         { rounds: [{ npc: ['Federal agents. Open the door.', 'We know you are in there. Open up.'],
             box: [
               { g:'shield', t:'Stay where you are. Talk through the door.', keys:['closed'] },
-              { g:'harmful', t:'Open it a crack, just to see who it is.', damages:true },
+              { g:'harmful', t:'Open it a crack, just to see who it is.', damages:true, door:'cracked' },
               { g:'fatal', t:'Open the door. Refusing looks guilty.',
                 why:'You let them in. Nothing after that was a search. It was a visit you agreed to.' }
             ] }] },
@@ -68,14 +68,14 @@ window.KnowYourRights.init = function (root, base) {
                     { g:'soft', t:'Ask who they are looking for.' },
                     { g:'fatal', t:'\u201cThen come in.\u201d', why:'You said yes. Consent is the only key they needed.' } ] },
             { npc:['I told you. It has your name on it.','It is a federal warrant. That is all you need to know.'],
-              box:[ { g:'shield', t:'\u201cSlide it under the door.\u201d', keys:['slide'] },
+              box:[ { g:'shield', t:'\u201cSlide it under the door, or show me in the window.\u201d', keys:['slide'], door:'warrant' },
                     { g:'harmful', t:'Tell them your name so they can check.', damages:true },
                     { g:'fatal', t:'Open the door far enough to look at it.', why:'The door came open. From there it was never going to close.' } ] },
             { npc:['Last chance. Open it or we open it for you. Do not make this hard.','Every minute you stall goes in the report. Open the door.'],
               box:[ { g:'shield', t:'\u201cI do not consent to entry.\u201d', keys:['refused'] },
                     { g:'severe', t:'Tell them nobody is home.', damages:true },
                     { g:'fatal', t:'Unlock it. They said they would break it.', why:'They did not break it. You opened it.' } ] }
-          ], after:'A paper slides under the door. The header reads DEPARTMENT OF HOMELAND SECURITY. At the bottom: Field Office Director. No judge ever saw it.' },
+          ], after:'He holds the paper up to the window. The header reads DEPARTMENT OF HOMELAND SECURITY. At the bottom: Field Office Director. No judge ever saw it.' },
         { rounds: [{ npc:['There. Warrant. Now open the door.','You have seen it. Open the door.'],
             box:[ { g:'shield', t:'\u201cThat is not signed by a judge. I do not consent.\u201d', keys:['read','refused'] },
                   { g:'harmful', t:'\u201cThat is my name. I am the one you want.\u201d', damages:true },
@@ -378,58 +378,9 @@ window.KnowYourRights.init = function (root, base) {
   /* ---------- scene draw routines (share day/night via C()) ---------- */
   var artState={ open:0, t:0, lit:false };
 
-  function hallway(){
-    var ceil=C('#cdd8e8','#7d8daa'),
-        floor=C('#c1ac82','#6b5f48'), wallC=C('#aab9d0','#647794'), wallD=C('#8898b4','#4c5d79'),
-        back=C('#cdd8e8','#7d8daa');
-    Rr(0,0,LW,LH,back);
-    var bx0=40,bx1=120,by0=20,by1=118;
-    POLY([[0,0],[LW,0],[bx1,by0],[bx0,by0]], ceil);
-    POLY([[0,LH],[LW,LH],[bx1,by1],[bx0,by1]], floor);
-    POLY([[0,0],[bx0,by0],[bx0,by1],[0,LH]], wallD);
-    POLY([[LW,0],[bx1,by0],[bx1,by1],[LW,LH]], wallD);
-    for (var i=1;i<6;i++){ var t=i/6, yy=LH-(LH-by1)*t, lx=bx0*t, rx=LW-(LW-bx1)*t;
-      hx.strokeStyle=C('#6f6044','#4c4235'); hx.lineWidth=SCALE; hx.beginPath();
-      hx.moveTo(lx*SCALE,yy*SCALE); hx.lineTo(rx*SCALE,yy*SCALE); hx.stroke(); }
-    Rr(bx0,by0,bx1-bx0,by1-by0,wallC);
-    Rr(bx0,by0,bx1-bx0,2,back);
-    Rr(20,60,2,14,wallD); Rr(17,58,8,2,C('#3d5070','#354760'));  /* coat hook */
-    return {bx0:bx0,bx1:bx1,by0:by0,by1:by1};
-  }
 
-  function drawDoor(){
-    var open=artState.open, hwv=hallway();
-    var dTop=32,dBot=120,dHinge=58,dFree=102,k=open;
-    var wood=C('#a5906a','#6b5f48'), woodhi=C('#c1ac82','#867658'), frame=C('#6b7d9c','#3b4d68');
-    Rr(dHinge-4,dTop-4,dFree-dHinge+8,4,frame); Rr(dHinge-4,dTop-4,4,dBot-dTop+4,frame); Rr(dFree,dTop-4,4,dBot-dTop+4,frame);
-    /* porch behind */
-    hx.save(); hx.beginPath(); hx.rect(dHinge*SCALE,dTop*SCALE,(dFree-dHinge)*SCALE,(dBot-dTop)*SCALE); hx.clip();
-    var pfloor=C('#ac9970','#615642');
-    if (palName==='day'){ Rr(dHinge,dTop,dFree-dHinge,dBot-dTop,'#d9c9a6'); Rr(dHinge,dTop,dFree-dHinge,(dBot-dTop)*0.42,'#aab9d0'); GLOW((dHinge+dFree)/2,dTop+4,66,'rgba(253,244,220,.85)',1); }
-    else { Rr(dHinge,dTop,dFree-dHinge,dBot-dTop,'#28374c'); GLOW((dHinge+dFree)/2,dTop+2,54,'rgba(244,225,170,.75)',1); Rr((dHinge+dFree)/2-3,dTop+1,6,5,'#f4e1aa'); }
-    Rr(dHinge,dBot-10,dFree-dHinge,10,pfloor);
-    officer((dHinge+dFree)/2, dBot-1, (dBot-dTop)*0.94, true);
-    hx.restore();
-    /* slab */
-    var freeX=dFree-(dFree-dHinge-5)*k, ft=dTop-5*k, fb=dBot+5*k;
-    if (open<0.985){
-      POLY([[dHinge,dTop],[freeX,ft],[freeX,fb],[dHinge,dBot]], wood);
-      POLY([[dHinge+2,dTop+2],[freeX-3,ft+3],[freeX-3,fb-3],[dHinge+2,dBot-2]], woodhi);
-      var wa=dHinge+(freeX-dHinge)*0.17, wb=dHinge+(freeX-dHinge)*0.83, wy=dTop+9, wh=24;
-      if (open<0.55){  /* window: silhouette of one figure, backlit */
-        GLOW((wa+wb)/2, wy+wh*0.5, (wb-wa)*0.9, palName==='day'?'rgba(200,215,230,.8)':'rgba(233,194,107,.8)', 1);
-        Rr(wa,wy,wb-wa,wh,C('#98a9c1','#cb9944')); Rr(wa+1,wy+1,wb-wa-2,wh-2,C('#bcc7d8','#e9c26b'));
-        var sx=(wa+wb)/2, hw=(wb-wa)*0.34;
-        Rr(sx-hw/2,wy+wh*0.34,hw,wh*0.66,'#1a1f2b'); Rr(sx-hw*0.32,wy+wh*0.06,hw*0.64,wh*0.32,'#1a1f2b');
-      }
-      if (open<0.5){ var py0=dTop+40,py1=dBot-8,pm=(py0+py1)/2;
-        POLY([[wa,py0],[wb,py0-1],[wb,pm-2],[wa,pm-1]], C('#6f6044','#4c4235'));
-        POLY([[wa,pm+2],[wb,pm+1],[wb,py1],[wa,py1+1]], C('#6f6044','#4c4235')); }
-      Rr(freeX-8,dTop+52,6,5,C('#d4dae0','#adb5c0'));
-    }
-    Rr(dHinge-2,dTop+8,3,6,C('#9fa8b3','#79828f')); Rr(dHinge-2,dBot-12,3,6,C('#9fa8b3','#79828f'));
-    hx.globalAlpha=0.4+0.4*open; Rr(dHinge,dBot,dFree-dHinge,2,C('#e8b954','#cb9944')); hx.globalAlpha=1;
-  }
+
+
 
   function drawCar(){
     var road=C('#a5906a','#4c4235'), sky=C('#cdd8e8','#2d3d54'), pillar=C('#8898b4','#4c5d79'),
@@ -511,10 +462,9 @@ window.KnowYourRights.init = function (root, base) {
   }
 
   function render(){
-    var s=SCENES[S?S.i:0];
     var art = S?S.sc.art:'door';
-    if (art==='door') drawDoor();
-    else if (art==='car') drawCar();
+    if (art==='door'){ /* door is drawn with SVG layers, not the canvas */ return; }
+    if (art==='car') drawCar();
     else if (art==='street') drawStreet();
     else if (art==='store') drawStore();
     else drawSite();
@@ -525,9 +475,60 @@ window.KnowYourRights.init = function (root, base) {
     pixelize();
   }
 
-  function swing(then){ var t0=performance.now();
-    (function step(now){ artState.t=now; artState.open=Math.min(1,(now-t0)/650); render();
-      if(artState.open<1) requestAnimationFrame(step); else if(then) then(); })(t0); }
+  /* ---- door SVG layer stack (Casey's pre-aligned 1600x1440 art) ------
+     Layer order (back to front): sky, floor, [agents], walls, door.
+     Each is a full-frame transparent PNG/SVG; we just show/hide. */
+  var DOOR_LAYERS = [
+    'sky',        '0-sky.svg',
+    'floor',      '1-floor.svg',
+    'agentDoor1', '2-agent-1-at-door.svg',
+    'agentDoor2', '3-agent-2-at-door.svg',
+    'agentWin',   '2-agent-4-looking-in-window.svg',
+    'agentWarrant','2-agent-3-papers-at-window.svg',
+    'walls',      '4-walls.svg',
+    'doorClosed', '5-door-closed.svg',
+    'doorCracked','5-door-cracked.svg',
+    'doorOpen',   '5-door-open.svg'
+  ];
+  var doorImgs = {}, doorBuilt = false;
+  function buildDoorLayers(){
+    if (doorBuilt) return; doorBuilt = true;
+    elLayers.innerHTML = '';
+    var stack = document.createElement('div'); stack.className = 'pr-stack';
+    for (var i=0;i<DOOR_LAYERS.length;i+=2){
+      var key = DOOR_LAYERS[i], file = DOOR_LAYERS[i+1];
+      var im = document.createElement('img');
+      im.src = base + file; im.alt = ''; im.className = 'hide'; im.decoding = 'async';
+      stack.appendChild(im); doorImgs[key] = im;
+    }
+    elLayers.appendChild(stack);
+  }
+  function show(keys){
+    for (var k in doorImgs) doorImgs[k].classList.add('hide');
+    keys.forEach(function(k){ if(doorImgs[k]) doorImgs[k].classList.remove('hide'); });
+  }
+  /* compose the door scene from the current game state */
+  function paintDoor(){
+    if (!S) return;
+    var L = ['sky','floor'];
+    var open = S.doorState;               // 'closed' | 'cracked' | 'open'
+    if (open==='closed'){
+      /* while shut, an agent is at the window; the warrant agent replaces
+         him once the paper is asked for */
+      if (S.warrantShown) L.push('agentWarrant');
+      else if (S.agentWin) L.push('agentWin');
+    } else {
+      /* door is cracked or open: the agent is at the doorway now.
+         a second one joins only once you have given something away. */
+      L.push('agentDoor1');
+      if (S.risk >= 30) L.push('agentDoor2');
+    }
+    L.push('walls');
+    L.push(open==='open' ? 'doorOpen' : open==='cracked' ? 'doorCracked' : 'doorClosed');
+    show(L);
+  }
+
+
 
   /* ============================== DOM ============================== */
   function x(n){ return root.querySelector('[data-el="'+n+'"]'); }
@@ -537,8 +538,9 @@ window.KnowYourRights.init = function (root, base) {
       elBar=x('bar'), elCount=x('count'), elRec=x('btnRec'), elHint=x('btnHint'),
       elSceneName=x('sceneName'), elDots=x('beatDots'),
       elStamp=x('stamp'), elTruth=x('truth'), elPlain=x('plain'),
-      elList=x('list'), elReward=x('reward'), elDiff=x('diffRow'), elLight=x('lightRow');
+      elList=x('list'), elReward=x('reward'), elDiff=x('diffRow');
   visCanvas=x('canvas'); visCanvas.width=LW; visCanvas.height=LH; vx=visCanvas.getContext('2d');
+  var elLayers=x('layers');
 
   var difficulty='medium', S=null, typing=null, pendingThen=null, skipTo=null;
   function pick(a){ return a[(Math.random()*a.length)|0]; }
@@ -575,11 +577,20 @@ window.KnowYourRights.init = function (root, base) {
     elTitle.hidden=false; elGame.hidden=true; elResult.hidden=true; }
 
   function startScene(i){ var sc=SCENES[i];
-    S={ i:i, sc:sc, beat:0, round:0, risk:sc.floor, damaged:false, keys:{}, over:false, recording:false };
+    S={ i:i, sc:sc, beat:0, round:0, risk:sc.floor, damaged:false, keys:{}, over:false, recording:false,
+        doorState:'closed', agentWin:false, warrantShown:false };
     artState.open=0; artState.lit=false;
     elTitle.hidden=true; elResult.hidden=true; elGame.hidden=false;
-    elSceneName.textContent=sc.name; elRec.className='pr-rec'; 
-    render(); drawDots();
+    elSceneName.textContent=sc.name; elRec.className='pr-rec';
+    if (sc.id==='door'){
+      buildDoorLayers();
+      elLayers.hidden=false; visCanvas.style.display='none';
+      paintDoor();
+    } else {
+      elLayers.hidden=true; visCanvas.style.display='';
+      render();
+    }
+    drawDots();
     say(sc.open, true, renderBeat); }
 
   function drawDots(){ elDots.innerHTML='';
@@ -588,7 +599,13 @@ window.KnowYourRights.init = function (root, base) {
   function curBeat(){ return S.sc.beats[S.beat]; }
   function renderBeat(){ var b=curBeat(); if(!b) return finish();
     if (S.sc.id==='store' && S.beat>=1) artState.lit=true;
-    drawDots(); render(); renderRound(); }
+    if (S.sc.id==='door'){
+      /* the knock is the opening line; from the first real beat on, an agent
+         is at the window unless the door is already open */
+      if (S.doorState==='closed' && !S.warrantShown) S.agentWin=true;
+      paintDoor();
+    }
+    drawDots(); if(S.sc.id!=='door') render(); renderRound(); }
   function renderRound(){ var b=curBeat(), r=b.rounds[Math.min(S.round,b.rounds.length-1)];
     say(pick(r.npc), !!r.narr, function(){ showChoices(r,b); }); }
 
@@ -603,11 +620,17 @@ window.KnowYourRights.init = function (root, base) {
   function curFloor(){ return S.sc.floor; }
 
   function resolve(o,b){ stopTimer(); grantKeys(o.keys); if(o.damages) S.damaged=true;
+    if (S.sc.id==='door' && o.door){
+      if (o.door==='warrant'){ S.warrantShown=true; S.agentWin=false; }
+      else { S.doorState=o.door; }        /* 'cracked' | 'open' */
+      paintDoor();
+    }
     if (o.g==='ask'){ if (S.risk<=S.sc.exitAt){ S.keys.walked=true;
         return say('\u201cYeah. Go on.\u201d', true, function(){ finish(false); }); }
       return say(S.sc.exitDeny, false, function(){ nextBeat(b); }); }
     if (o.g==='fatal'){ S.risk=100;
-      if (S.sc.id==='door') return swing(function(){ say(o.why,true,function(){ finish(true); }); });
+      if (S.sc.id==='door'){ S.doorState='open'; paintDoor();
+        return say(o.why,true,function(){ finish(true); }); }
       return say(o.why,true,function(){ finish(true); }); }
     if (o.g==='shield'){ if (S.round<b.rounds.length-1){ S.round++; return renderRound(); } return nextBeat(b); }
     S.risk=Math.max(curFloor(), S.risk+DELTA[o.g]); nextBeat(b); }
@@ -651,9 +674,6 @@ window.KnowYourRights.init = function (root, base) {
 
   elDiff.addEventListener('click', function(e){ var b=e.target.closest('[data-diff]'); if(!b) return;
     difficulty=b.dataset.diff; elDiff.querySelectorAll('[data-diff]').forEach(function(z){ z.classList.toggle('on',z===b); }); });
-  elLight.addEventListener('click', function(e){ var b=e.target.closest('[data-light]'); if(!b) return;
-    palName=b.dataset.light; elLight.querySelectorAll('[data-light]').forEach(function(z){ z.classList.toggle('on',z===b); });
-    if(S && !elGame.hidden) render(); });
   elMenuList.addEventListener('click', function(e){ var b=e.target.closest('.pr-row'); if(!b) return; startScene(+b.dataset.scene); });
   x('box').addEventListener('click', function(e){ if(e.target.closest('.pr-opt')) return; advance(); });
   x('btnReplay').addEventListener('click', function(){ startScene(S.i); });
@@ -667,6 +687,5 @@ window.KnowYourRights.init = function (root, base) {
   SCENES.forEach(function(sc,i){ var b=document.createElement('button'); b.className='pr-row'; b.type='button'; b.dataset.scene=i;
     b.innerHTML='<span class="pr-cur">\u25b6</span><span class="pr-rowin"><b>'+sc.name+'</b><i>'+sc.teaches+'</i></span>'; elMenuList.appendChild(b); });
   elDiff.querySelector('[data-diff="medium"]').classList.add('on');
-  elLight.querySelector('[data-light="day"]').classList.add('on');
   toTitle();
 };
