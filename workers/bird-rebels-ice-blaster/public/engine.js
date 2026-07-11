@@ -159,7 +159,13 @@
     + '      <div class="rl-check-row">'
     + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
     + '        <label for="rl-kidmode-toggle"><span data-rl-mode-label>Kid Mode</span>'
-    + '          <small>No life bar, no penalty for missed cubes — snowflakes still grant triple blast</small>'
+    + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
+    + '        </label>'
+    + '      </div>'
+    + '      <div class="rl-check-row">'
+    + '        <input type="checkbox" id="rl-rainbow-toggle" data-rl-rainbow-toggle>'
+    + '        <label for="rl-rainbow-toggle">Rainbow Blizzard Mode'
+    + '          <small>Swaps your laser for rockets, adds a separate leaderboard</small>'
     + '        </label>'
     + '      </div>'
     + '      <button class="rl-btn" data-rl-start>Start Game</button>'
@@ -183,7 +189,10 @@
     + '      <button class="rl-hud-btn" data-rl-pause title="Pause">Pause</button>'
     + '    </div>'
     + '    <div class="rl-stage-outer" data-rl-stage-outer>'
-    + '      <div class="rl-triple-banner" data-rl-triple-banner hidden><span data-rl-powerup-label>⚡ Triple Laser</span> <span data-rl-triple-timer>10</span>s</div>'
+    + '      <div class="rl-powerup-bar" data-rl-triple-banner hidden>'
+    + '        <div class="rl-powerup-bar-fill" data-rl-powerup-bar-fill></div>'
+    + '        <span class="rl-powerup-bar-label"><span data-rl-powerup-label>⚡ Triple Laser</span> <span data-rl-triple-timer>10</span>s</span>'
+    + '      </div>'
     + '      <div class="rl-blizzard-banner" data-rl-blizzard-banner hidden>❄️ Rainbow Blizzard Mode</div>'
     + '      <div class="rl-stage" data-rl-stage><canvas data-rl-canvas></canvas></div>'
     + '    </div>'
@@ -225,6 +234,7 @@
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy">Easy</button>'
     + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium">Medium</button>'
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="hard">Hard</button>'
+    + '        <button type="button" class="rl-tab" data-rl-lb-tab="blizzard">Rainbow</button>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-leaderboard>Back</button>'
@@ -326,7 +336,6 @@
 
     // ---------- difficulty tier selector ----------
     var selectedTier = DEFAULT_TIER;
-    var pendingBlizzard = false;
     mount.querySelectorAll('[data-rl-tier]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         selectedTier = btn.getAttribute('data-rl-tier');
@@ -334,41 +343,17 @@
       });
     });
 
-    // Secret: tap "Hard" repeatedly, IN A ROW — any click anywhere else resets
-    // the count immediately. Taps 1–2 just select Hard normally; from the 3rd
-    // tap on, an escalating popup teases the unlock, landing on the 6th tap.
-    // Rainbow Blizzard Mode then works on whatever difficulty you go on to pick —
-    // it's a modifier, not tied to Hard.
-    var hardBtn = mount.querySelector('[data-rl-tier="hard"]');
-    var blizzardTaps = 0;
-    var TAP_MESSAGES = { 3: 'Keep going', 4: 'Almost there', 5: 'ALMOST THERE' };
-    document.addEventListener('click', function (e) {
-      if (pendingBlizzard) return; // already unlocked
-      if (hardBtn.contains(e.target)) return; // handled by hardBtn's own listener below
-      blizzardTaps = 0; // any click elsewhere breaks the streak
-    }, true); // capture phase so this runs before hardBtn's own click handler either way
-
-    hardBtn.addEventListener('click', function () {
-      if (pendingBlizzard) return; // already unlocked this session-visit
-      blizzardTaps++;
-
-      if (blizzardTaps >= 6) {
-        pendingBlizzard = true;
-        hardBtn.classList.add('rl-blizzard-armed');
-        setModeLabel(true);
-        toast('🌀 Oh yeah! Rainbow Blizzard Mode unlocked — enjoy yourself!', 2600);
-      } else if (TAP_MESSAGES[blizzardTaps]) {
-        toast(TAP_MESSAGES[blizzardTaps], 1200);
-      }
-    });
-
     var kidModeEl = mount.querySelector('[data-rl-kidmode]');
+    var rainbowToggleEl = mount.querySelector('[data-rl-rainbow-toggle]');
     var modeLabelEl = mount.querySelector('[data-rl-mode-label]');
-    function setModeLabel(blizzardArmed) {
-      // Swaps the word "Kid" out of the scene when Blizzard is armed — the
-      // grown-up variant calls the same no-stakes toggle "Leisure Mode".
-      modeLabelEl.textContent = blizzardArmed ? 'Leisure Mode' : 'Kid Mode';
+    function setModeLabel(blizzardOn) {
+      // Swaps the word "Kid" out of the scene when Rainbow Blizzard is on —
+      // the grown-up variant calls the same no-stakes toggle "Leisure Mode".
+      modeLabelEl.textContent = blizzardOn ? 'Leisure Mode' : 'Kid Mode';
     }
+    rainbowToggleEl.addEventListener('change', function () {
+      setModeLabel(rainbowToggleEl.checked);
+    });
 
     // ---------- leaderboard ----------
     var lbTier = DEFAULT_TIER;
@@ -426,6 +411,7 @@
     var tripleBanner = mount.querySelector('[data-rl-triple-banner]');
     var tripleTimerEl = mount.querySelector('[data-rl-triple-timer]');
     var powerupLabelEl = mount.querySelector('[data-rl-powerup-label]');
+    var powerupBarFillEl = mount.querySelector('[data-rl-powerup-bar-fill]');
     var blizzardBanner = mount.querySelector('[data-rl-blizzard-banner]');
     var finalScoreEl = mount.querySelector('[data-rl-final-score]');
     var initialInputs = mount.querySelectorAll('[data-rl-initial]');
@@ -459,8 +445,7 @@
     var S = null;
     function freshState() {
       var accentColor = charAccent[selectedChar] || null;
-      var blizzard = !!pendingBlizzard; // works on any difficulty now
-      pendingBlizzard = false; // one-shot: must be re-unlocked (tap Hard x6 again) for the next run
+      var blizzard = !!rainbowToggleEl.checked; // works on any difficulty tier
       return {
         running: true,
         paused: false,
@@ -536,7 +521,9 @@
       if (active) {
         tripleBanner.hidden = false;
         powerupLabelEl.textContent = POWERUP_LABELS[S.powerup] || POWERUP_LABELS.triple;
-        tripleTimerEl.textContent = Math.ceil((S.powerupUntil - now) / 1000);
+        var remainingMs = S.powerupUntil - now;
+        tripleTimerEl.textContent = Math.ceil(remainingMs / 1000);
+        powerupBarFillEl.style.transform = 'scaleX(' + clamp(remainingMs / POWERUP_MS, 0, 1) + ')';
       } else {
         tripleBanner.hidden = true;
       }
@@ -569,12 +556,15 @@
     }
     // Weapon powerups float through in a bubble and rotate through 3 kinds,
     // in order, so a run always sees a predictable Triple → Rocket → Mega
-    // → Triple… cadence rather than random repeats.
-    var POWERUP_SEQUENCE = ['triple', 'rocket', 'mega'];
+    // → Triple… cadence rather than random repeats. Rainbow Blizzard Mode
+    // fires regular rockets by default already, so its only powerup is Mega.
+    var POWERUP_SEQUENCE_NORMAL = ['triple', 'rocket', 'mega'];
+    var POWERUP_SEQUENCE_BLIZZARD = ['mega'];
     function spawnPowerupBubble() {
+      var seq = S.cfg.blizzard ? POWERUP_SEQUENCE_BLIZZARD : POWERUP_SEQUENCE_NORMAL;
       var fromLeft = Math.random() < 0.5;
       var y = rand(H * 0.14, H * 0.42);
-      var type = POWERUP_SEQUENCE[S.powerupSeqIndex % POWERUP_SEQUENCE.length];
+      var type = seq[S.powerupSeqIndex % seq.length];
       S.powerupSeqIndex++;
       S.bubble = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(30, 42), vy: rand(-4, 4), r: 14, wob: rand(0, Math.PI * 2), type: type };
     }
@@ -617,7 +607,8 @@
       if (now - S.lastFireAt < FIRE_COOLDOWN) return;
       S.lastFireAt = now;
       var active = (S.powerup && now < S.powerupUntil) ? S.powerup : null;
-      var weaponKey = active === 'rocket' ? 'rocket' : active === 'mega' ? 'mega' : 'laser';
+      var defaultWeapon = S.cfg.blizzard ? 'rocket' : 'laser'; // Rainbow Blizzard never fires lasers
+      var weaponKey = active === 'rocket' ? 'rocket' : active === 'mega' ? 'mega' : defaultWeapon;
       playSound(weaponKey === 'laser' ? 'laser' : 'squish');
       var eye = getEyePos();
       var offsets = active === 'triple' ? [-W / 4, 0, W / 4] : [0];
@@ -643,7 +634,7 @@
           if (pr.weapon === 'mega') {
             detonateMega(pr, c.x, c.y);
           } else {
-            spawnBurst(c.x, c.y, '#bfe9ff');
+            spawnBurst(c.x, c.y, S.cfg.blizzard ? RAINBOW[Math.floor(rand(0, RAINBOW.length))] : '#bfe9ff');
             S.cubes.splice(i, 1);
             S.melted++;
             playSound('hit');
@@ -870,17 +861,14 @@
       stopBlizzardTheme();
       S = freshState();
       setLives(START_LIVES);
-      blizzardBanner.hidden = !S.cfg.blizzard; // one-shot arm was already consumed at the original Start — almost always hidden here
+      blizzardBanner.hidden = !S.cfg.blizzard; // reflects whatever the Rainbow Blizzard toggle currently says
       showScreen('game');
     });
     var doReset = function () {
       if (S) S.running = false;
       stopBlizzardTheme();
       blizzardBanner.hidden = true;
-      pendingBlizzard = false;
-      blizzardTaps = 0;
-      hardBtn.classList.remove('rl-blizzard-armed');
-      setModeLabel(false);
+      setModeLabel(rainbowToggleEl.checked);
       showScreen('start');
     };
     mount.querySelector('[data-rl-reset]').addEventListener('click', doReset);
@@ -1273,7 +1261,7 @@
       fetch(BASE + '/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initials: initials, tier: S.cfg.tier, score: S.melted, character: S.cfg.character })
+        body: JSON.stringify({ initials: initials, tier: S.cfg.blizzard ? 'blizzard' : S.cfg.tier, score: S.melted, character: S.cfg.character })
       })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
         .then(function (res) {
@@ -1295,10 +1283,7 @@
     mount.querySelector('[data-rl-restart]').addEventListener('click', function () {
       var btn = mount.querySelector('[data-rl-submit-score]');
       btn.removeAttribute('disabled'); btn.textContent = 'Save Score';
-      pendingBlizzard = false;
-      blizzardTaps = 0;
-      hardBtn.classList.remove('rl-blizzard-armed');
-      setModeLabel(false);
+      setModeLabel(rainbowToggleEl.checked);
       showScreen('start');
     });
 
@@ -1323,8 +1308,6 @@
         livesWrap.style.removeProperty('--rl-life-glow');
         livesWrap.style.removeProperty('--rl-life-bg');
       }
-
-      hardBtn.classList.remove('rl-blizzard-armed'); // arm state is consumed by freshState() either way
 
       stopBlizzardTheme();
       blizzardBanner.hidden = !S.cfg.blizzard;
