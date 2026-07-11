@@ -15,7 +15,7 @@
 // sort_order). No redeploy needed — the game reads the roster live.
 // ============================================================================
 
-const TIERS = ['easy', 'medium', 'hard'];
+const TIERS = ['easy', 'medium', 'hard', 'blizzard'];
 const MAX_SCORE = 100000; // sanity ceiling, not a real gameplay cap
 const LB_MAX = 10;
 
@@ -101,7 +101,7 @@ async function getCharacterImage(pathname, env) {
 
 async function getLeaderboard(url, env) {
   const tier = (url.searchParams.get('tier') || 'easy').toLowerCase();
-  if (!TIERS.includes(tier)) return json({ error: 'tier must be easy, medium, or hard' }, 400);
+  if (!TIERS.includes(tier)) return json({ error: 'tier must be easy, medium, hard, or blizzard' }, 400);
   const raw = await env.LEADERBOARD.get('board:' + tier);
   const arr = raw ? JSON.parse(raw) : [];
   return json(arr);
@@ -116,7 +116,7 @@ async function postLeaderboard(request, env) {
   }
 
   const tier = String((body && body.tier) || '').toLowerCase();
-  if (!TIERS.includes(tier)) return json({ error: 'tier must be easy, medium, or hard' }, 400);
+  if (!TIERS.includes(tier)) return json({ error: 'tier must be easy, medium, hard, or blizzard' }, 400);
 
   const normalized = normalizeInitials(body && body.initials);
   if (normalized.length !== 3) return json({ error: 'initials must be exactly 3 letters' }, 400);
