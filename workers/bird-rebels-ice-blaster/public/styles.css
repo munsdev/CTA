@@ -86,7 +86,6 @@
   -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
 }
 .rl-tier-btn.rl-selected{ border-color:var(--rl-ice); background:rgba(191,233,255,.08); color:var(--rl-ice); }
-.rl-tier-btn.rl-blizzard-armed{ border-color:#9de6ff; box-shadow:0 0 0 2px rgba(157,230,255,.35), 0 0 14px rgba(157,230,255,.55); }
 .rl-tier-note{ font-size:11px; color:var(--rl-dim); margin:-8px 0 16px; line-height:1.45; text-align:center; }
 
 .rl-check-row{
@@ -132,15 +131,22 @@
 .rl-hud-btn:hover{ border-color:var(--rl-ice); color:var(--rl-ice); }
 .rl-hud-btns{ display:flex; gap:6px; align-items:center; }
 
-.rl-triple-banner{
-  position:absolute; top:8px; left:50%; transform:translateX(-50%);
-  background:var(--rl-gold); color:#241900; font-family:var(--rl-font-display); font-weight:800;
-  font-size:11px; letter-spacing:.05em; text-transform:uppercase; padding:5px 12px; border-radius:20px;
-  z-index:4; box-shadow:0 3px 10px rgba(0,0,0,.35); display:flex; align-items:center; gap:6px;
-  pointer-events:none;
+.rl-powerup-bar{
+  position:absolute; top:0; left:0; right:0; height:22px;
+  background:rgba(0,0,0,.4); z-index:4; overflow:hidden; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.rl-powerup-bar-fill{
+  position:absolute; inset:0; transform-origin:left center; transform:scaleX(1);
+  background:linear-gradient(90deg, var(--rl-gold), #ffe89a);
+}
+.rl-powerup-bar-label{
+  position:relative; z-index:1; font-family:var(--rl-font-display); font-weight:800;
+  font-size:10.5px; letter-spacing:.03em; text-transform:uppercase; color:#241900;
+  text-shadow:0 1px 1px rgba(255,255,255,.3);
 }
 .rl-blizzard-banner{
-  position:absolute; top:8px; left:8px;
+  position:absolute; top:28px; left:8px;
   background:#0e2233; color:#9de6ff; font-family:var(--rl-font-display); font-weight:800;
   font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; padding:5px 10px; border-radius:20px;
   z-index:4; box-shadow:0 3px 10px rgba(0,0,0,.35), 0 0 10px rgba(157,230,255,.4);
