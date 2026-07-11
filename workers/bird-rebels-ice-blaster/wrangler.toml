@@ -1,0 +1,31 @@
+name = "rebel-loon-ice-blast"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Static files (loader.js, engine.js, styles.css) live in ./public and are
+# served automatically for any request that matches a file there. Requests
+# that don't match a static file (the /api/* and /characters/* routes) fall
+# through to the Worker code in src/index.js.
+#
+# run_worker_first forces EVERY request through src/index.js first, including
+# ones that match a static file — without it, matching static files (like
+# /sounds/*.mp3) get served directly by Cloudflare's asset layer and never
+# reach the Worker at all, which is why the CORS header added there wasn't
+# taking effect on the sound files.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[kv_namespaces]]
+binding = "LEADERBOARD"
+id = "bdd770e086744c76bbcbb2beabb38831"
+
+[[d1_databases]]
+binding = "CHARACTERS_DB"
+database_name = "rebel_loon_characters"
+database_id = "0ab6977e-f627-4cb9-b25a-6f70e93712c1"
+
+[[r2_buckets]]
+binding = "CHAR_ASSETS"
+bucket_name = "rebel-loon-characters"
