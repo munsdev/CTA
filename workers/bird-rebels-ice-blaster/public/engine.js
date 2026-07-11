@@ -26,7 +26,7 @@
   var SNOWFLAKE_INTERVAL = 24000;
   var FIRE_COOLDOWN = 230;
   var POWERUP_MS = 10000; // duration any weapon powerup stays active once collected
-  var MEGA_RADIUS_RATIO = 0.25; // mega rocket blast radius, as a fraction of stage width
+  var MEGA_RADIUS_RATIO = 0.5; // mega rocket blast radius, as a fraction of stage width
   var MAX_STAGE_RATIO = 0.72;
   var LB_MAX = 10;
 
@@ -111,6 +111,14 @@
     var c = hexToRgb(hex);
     if (!c) return 'rgba(44,74,99,' + alpha + ')';
     return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha + ')';
+  }
+  // Accepts either a hex color or an 'hsl(...)' string (used for the Rainbow
+  // Blizzard cycling glow) and returns a matching translucent color.
+  function colorToRgba(color, alpha) {
+    if (String(color).indexOf('hsl') === 0) {
+      return color.replace('hsl(', 'hsla(').replace(')', ',' + alpha + ')');
+    }
+    return hexToRgba(color, alpha);
   }
   function computeLaserColors(accentHex) {
     if (!accentHex || !hexToRgb(accentHex)) return { outer: '#9d2732', core: '#ff8a8a' };
@@ -230,11 +238,14 @@
     + '  <div class="rl-overlay" data-rl-screen="leaderboard" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2 style="margin-bottom:14px;">Leaderboard</h2>'
+    + '      <div class="rl-tabs" data-rl-lb-set-tabs>'
+    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-set="normal">Normal</button>'
+    + '        <button type="button" class="rl-tab" data-rl-lb-set="blizzard">Rainbow Blizzard</button>'
+    + '      </div>'
     + '      <div class="rl-tabs" data-rl-lb-tabs>'
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy">Easy</button>'
     + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium">Medium</button>'
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="hard">Hard</button>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-tab="blizzard">Rainbow</button>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-leaderboard>Back</button>'
@@ -356,10 +367,14 @@
     });
 
     // ---------- leaderboard ----------
+    // Same Easy/Medium/Hard tabs either way — the Normal/Rainbow toggle above
+    // them switches which underlying set of 3 boards those tabs point at.
     var lbTier = DEFAULT_TIER;
-    function loadLeaderboard(tier, container) {
+    var lbSet = 'normal';
+    function boardKey(tier, set) { return set === 'blizzard' ? tier + '-blizzard' : tier; }
+    function loadLeaderboard(tier, set, container) {
       container.innerHTML = '<div class="rl-loading">Loading…</div>';
-      fetch(BASE + '/api/leaderboard?tier=' + encodeURIComponent(tier))
+      fetch(BASE + '/api/leaderboard?tier=' + encodeURIComponent(boardKey(tier, set)))
         .then(function (r) { return r.json(); })
         .then(function (arr) { renderBoard(container, arr); })
         .catch(function () { container.innerHTML = '<div class="rl-loading">Couldn\'t load the leaderboard.</div>'; });
@@ -384,8 +399,10 @@
 
     mount.querySelector('[data-rl-open-leaderboard]').addEventListener('click', function () {
       lbTier = DEFAULT_TIER;
+      lbSet = 'normal';
       mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
-      loadLeaderboard(lbTier, mount.querySelector('[data-rl-board-full]'));
+      mount.querySelectorAll('[data-rl-lb-set]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-set') === lbSet); });
+      loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'));
       showScreen('leaderboard-from-start');
     });
     mount.querySelector('[data-rl-close-leaderboard]').addEventListener('click', function () { showScreen('leaderboard-close'); });
@@ -393,7 +410,14 @@
       tab.addEventListener('click', function () {
         lbTier = tab.getAttribute('data-rl-lb-tab');
         mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t === tab); });
-        loadLeaderboard(lbTier, mount.querySelector('[data-rl-board-full]'));
+        loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'));
+      });
+    });
+    mount.querySelectorAll('[data-rl-lb-set]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        lbSet = btn.getAttribute('data-rl-lb-set');
+        mount.querySelectorAll('[data-rl-lb-set]').forEach(function (t) { t.classList.toggle('rl-selected', t === btn); });
+        loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'));
       });
     });
 
@@ -472,6 +496,7 @@
         particles: [],
         shards: [],
         blasts: [],
+        shakeUntil: 0, shakeMag: 0, shakeDuration: 0,
         powerup: null,        // null | 'triple' | 'rocket' | 'mega'
         powerupUntil: 0,
         powerupWasActive: false,
@@ -672,6 +697,11 @@
     // width around the impact point, plus a bigger, distinct blast effect —
     // white splatter in Rainbow Blizzard Mode, a red/orange/yellow explosion
     // otherwise.
+    function triggerShake(magnitude, durationMs) {
+      S.shakeMag = magnitude;
+      S.shakeDuration = durationMs;
+      S.shakeUntil = performance.now() + durationMs;
+    }
     function detonateMega(pr, x, y) {
       var radius = W * MEGA_RADIUS_RATIO;
       var destroyed = 0;
@@ -687,6 +717,7 @@
       S.melted += destroyed;
       playSound(destroyed ? 'hit' : 'explosion');
       spawnMegaBlast(x, y, radius);
+      triggerShake(11, 340);
     }
     function spawnMegaBlast(x, y, radius) {
       S.blasts.push({ x: x, y: y, radius: radius, born: performance.now(), white: S.cfg.blizzard });
@@ -785,7 +816,8 @@
           vx: Math.cos(ang) * sp * rand(0.6, 1.2),
           vy: Math.sin(ang) * sp,
           rot: rand(0, Math.PI * 2), vr: rand(-8, 8),
-          s: rand(size * 0.14, size * 0.32), life: 1
+          s: rand(size * 0.14, size * 0.32), life: 1,
+          color: S.cfg.blizzard ? RAINBOW[Math.floor(rand(0, RAINBOW.length))] : null
         });
       }
     }
@@ -899,17 +931,32 @@
       }
     }
     function drawBackground(now) {
-      var colors = S.bgColors || { top: '#0a1420', bottom: '#16283c' };
       var g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, colors.top); g.addColorStop(1, colors.bottom);
+      if (S.cfg.blizzard) {
+        // Slow, smooth hue drift (full rotation ~24s) — deliberately gentle,
+        // never a fast flash/strobe. Kept dark and modestly saturated so it
+        // doesn't fight with gameplay readability.
+        var hue1 = (now / 66) % 360;
+        var hue2 = (hue1 + 35) % 360;
+        g.addColorStop(0, 'hsl(' + hue1 + ', 42%, 13%)');
+        g.addColorStop(1, 'hsl(' + hue2 + ', 42%, 19%)');
+      } else {
+        var colors = S.bgColors || { top: '#0a1420', bottom: '#16283c' };
+        g.addColorStop(0, colors.top); g.addColorStop(1, colors.bottom);
+      }
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
       // soft glow behind the loon, tinted by whatever's currently lighting
-      // the scene (laser color if set, else a gentle default)
-      var glowColor = (S.laserColors && S.laserColors.outer) || '#2c4a63';
+      // the scene (the cycling hue in Rainbow Blizzard, laser color otherwise)
+      var glowColor;
+      if (S.cfg.blizzard) {
+        glowColor = 'hsl(' + ((now / 66) % 360) + ', 70%, 55%)';
+      } else {
+        glowColor = (S.laserColors && S.laserColors.outer) || '#2c4a63';
+      }
       var glow = ctx.createRadialGradient(W / 2, H * 0.92, 4, W / 2, H * 0.92, H * 0.55);
-      glow.addColorStop(0, hexToRgba(glowColor, 0.16));
-      glow.addColorStop(1, hexToRgba(glowColor, 0));
+      glow.addColorStop(0, colorToRgba(glowColor, 0.16));
+      glow.addColorStop(1, colorToRgba(glowColor, 0));
       ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
       ctx.save();
@@ -1136,10 +1183,15 @@
         ctx.globalAlpha = clamp(sh.life, 0, 1);
         ctx.translate(sh.x, sh.y);
         ctx.rotate(sh.rot);
-        var g = ctx.createLinearGradient(-sh.s, -sh.s, sh.s, sh.s);
-        g.addColorStop(0, '#eaf9ff'); g.addColorStop(1, '#8fd0ee');
-        ctx.fillStyle = g;
-        ctx.strokeStyle = 'rgba(79,143,184,0.8)'; ctx.lineWidth = 1;
+        if (sh.color) {
+          ctx.fillStyle = sh.color;
+          ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+        } else {
+          var g = ctx.createLinearGradient(-sh.s, -sh.s, sh.s, sh.s);
+          g.addColorStop(0, '#eaf9ff'); g.addColorStop(1, '#8fd0ee');
+          ctx.fillStyle = g;
+          ctx.strokeStyle = 'rgba(79,143,184,0.8)'; ctx.lineWidth = 1;
+        }
         // an angular triangular shard
         ctx.beginPath();
         ctx.moveTo(0, -sh.s);
@@ -1211,6 +1263,14 @@
         updateBgSpecks(dt);
       }
 
+      var shakeX = 0, shakeY = 0;
+      if (now < S.shakeUntil) {
+        var shakeRemain = (S.shakeUntil - now) / S.shakeDuration; // 1 -> 0
+        var mag = S.shakeMag * shakeRemain;
+        shakeX = rand(-mag, mag); shakeY = rand(-mag, mag);
+      }
+      ctx.save();
+      ctx.translate(shakeX, shakeY);
       drawBackground(now);
       var eye = getEyePos();
       drawProjectiles(now);
@@ -1221,6 +1281,7 @@
       drawBlasts(now);
       drawShards(S.paused ? 0 : dt);
       drawParticles(S.paused ? 0 : dt);
+      ctx.restore();
 
       updateHud();
       requestAnimationFrame(loop);
@@ -1261,7 +1322,7 @@
       fetch(BASE + '/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initials: initials, tier: S.cfg.blizzard ? 'blizzard' : S.cfg.tier, score: S.melted, character: S.cfg.character })
+        body: JSON.stringify({ initials: initials, tier: S.cfg.blizzard ? (S.cfg.tier + '-blizzard') : S.cfg.tier, score: S.melted, character: S.cfg.character })
       })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
         .then(function (res) {
