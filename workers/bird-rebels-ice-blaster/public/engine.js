@@ -25,7 +25,8 @@
 
   var SNOWFLAKE_INTERVAL = 24000;
   var FIRE_COOLDOWN = 230;
-  var TRIPLE_BLAST_MS = 10000;
+  var POWERUP_MS = 10000; // duration any weapon powerup stays active once collected
+  var MEGA_RADIUS_RATIO = 0.25; // mega rocket blast radius, as a fraction of stage width
   var MAX_STAGE_RATIO = 0.72;
   var LB_MAX = 10;
 
@@ -106,6 +107,11 @@
     var mix = function (ch) { return Math.round(ch + (255 - ch) * 0.72); };
     return 'rgb(' + mix(c.r) + ',' + mix(c.g) + ',' + mix(c.b) + ')';
   }
+  function hexToRgba(hex, alpha) {
+    var c = hexToRgb(hex);
+    if (!c) return 'rgba(44,74,99,' + alpha + ')';
+    return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha + ')';
+  }
   function computeLaserColors(accentHex) {
     if (!accentHex || !hexToRgb(accentHex)) return { outer: '#9d2732', core: '#ff8a8a' };
     return { outer: accentHex, core: lightenForCore(accentHex) };
@@ -122,7 +128,7 @@
   }
   function computeBgColors(accentHex) {
     if (!accentHex || !hexToRgb(accentHex)) return { top: '#0a1420', bottom: '#16283c' };
-    return { top: mixColor('#0a1420', accentHex, 0.16), bottom: mixColor('#16283c', accentHex, 0.16) };
+    return { top: mixColor('#0a1420', accentHex, 0.22), bottom: mixColor('#16283c', accentHex, 0.22) };
   }
   // Picks black or white for the life-marker background chip, whichever
   // contrasts better against the given accent color (simple perceived-
@@ -177,8 +183,8 @@
     + '      <button class="rl-hud-btn" data-rl-pause title="Pause">Pause</button>'
     + '    </div>'
     + '    <div class="rl-stage-outer" data-rl-stage-outer>'
-    + '      <div class="rl-triple-banner" data-rl-triple-banner hidden>⚡ Triple Blast <span data-rl-triple-timer>10</span>s</div>'
-    + '      <div class="rl-blizzard-banner" data-rl-blizzard-banner hidden>❄️ Blizzard Mode</div>'
+    + '      <div class="rl-triple-banner" data-rl-triple-banner hidden><span data-rl-powerup-label>⚡ Triple Laser</span> <span data-rl-triple-timer>10</span>s</div>'
+    + '      <div class="rl-blizzard-banner" data-rl-blizzard-banner hidden>❄️ Rainbow Blizzard Mode</div>'
     + '      <div class="rl-stage" data-rl-stage><canvas data-rl-canvas></canvas></div>'
     + '    </div>'
     + '    <div class="rl-pause-hint">move to aim · tap / click / space to fire</div>'
@@ -331,7 +337,7 @@
     // Secret: tap "Hard" repeatedly, IN A ROW — any click anywhere else resets
     // the count immediately. Taps 1–2 just select Hard normally; from the 3rd
     // tap on, an escalating popup teases the unlock, landing on the 6th tap.
-    // Blizzard Mode then works on whatever difficulty you go on to pick —
+    // Rainbow Blizzard Mode then works on whatever difficulty you go on to pick —
     // it's a modifier, not tied to Hard.
     var hardBtn = mount.querySelector('[data-rl-tier="hard"]');
     var blizzardTaps = 0;
@@ -350,7 +356,7 @@
         pendingBlizzard = true;
         hardBtn.classList.add('rl-blizzard-armed');
         setModeLabel(true);
-        toast('🌀 Oh yeah! Blizzard Mode unlocked — enjoy yourself!', 2600);
+        toast('🌀 Oh yeah! Rainbow Blizzard Mode unlocked — enjoy yourself!', 2600);
       } else if (TAP_MESSAGES[blizzardTaps]) {
         toast(TAP_MESSAGES[blizzardTaps], 1200);
       }
@@ -419,6 +425,7 @@
     var lifeEls = mount.querySelectorAll('[data-rl-lives] .rl-life');
     var tripleBanner = mount.querySelector('[data-rl-triple-banner]');
     var tripleTimerEl = mount.querySelector('[data-rl-triple-timer]');
+    var powerupLabelEl = mount.querySelector('[data-rl-powerup-label]');
     var blizzardBanner = mount.querySelector('[data-rl-blizzard-banner]');
     var finalScoreEl = mount.querySelector('[data-rl-final-score]');
     var initialInputs = mount.querySelectorAll('[data-rl-initial]');
@@ -442,6 +449,7 @@
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seedBgSpecks();
     }
     var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(layoutStage) : null;
     if (ro) ro.observe(stageOuter);
@@ -470,15 +478,18 @@
         escaped: 0,
         cubes: [],
         snow: null,           // life-restore pickup
-        triple: null,         // triple-blast pickup
+        bubble: null,         // weapon powerup pickup (type: 'triple'|'rocket'|'mega')
+        powerupSeqIndex: 0,   // rotates which powerup the next bubble grants
         nextSnowAt: SNOWFLAKE_INTERVAL,
-        nextTripleAt: SNOWFLAKE_INTERVAL / 2,
+        nextBubbleAt: SNOWFLAKE_INTERVAL / 2,
         nextSpawnAt: 0,
         projectiles: [],
         particles: [],
         shards: [],
-        tripleUntil: 0,
-        tripleWasActive: false,
+        blasts: [],
+        powerup: null,        // null | 'triple' | 'rocket' | 'mega'
+        powerupUntil: 0,
+        powerupWasActive: false,
         laserColors: computeLaserColors(accentColor),
         bgColors: computeBgColors(accentColor),
         cfg: {
@@ -513,17 +524,19 @@
       });
     }
 
+    var POWERUP_LABELS = { triple: '⚡ Triple Laser', rocket: '🚀 Rocket Barrage', mega: '💥 Mega Rocket' };
     function updateHud() {
       scoreEl.textContent = S.melted;
       escapedEl.textContent = S.escaped;
-      if (S.paused) return; // freeze triple-blast timer/sound state while paused
+      if (S.paused) return; // freeze powerup timer/sound state while paused
       var now = performance.now();
-      var tripleActive = now < S.tripleUntil;
-      if (!tripleActive && S.tripleWasActive) playSound('powerdown');
-      S.tripleWasActive = tripleActive;
-      if (tripleActive) {
+      var active = now < S.powerupUntil;
+      if (!active && S.powerupWasActive) playSound('powerdown');
+      S.powerupWasActive = active;
+      if (active) {
         tripleBanner.hidden = false;
-        tripleTimerEl.textContent = Math.ceil((S.tripleUntil - now) / 1000);
+        powerupLabelEl.textContent = POWERUP_LABELS[S.powerup] || POWERUP_LABELS.triple;
+        tripleTimerEl.textContent = Math.ceil((S.powerupUntil - now) / 1000);
       } else {
         tripleBanner.hidden = true;
       }
@@ -554,10 +567,16 @@
       var y = rand(H * 0.14, H * 0.42);
       S.snow = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(34, 46), vy: rand(-4, 4), r: 11, wob: rand(0, Math.PI * 2) };
     }
-    function spawnTripleOrb() {
+    // Weapon powerups float through in a bubble and rotate through 3 kinds,
+    // in order, so a run always sees a predictable Triple → Rocket → Mega
+    // → Triple… cadence rather than random repeats.
+    var POWERUP_SEQUENCE = ['triple', 'rocket', 'mega'];
+    function spawnPowerupBubble() {
       var fromLeft = Math.random() < 0.5;
       var y = rand(H * 0.14, H * 0.42);
-      S.triple = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(34, 46), vy: rand(-4, 4), r: 11, wob: rand(0, Math.PI * 2) };
+      var type = POWERUP_SEQUENCE[S.powerupSeqIndex % POWERUP_SEQUENCE.length];
+      S.powerupSeqIndex++;
+      S.bubble = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(30, 42), vy: rand(-4, 4), r: 14, wob: rand(0, Math.PI * 2), type: type };
     }
 
     // ---------- weapon presets ----------
@@ -565,8 +584,9 @@
     // sensibly across screen sizes, same spirit as "25vh" — computed to
     // actual px against the live H when a shot is fired.
     var WEAPONS = {
-      laser:  { speedRatio: 3.2, pathWidth: 9,  trailRatio: 0.55, pierce: true  }, // fast, narrow, long trail, passes through
-      rocket: { speedRatio: 1.3, pathWidth: 24, trailRatio: 0.25, pierce: false } // slower, wide, short trail, stops on impact
+      laser:  { speedRatio: 3.2, pathWidth: 9,  trailRatio: 0.55, pierce: true  }, // default, both modes — fast, narrow, long trail, passes through
+      rocket: { speedRatio: 1.3, pathWidth: 24, trailRatio: 0.25, pierce: false }, // powerup — slower, wide, short trail, stops on impact
+      mega:   { speedRatio: 1.05, pathWidth: 34, trailRatio: 0.3, pierce: false } // powerup — bigger, slower still, explodes in a radius
     };
     var TOY_COLORS = ['#ffb59e', '#7b3f8f', '#c8a2e0', '#ff8fb0', '#5b7fd4', '#9be08a', '#ffd36e'];
     // peach, eggplant, lavender, rose pink, blueberry, mint, butter
@@ -590,17 +610,20 @@
     }
 
     // ---------- firing ----------
+    // Laser is the default weapon in BOTH modes — Rainbow Blizzard only
+    // recolors it (see drawProjectiles). Rocket/Mega only fire while a
+    // powerup bubble's effect is active.
     function fire(now) {
       if (now - S.lastFireAt < FIRE_COOLDOWN) return;
       S.lastFireAt = now;
-      var weaponKey = S.cfg.blizzard ? 'rocket' : 'laser';
-      playSound(S.cfg.blizzard ? 'squish' : 'laser');
+      var active = (S.powerup && now < S.powerupUntil) ? S.powerup : null;
+      var weaponKey = active === 'rocket' ? 'rocket' : active === 'mega' ? 'mega' : 'laser';
+      playSound(weaponKey === 'laser' ? 'laser' : 'squish');
       var eye = getEyePos();
-      var triple = now < S.tripleUntil;
-      var offsets = triple ? [-W / 4, 0, W / 4] : [0];
+      var offsets = active === 'triple' ? [-W / 4, 0, W / 4] : [0];
       offsets.forEach(function (off) {
         var topX = eye.x + off;
-        var color = weaponKey === 'rocket' ? TOY_COLORS[Math.floor(rand(0, TOY_COLORS.length))] : null;
+        var color = weaponKey !== 'laser' ? TOY_COLORS[Math.floor(rand(0, TOY_COLORS.length))] : null;
         spawnProjectile(eye.x, eye.y, topX, -6, weaponKey, now, color);
       });
     }
@@ -617,13 +640,17 @@
         if (ty < 0 || ty > 1) continue; // cube's Y isn't within the current tail..head segment yet — not reachable this frame
         var bx = lerp(x0, x1, ty);
         if (Math.abs(bx - c.x) < half + c.size / 2 && c.y > -c.size && c.y < H) {
-          spawnBurst(c.x, c.y, '#bfe9ff');
-          S.cubes.splice(i, 1);
-          S.melted++;
-          playSound('hit');
+          if (pr.weapon === 'mega') {
+            detonateMega(pr, c.x, c.y);
+          } else {
+            spawnBurst(c.x, c.y, '#bfe9ff');
+            S.cubes.splice(i, 1);
+            S.melted++;
+            playSound('hit');
+          }
           if (!pr.pierce) {
             pr.impacted = true; pr.impactAt = performance.now();
-            spawnBurst(c.x, c.y, pr.color || '#ffcf4d');
+            if (pr.weapon !== 'mega') spawnBurst(c.x, c.y, pr.color || '#ffcf4d');
             return; // this weapon explodes on first contact — stop checking
           }
         }
@@ -638,16 +665,69 @@
           }
         }
       }
-      if (S.triple) {
-        var ty3 = dy !== 0 ? (S.triple.y - y0) / dy : 0;
+      if (S.bubble) {
+        var ty3 = dy !== 0 ? (S.bubble.y - y0) / dy : 0;
         if (ty3 >= 0 && ty3 <= 1) {
           var bx3 = lerp(x0, x1, ty3);
-          if (Math.abs(bx3 - S.triple.x) < half + S.triple.r) {
-            onTripleOrbHit();
+          if (Math.abs(bx3 - S.bubble.x) < half + S.bubble.r) {
+            onPowerupBubbleHit();
             if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
           }
         }
       }
+    }
+
+    // Mega rocket: destroys every cube within MEGA_RADIUS_RATIO of stage
+    // width around the impact point, plus a bigger, distinct blast effect —
+    // white splatter in Rainbow Blizzard Mode, a red/orange/yellow explosion
+    // otherwise.
+    function detonateMega(pr, x, y) {
+      var radius = W * MEGA_RADIUS_RATIO;
+      var destroyed = 0;
+      for (var j = S.cubes.length - 1; j >= 0; j--) {
+        var cc = S.cubes[j];
+        var dist = Math.hypot(cc.x - x, cc.y - y);
+        if (dist <= radius + cc.size / 2) {
+          spawnBurst(cc.x, cc.y, S.cfg.blizzard ? '#ffffff' : '#bfe9ff');
+          S.cubes.splice(j, 1);
+          destroyed++;
+        }
+      }
+      S.melted += destroyed;
+      playSound(destroyed ? 'hit' : 'explosion');
+      spawnMegaBlast(x, y, radius);
+    }
+    function spawnMegaBlast(x, y, radius) {
+      S.blasts.push({ x: x, y: y, radius: radius, born: performance.now(), white: S.cfg.blizzard });
+      var n = 22;
+      for (var i = 0; i < n; i++) {
+        var a = rand(0, Math.PI * 2), sp = rand(80, radius * 2.2);
+        S.particles.push({
+          x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1,
+          color: S.cfg.blizzard ? '#ffffff' : (Math.random() < 0.5 ? '#ff9a3d' : '#ffe066')
+        });
+      }
+    }
+    function updateBlasts(now) {
+      for (var i = S.blasts.length - 1; i >= 0; i--) {
+        if (now - S.blasts[i].born > 380) S.blasts.splice(i, 1);
+      }
+    }
+    function drawBlasts(now) {
+      S.blasts.forEach(function (b) {
+        var t = clamp((now - b.born) / 380, 0, 1);
+        var r = lerp(b.radius * 0.15, b.radius, t);
+        var alpha = 1 - t;
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.6;
+        ctx.strokeStyle = b.white ? '#ffffff' : '#ffb238';
+        ctx.lineWidth = 4 * (1 - t) + 1;
+        ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = alpha * 0.22;
+        ctx.fillStyle = b.white ? '#ffffff' : '#ff9a3d';
+        ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
     }
 
     function updateProjectiles(dt, now) {
@@ -683,12 +763,14 @@
       setLives(S.lives + 1, { pulse: true });
     }
 
-    // Triple-blast pickup: always grants triple blast, independent of lives —
-    // works in Kid Mode too.
-    function onTripleOrbHit() {
-      spawnBurst(S.triple.x, S.triple.y, '#9de6ff');
-      S.triple = null;
-      S.tripleUntil = performance.now() + TRIPLE_BLAST_MS;
+    // Weapon powerup bubble: grants whichever effect it's currently showing
+    // (Triple Laser / Rocket / Mega Rocket), independent of lives — works in
+    // Kid Mode too, same as the old triple-blast pickup did.
+    function onPowerupBubbleHit() {
+      spawnBurst(S.bubble.x, S.bubble.y, '#9de6ff');
+      S.powerup = S.bubble.type;
+      S.bubble = null;
+      S.powerupUntil = performance.now() + POWERUP_MS;
       playSound('powerup');
     }
 
@@ -774,7 +856,7 @@
       if (S.pauseStartedAt) {
         var pausedMs = now - S.pauseStartedAt;
         S.pausedAccum += pausedMs / 1000;
-        if (S.tripleUntil > 0) S.tripleUntil += pausedMs; // don't let triple blast silently expire while paused
+        if (S.powerupUntil > 0) S.powerupUntil += pausedMs; // don't let an active powerup silently expire while paused
         S.pauseStartedAt = null;
       }
       S.lastT = now; // avoid a big dt jump on resume
@@ -818,34 +900,109 @@
     });
 
     // ---------- render ----------
-    function drawBackground() {
+    // Ambient background specks — slow, dim, non-interactive, just to keep
+    // the gradient from reading flat. Regenerated whenever the stage resizes.
+    var bgSpecks = [];
+    function seedBgSpecks() {
+      bgSpecks = [];
+      var n = Math.round((W * H) / 9000);
+      for (var i = 0; i < n; i++) {
+        bgSpecks.push({ x: rand(0, W), y: rand(0, H), r: rand(0.6, 1.8), speed: rand(4, 12), phase: rand(0, Math.PI * 2) });
+      }
+    }
+    function drawBackground(now) {
       var colors = S.bgColors || { top: '#0a1420', bottom: '#16283c' };
       var g = ctx.createLinearGradient(0, 0, 0, H);
       g.addColorStop(0, colors.top); g.addColorStop(1, colors.bottom);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+      // soft glow behind the loon, tinted by whatever's currently lighting
+      // the scene (laser color if set, else a gentle default)
+      var glowColor = (S.laserColors && S.laserColors.outer) || '#2c4a63';
+      var glow = ctx.createRadialGradient(W / 2, H * 0.92, 4, W / 2, H * 0.92, H * 0.55);
+      glow.addColorStop(0, hexToRgba(glowColor, 0.16));
+      glow.addColorStop(1, hexToRgba(glowColor, 0));
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      bgSpecks.forEach(function (s) {
+        var tw = 0.4 + 0.35 * Math.sin(now / 900 + s.phase);
+        ctx.globalAlpha = tw * 0.5;
+        ctx.fillStyle = '#dff1ff';
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.restore();
+    }
+    function updateBgSpecks(dt) {
+      bgSpecks.forEach(function (s) {
+        s.y += s.speed * dt;
+        if (s.y > H) { s.y = -4; s.x = rand(0, W); }
+      });
     }
 
-    // Deliberately abstract "toy rocket" sprite (rounded cap + shaft + two
-    // base nubs) — a cartoonish nod to the Whipple Building protest coverage,
-    // not anatomical detail. Drawn pointing "up" (−y); caller translates.
+    // Deliberately abstract "toy rocket" silhouette (rounded cap + shaft +
+    // two base nubs) — a cartoonish nod to the Whipple Building protest
+    // coverage, not anatomical detail. Shared by the regular and mega
+    // rockets in every mode; only color/scale/stripe differ. Drawn pointing
+    // "up" (−y); caller translates.
     var RAINBOW = ['#ff5f5f', '#ffab5f', '#ffe95f', '#5fe08a', '#5fb8ff', '#9d7bff', '#ff7be0'];
-    function drawRocket(scale, color) {
-      ctx.fillStyle = color;
+    function drawRocketBody(scale, bodyColor, stripeColor) {
+      ctx.fillStyle = bodyColor;
       roundRect(ctx, -3.2 * scale, -9 * scale, 6.4 * scale, 15 * scale, 3.2 * scale);
       ctx.fill();
       ctx.beginPath();
       ctx.arc(-3 * scale, 6 * scale, 2.8 * scale, 0, Math.PI * 2);
       ctx.arc(3 * scale, 6 * scale, 2.8 * scale, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      if (stripeColor) {
+        ctx.fillStyle = stripeColor;
+        roundRect(ctx, -3.2 * scale, -1.3 * scale, 6.4 * scale, 2.4 * scale, 0.6 * scale);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
       roundRect(ctx, -1.5 * scale, -7 * scale, 1.8 * scale, 8 * scale, 0.9 * scale);
       ctx.fill();
+    }
+    // Fire trail for normal-mode rockets — hot yellow-white near the rocket,
+    // cooling toward the character's accent color at the tail (same "accent
+    // tints it, doesn't have to carry it" idea as the laser core).
+    function drawFireTrail(pr, fadeAlpha) {
+      var accent = S.cfg.accentColor || '#ff6a00';
+      var segs = 8;
+      for (var i = 1; i <= segs; i++) {
+        var t0 = (i - 1) / segs, t1 = i / segs;
+        var ax = lerp(pr.tailX, pr.headX, t0), ay = lerp(pr.tailY, pr.headY, t0);
+        var bx = lerp(pr.tailX, pr.headX, t1), by = lerp(pr.tailY, pr.headY, t1);
+        var frac = i / segs;
+        var col = frac > 0.72 ? '#fff3c4' : (frac > 0.4 ? '#ffb238' : accent);
+        ctx.save();
+        ctx.globalAlpha = fadeAlpha * (0.25 + 0.65 * frac);
+        ctx.strokeStyle = col; ctx.lineWidth = 1.5 + frac * pr.pathWidth * 0.45;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        ctx.restore();
+      }
+    }
+    function drawRainbowTrail(pr, fadeAlpha, lineIntensity) {
+      var segs = 8;
+      for (var i = 1; i <= segs; i++) {
+        var t0 = (i - 1) / segs, t1 = i / segs;
+        var ax = lerp(pr.tailX, pr.headX, t0), ay = lerp(pr.tailY, pr.headY, t0);
+        var bx = lerp(pr.tailX, pr.headX, t1), by = lerp(pr.tailY, pr.headY, t1);
+        var col = RAINBOW[i % RAINBOW.length];
+        ctx.save();
+        ctx.globalAlpha = fadeAlpha * lineIntensity * (0.25 + 0.65 * (i / segs));
+        ctx.strokeStyle = col; ctx.lineWidth = (1 + (i / segs) * pr.pathWidth * 0.55) * (0.6 + 0.4 * lineIntensity);
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // Renders every live projectile's CURRENT trail segment (tail..head) —
     // the visual trail IS the active kill-stripe, so what you see is exactly
-    // what can hit something. Laser and rocket share this one draw path,
-    // branching only on weapon type.
+    // what can hit something. Laser/Rocket/Mega share this one draw path,
+    // branching on weapon type and Rainbow Blizzard Mode for color/sprite.
     function drawProjectiles(now) {
       var lineIntensity = S.cfg.tier === 'easy' ? 0.4 : (S.cfg.tier === 'medium' ? 0.7 : 1);
       S.projectiles.forEach(function (pr) {
@@ -854,35 +1011,47 @@
           : (pr.fadeStart ? clamp(1 - (now - pr.fadeStart) / 160, 0, 1) : 1);
         if (fadeAlpha <= 0) return;
 
-        if (pr.weapon === 'rocket') {
-          var segs = 8;
-          for (var i = 1; i <= segs; i++) {
-            var t0 = (i - 1) / segs, t1 = i / segs;
-            var ax = lerp(pr.tailX, pr.headX, t0), ay = lerp(pr.tailY, pr.headY, t0);
-            var bx = lerp(pr.tailX, pr.headX, t1), by = lerp(pr.tailY, pr.headY, t1);
-            var col = RAINBOW[i % RAINBOW.length];
-            ctx.save();
-            ctx.globalAlpha = fadeAlpha * lineIntensity * (0.25 + 0.65 * (i / segs));
-            ctx.strokeStyle = col; ctx.lineWidth = (1 + (i / segs) * pr.pathWidth * 0.55) * (0.6 + 0.4 * lineIntensity);
-            ctx.lineCap = 'round';
-            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-            ctx.restore();
+        if (pr.weapon === 'rocket' || pr.weapon === 'mega') {
+          var isMega = pr.weapon === 'mega';
+          var scale = isMega ? 2.3 : 1.5; // mega is noticeably bigger
+          if (S.cfg.blizzard) {
+            drawRainbowTrail(pr, fadeAlpha, lineIntensity);
+          } else {
+            drawFireTrail(pr, fadeAlpha);
           }
           if (!pr.impacted || (now - pr.impactAt) < 150) {
             ctx.save();
             ctx.globalAlpha = fadeAlpha;
             ctx.translate(pr.headX, pr.headY);
-            drawRocket(1.5, pr.color);
+            if (S.cfg.blizzard) {
+              drawRocketBody(scale, pr.color, null); // silicone colors, no stripe — reads as a big rubber rocket either way
+            } else if (isMega) {
+              drawRocketBody(scale, '#e0332c', '#ffd23f'); // red body, yellow stripe
+            } else {
+              drawRocketBody(scale, '#c9d3da', null); // plain silver
+            }
             ctx.restore();
           }
         } else {
-          var colors = S.laserColors || { outer: '#9d2732', core: '#ff8a8a' };
+          // laser — default weapon in both modes. Rainbow Blizzard recolors
+          // it; otherwise it's the character's accent color (or classic red).
           ctx.save();
-          ctx.globalAlpha = fadeAlpha * 0.5; ctx.strokeStyle = colors.outer; ctx.lineWidth = pr.pathWidth;
-          ctx.lineCap = 'round';
-          ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
-          ctx.globalAlpha = fadeAlpha; ctx.strokeStyle = colors.core; ctx.lineWidth = Math.max(2, pr.pathWidth * 0.35);
-          ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
+          if (S.cfg.blizzard) {
+            var grad = ctx.createLinearGradient(pr.tailX, pr.tailY, pr.headX, pr.headY);
+            RAINBOW.forEach(function (c, idx) { grad.addColorStop(idx / (RAINBOW.length - 1), c); });
+            ctx.globalAlpha = fadeAlpha * 0.55; ctx.strokeStyle = grad; ctx.lineWidth = pr.pathWidth;
+            ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
+            ctx.globalAlpha = fadeAlpha; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, pr.pathWidth * 0.3);
+            ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
+          } else {
+            var colors = S.laserColors || { outer: '#9d2732', core: '#ff8a8a' };
+            ctx.globalAlpha = fadeAlpha * 0.5; ctx.strokeStyle = colors.outer; ctx.lineWidth = pr.pathWidth;
+            ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
+            ctx.globalAlpha = fadeAlpha; ctx.strokeStyle = colors.core; ctx.lineWidth = Math.max(2, pr.pathWidth * 0.35);
+            ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
+          }
           ctx.restore();
         }
       });
@@ -924,21 +1093,38 @@
       ctx.restore();
     }
     // Triple-blast pickup — a simple circle with a 3-way split-laser glyph.
-    function drawTripleOrb(now) {
-      if (!S.triple) return;
-      var tp = S.triple; var bob = Math.sin(now / 220 + tp.wob) * 3;
-      var col = '#ffcf4d';
-      ctx.save(); ctx.translate(tp.x, tp.y + bob);
-      ctx.shadowColor = col; ctx.shadowBlur = 9;
-      ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.globalAlpha = 0.95;
-      ctx.beginPath(); ctx.arc(0, 0, tp.r, 0, Math.PI * 2); ctx.stroke();
-      ctx.shadowBlur = 0;
-      [-0.42, 0, 0.42].forEach(function (off) {
-        ctx.beginPath();
-        ctx.moveTo(0, 2);
-        ctx.lineTo(off * tp.r * 1.5, -tp.r * 0.85);
-        ctx.stroke();
-      });
+    // Weapon powerup pickup — a translucent bubble with a small icon inside
+    // telegraphing which of the 3 rotating effects it grants.
+    function drawPowerupBubble(now) {
+      if (!S.bubble) return;
+      var b = S.bubble; var bob = Math.sin(now / 220 + b.wob) * 3;
+      ctx.save();
+      ctx.translate(b.x, b.y + bob);
+
+      // bubble shell
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = 'rgba(255,255,255,0.09)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-b.r * 0.35, -b.r * 0.35, b.r * 0.22, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fill();
+
+      if (b.type === 'triple') {
+        var col = '#ffcf4d';
+        ctx.shadowColor = col; ctx.shadowBlur = 7;
+        ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.globalAlpha = 0.95;
+        [-0.42, 0, 0.42].forEach(function (off) {
+          ctx.beginPath();
+          ctx.moveTo(0, b.r * 0.3);
+          ctx.lineTo(off * b.r * 1.15, -b.r * 0.6);
+          ctx.stroke();
+        });
+      } else if (b.type === 'rocket') {
+        ctx.save(); ctx.scale(0.6, 0.6); drawRocketBody(0.95, '#c9d3da', null); ctx.restore();
+      } else if (b.type === 'mega') {
+        ctx.save(); ctx.scale(0.6, 0.6); drawRocketBody(1.3, '#e0332c', '#ffd23f'); ctx.restore();
+      }
       ctx.restore();
     }
     function drawParticles(dt) {
@@ -1007,9 +1193,11 @@
           spawnSnowflake();
           S.nextSnowAt += SNOWFLAKE_INTERVAL;
         }
-        if (!S.triple && (now - S.startedAt) >= S.nextTripleAt) {
-          spawnTripleOrb();
-          S.nextTripleAt += SNOWFLAKE_INTERVAL;
+        // Weapon powerup bubble spawns regardless of Kid Mode — the rocket/
+        // mega/triple effects are all fun independent of the life system.
+        if (!S.bubble && (now - S.startedAt) >= S.nextBubbleAt) {
+          spawnPowerupBubble();
+          S.nextBubbleAt += SNOWFLAKE_INTERVAL;
         }
 
         var floorY = H - 6;
@@ -1026,20 +1214,23 @@
           S.snow.x += S.snow.vx * dt;
           if (S.snow.x < -40 || S.snow.x > W + 40) S.snow = null;
         }
-        if (S.triple) {
-          S.triple.x += S.triple.vx * dt;
-          if (S.triple.x < -40 || S.triple.x > W + 40) S.triple = null;
+        if (S.bubble) {
+          S.bubble.x += S.bubble.vx * dt;
+          if (S.bubble.x < -40 || S.bubble.x > W + 40) S.bubble = null;
         }
         updateProjectiles(dt, now);
+        updateBlasts(now);
+        updateBgSpecks(dt);
       }
 
-      drawBackground();
+      drawBackground(now);
       var eye = getEyePos();
       drawProjectiles(now);
       drawLoon(eye);
       drawCubes();
       drawSnowflake(now);
-      drawTripleOrb(now);
+      drawPowerupBubble(now);
+      drawBlasts(now);
       drawShards(S.paused ? 0 : dt);
       drawParticles(S.paused ? 0 : dt);
 
@@ -1138,7 +1329,7 @@
       stopBlizzardTheme();
       blizzardBanner.hidden = !S.cfg.blizzard;
       if (S.cfg.blizzard) {
-        toast('🌀 BLIZZARD MODE', 2000);
+        toast('🌀 RAINBOW BLIZZARD MODE', 2000);
         blizzardTheme.currentTime = 0;
         var p = blizzardTheme.play();
         if (p && p.catch) p.catch(function () {});
