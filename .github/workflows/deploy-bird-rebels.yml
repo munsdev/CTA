@@ -1,0 +1,24 @@
+name: Deploy Bird Rebels — Ice Blaster
+
+# Only runs when something inside this game's own folder changes, so it
+# never fires for The Quota / Then or Now / Know Your Rights / DC Lagoon
+# commits, and their pushes never trigger this one either.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/bird-rebels-ice-blaster/**'
+  workflow_dispatch: {} # lets you manually re-run a deploy from the Actions tab if ever needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/bird-rebels-ice-blaster
