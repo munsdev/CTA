@@ -614,7 +614,7 @@
       for (var i = S.cubes.length - 1; i >= 0; i--) {
         var c = S.cubes[i];
         var ty = dy !== 0 ? (c.y - y0) / dy : 0;
-        ty = clamp(ty, 0, 1);
+        if (ty < 0 || ty > 1) continue; // cube's Y isn't within the current tail..head segment yet — not reachable this frame
         var bx = lerp(x0, x1, ty);
         if (Math.abs(bx - c.x) < half + c.size / 2 && c.y > -c.size && c.y < H) {
           spawnBurst(c.x, c.y, '#bfe9ff');
@@ -629,19 +629,23 @@
         }
       }
       if (S.snow) {
-        var ty2 = dy !== 0 ? (S.snow.y - y0) / dy : 0; ty2 = clamp(ty2, 0, 1);
-        var bx2 = lerp(x0, x1, ty2);
-        if (Math.abs(bx2 - S.snow.x) < half + S.snow.r) {
-          onSnowflakeHit();
-          if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
+        var ty2 = dy !== 0 ? (S.snow.y - y0) / dy : 0;
+        if (ty2 >= 0 && ty2 <= 1) {
+          var bx2 = lerp(x0, x1, ty2);
+          if (Math.abs(bx2 - S.snow.x) < half + S.snow.r) {
+            onSnowflakeHit();
+            if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
+          }
         }
       }
       if (S.triple) {
-        var ty3 = dy !== 0 ? (S.triple.y - y0) / dy : 0; ty3 = clamp(ty3, 0, 1);
-        var bx3 = lerp(x0, x1, ty3);
-        if (Math.abs(bx3 - S.triple.x) < half + S.triple.r) {
-          onTripleOrbHit();
-          if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
+        var ty3 = dy !== 0 ? (S.triple.y - y0) / dy : 0;
+        if (ty3 >= 0 && ty3 <= 1) {
+          var bx3 = lerp(x0, x1, ty3);
+          if (Math.abs(bx3 - S.triple.x) < half + S.triple.r) {
+            onTripleOrbHit();
+            if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
+          }
         }
       }
     }
