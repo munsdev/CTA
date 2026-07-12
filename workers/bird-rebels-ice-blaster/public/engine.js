@@ -14,6 +14,9 @@
   };
   var TIER_ORDER = ['easy', 'medium', 'hard'];
   var MIN_CUBE_SIZE = 24;
+  // Rainbow Blizzard Mode only: max cumulative horizontal drift a cube can
+  // pick up over a full top-to-bottom fall, as a fraction of stage width.
+  var WIND_MAX_RATIO = { easy: 0.05, medium: 0.10, hard: 0.30 };
   var DEFAULT_TIER = 'medium';
   var MAX_LIVES = 5;
   var START_LIVES = 3;
@@ -166,7 +169,7 @@
     + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <div class="rl-check-row">'
     + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
-    + '        <label for="rl-kidmode-toggle"><span data-rl-mode-label>Kid Mode</span>'
+    + '        <label for="rl-kidmode-toggle">Casual Mode'
     + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
     + '        </label>'
     + '      </div>'
@@ -220,6 +223,7 @@
     + '    <div class="rl-screen-inner">'
     + '      <h2>Melted Through!</h2>'
     + '      <p class="rl-final">Ice cubes melted<b data-rl-final-score>0</b></p>'
+    + '      <p class="rl-final">Accuracy<b data-rl-final-accuracy>0%</b></p>'
     + '      <div data-rl-score-submit>'
     + '        <div class="rl-initials-row">'
     + '          <input type="text" maxlength="1" data-rl-initial="0" autocomplete="off" autocapitalize="characters">'
@@ -228,24 +232,31 @@
     + '        </div>'
     + '        <button class="rl-btn" data-rl-submit-score>Save Score</button>'
     + '        <p class="rl-error" data-rl-submit-error></p>'
+    + '        <p class="rl-lb-set-note" data-rl-board-inline-note hidden></p>'
     + '        <div class="rl-board" data-rl-board-inline hidden></div>'
     + '      </div>'
-    + '      <p class="rl-tier-note" data-rl-kid-note hidden>Kid Mode runs aren\'t added to the leaderboard.</p>'
+    + '      <p class="rl-tier-note" data-rl-kid-note hidden>Casual Mode runs aren\'t added to the leaderboard.</p>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-restart>Play Again</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="leaderboard" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2 style="margin-bottom:14px;">Leaderboard</h2>'
-    + '      <div class="rl-tabs" data-rl-lb-set-tabs>'
-    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-set="normal">Normal</button>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-set="blizzard">Rainbow Blizzard</button>'
-    + '      </div>'
+    + '      <h2 style="margin-bottom:2px;">Leaderboard</h2>'
+    + '      <p class="rl-lb-set-note" data-rl-lb-set-note>Normal scores</p>'
     + '      <div class="rl-tabs" data-rl-lb-tabs>'
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy">Easy</button>'
     + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium">Medium</button>'
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="hard">Hard</button>'
+    + '      </div>'
+    + '      <div class="rl-lb-sort-row">'
+    + '        <label for="rl-lb-sort">Sort by</label>'
+    + '        <select id="rl-lb-sort" data-rl-lb-sort>'
+    + '          <option value="score">Score</option>'
+    + '          <option value="accuracy">Accuracy</option>'
+    + '          <option value="initials">Name</option>'
+    + '          <option value="ts">Date</option>'
+    + '        </select>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-leaderboard>Back</button>'
@@ -356,27 +367,34 @@
 
     var kidModeEl = mount.querySelector('[data-rl-kidmode]');
     var rainbowToggleEl = mount.querySelector('[data-rl-rainbow-toggle]');
-    var modeLabelEl = mount.querySelector('[data-rl-mode-label]');
-    function setModeLabel(blizzardOn) {
-      // Swaps the word "Kid" out of the scene when Rainbow Blizzard is on —
-      // the grown-up variant calls the same no-stakes toggle "Leisure Mode".
-      modeLabelEl.textContent = blizzardOn ? 'Leisure Mode' : 'Kid Mode';
-    }
-    rainbowToggleEl.addEventListener('change', function () {
-      setModeLabel(rainbowToggleEl.checked);
-    });
 
     // ---------- leaderboard ----------
-    // Same Easy/Medium/Hard tabs either way — the Normal/Rainbow toggle above
-    // them switches which underlying set of 3 boards those tabs point at.
+    // Same Easy/Medium/Hard tabs either way — which of the 6 underlying
+    // boards they point at is decided by the Rainbow Blizzard toggle on the
+    // main screen, not a separate switch here.
+    var SET_LABELS = { normal: 'Normal scores', blizzard: 'Rainbow Blizzard scores' };
     var lbTier = DEFAULT_TIER;
     var lbSet = 'normal';
+    var lbSort = 'score';
+    var lastBoardArr = [];
     function boardKey(tier, set) { return set === 'blizzard' ? tier + '-blizzard' : tier; }
-    function loadLeaderboard(tier, set, container) {
+    function sortBoard(arr, key) {
+      var copy = arr.slice();
+      if (key === 'initials') copy.sort(function (a, b) { return a.initials.localeCompare(b.initials); });
+      else if (key === 'ts') copy.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); }); // newest first
+      else if (key === 'accuracy') copy.sort(function (a, b) { return (b.accuracy || 0) - (a.accuracy || 0); });
+      else copy.sort(function (a, b) { return b.score - a.score; });
+      return copy;
+    }
+    function loadLeaderboard(tier, set, container, noteEl) {
       container.innerHTML = '<div class="rl-loading">Loading…</div>';
+      if (noteEl) noteEl.textContent = SET_LABELS[set] || SET_LABELS.normal;
       fetch(BASE + '/api/leaderboard?tier=' + encodeURIComponent(boardKey(tier, set)))
         .then(function (r) { return r.json(); })
-        .then(function (arr) { renderBoard(container, arr); })
+        .then(function (arr) {
+          lastBoardArr = Array.isArray(arr) ? arr : [];
+          renderBoard(container, sortBoard(lastBoardArr, lbSort));
+        })
         .catch(function () { container.innerHTML = '<div class="rl-loading">Couldn\'t load the leaderboard.</div>'; });
     }
     function renderBoard(container, arr, highlightTs) {
@@ -387,10 +405,12 @@
       var html = '';
       arr.forEach(function (row, i) {
         var mine = highlightTs && row.ts === highlightTs;
+        var accPct = Math.round((row.accuracy || 0) * 100);
         html += '<div class="rl-board-row' + (mine ? ' rl-me' : '') + '">'
           + '<span class="rl-rank">' + (i + 1) + '</span>'
           + '<span class="rl-char-tag">' + (row.character || '—') + '</span>'
           + '<span class="rl-init">' + row.initials + '</span>'
+          + '<span class="rl-acc-bar" title="' + accPct + '% accuracy"><span class="rl-acc-fill" style="width:' + accPct + '%"></span></span>'
           + '<span class="rl-pts">' + row.score + '</span>'
           + '</div>';
       });
@@ -399,10 +419,9 @@
 
     mount.querySelector('[data-rl-open-leaderboard]').addEventListener('click', function () {
       lbTier = DEFAULT_TIER;
-      lbSet = 'normal';
+      lbSet = rainbowToggleEl.checked ? 'blizzard' : 'normal'; // whatever the main-screen toggle currently says
       mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
-      mount.querySelectorAll('[data-rl-lb-set]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-set') === lbSet); });
-      loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'));
+      loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
       showScreen('leaderboard-from-start');
     });
     mount.querySelector('[data-rl-close-leaderboard]').addEventListener('click', function () { showScreen('leaderboard-close'); });
@@ -410,15 +429,12 @@
       tab.addEventListener('click', function () {
         lbTier = tab.getAttribute('data-rl-lb-tab');
         mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t === tab); });
-        loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'));
+        loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
       });
     });
-    mount.querySelectorAll('[data-rl-lb-set]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        lbSet = btn.getAttribute('data-rl-lb-set');
-        mount.querySelectorAll('[data-rl-lb-set]').forEach(function (t) { t.classList.toggle('rl-selected', t === btn); });
-        loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'));
-      });
+    mount.querySelector('[data-rl-lb-sort]').addEventListener('change', function () {
+      lbSort = this.value;
+      renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(lastBoardArr, lbSort));
     });
 
     // ---------- game elements ----------
@@ -438,6 +454,8 @@
     var powerupBarFillEl = mount.querySelector('[data-rl-powerup-bar-fill]');
     var blizzardBanner = mount.querySelector('[data-rl-blizzard-banner]');
     var finalScoreEl = mount.querySelector('[data-rl-final-score]');
+    var finalAccuracyEl = mount.querySelector('[data-rl-final-accuracy]');
+    var boardInlineNote = mount.querySelector('[data-rl-board-inline-note]');
     var initialInputs = mount.querySelectorAll('[data-rl-initial]');
     var boardInline = mount.querySelector('[data-rl-board-inline]');
     var submitError = mount.querySelector('[data-rl-submit-error]');
@@ -470,6 +488,13 @@
     function freshState() {
       var accentColor = charAccent[selectedChar] || null;
       var blizzard = !!rainbowToggleEl.checked; // works on any difficulty tier
+      var tierCfg = TIERS[selectedTier] || TIERS[DEFAULT_TIER];
+      // Max wind velocity such that, if it stayed pinned at max the whole
+      // fall, a cube would drift about WIND_MAX_RATIO of stage width by the
+      // time it lands — real gusts vary, so actual drift is usually less.
+      var windMaxPxPerSec = blizzard
+        ? (WIND_MAX_RATIO[selectedTier] || 0.1) * W * tierCfg.speed / H
+        : 0;
       return {
         running: true,
         paused: false,
@@ -485,6 +510,9 @@
         lives: START_LIVES,
         melted: 0,
         escaped: 0,
+        shotsFired: 0,
+        shotsHit: 0,
+        accuracy: 0,
         cubes: [],
         snow: null,           // life-restore pickup
         bubble: null,         // weapon powerup pickup (type: 'triple'|'rocket'|'mega')
@@ -502,6 +530,7 @@
         powerupWasActive: false,
         laserColors: computeLaserColors(accentColor),
         bgColors: computeBgColors(accentColor),
+        wind: { bands: rollWindBands(windMaxPxPerSec), maxPxPerSec: windMaxPxPerSec, nextRollAt: 0, streaks: [] },
         cfg: {
           character: selectedChar,
           accentColor: accentColor,
@@ -580,16 +609,16 @@
       S.snow = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(34, 46), vy: rand(-4, 4), r: 11, wob: rand(0, Math.PI * 2) };
     }
     // Weapon powerups float through in a bubble and rotate through 3 kinds,
-    // in order, so a run always sees a predictable Triple → Rocket → Mega
-    // → Triple… cadence rather than random repeats. Rainbow Blizzard Mode
-    // fires regular rockets by default already, so its only powerup is Mega.
-    var POWERUP_SEQUENCE_NORMAL = ['triple', 'rocket', 'mega'];
-    var POWERUP_SEQUENCE_BLIZZARD = ['mega'];
+    // Same rotation in both modes now: Triple → Mega → Triple… "Triple" just
+    // fans whatever the mode's default weapon is (lasers normally, rockets
+    // in Rainbow Blizzard) rather than being laser-only. Regular Rocket is
+    // no longer a standalone powerup — it's the default weapon in Rainbow
+    // Blizzard Mode, so there's nothing left for it to power up FROM there.
+    var POWERUP_SEQUENCE = ['triple', 'mega'];
     function spawnPowerupBubble() {
-      var seq = S.cfg.blizzard ? POWERUP_SEQUENCE_BLIZZARD : POWERUP_SEQUENCE_NORMAL;
       var fromLeft = Math.random() < 0.5;
       var y = rand(H * 0.14, H * 0.42);
-      var type = seq[S.powerupSeqIndex % seq.length];
+      var type = POWERUP_SEQUENCE[S.powerupSeqIndex % POWERUP_SEQUENCE.length];
       S.powerupSeqIndex++;
       S.bubble = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(30, 42), vy: rand(-4, 4), r: 14, wob: rand(0, Math.PI * 2), type: type };
     }
@@ -599,9 +628,9 @@
     // sensibly across screen sizes, same spirit as "25vh" — computed to
     // actual px against the live H when a shot is fired.
     var WEAPONS = {
-      laser:  { speedRatio: 3.2, pathWidth: 9,  trailRatio: 0.55, pierce: true  }, // default, both modes — fast, narrow, long trail, passes through
-      rocket: { speedRatio: 1.3, pathWidth: 24, trailRatio: 0.25, pierce: false }, // powerup — slower, wide, short trail, stops on impact
-      mega:   { speedRatio: 1.05, pathWidth: 34, trailRatio: 0.3, pierce: false } // powerup — bigger, slower still, explodes in a radius
+      laser:  { speedRatio: 3.2, pathWidth: 9,  trailRatio: 0.55, pierce: true  }, // default in normal mode — fast, narrow, long trail, passes through
+      rocket: { speedRatio: 1.3, pathWidth: 24, trailRatio: 0.25, pierce: false }, // default in Rainbow Blizzard Mode — slower, wide, short trail, stops on impact
+      mega:   { speedRatio: 1.05, pathWidth: 34, trailRatio: 0.3, pierce: false } // powerup in both modes — bigger, slower still, explodes in a radius
     };
     var TOY_COLORS = ['#ffb59e', '#7b3f8f', '#c8a2e0', '#ff8fb0', '#5b7fd4', '#9be08a', '#ffd36e'];
     // peach, eggplant, lavender, rose pink, blueberry, mint, butter
@@ -610,6 +639,7 @@
       var weapon = WEAPONS[weaponKey];
       var dx = x1 - x0, dy = y1 - y0;
       var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      S.shotsFired++;
       S.projectiles.push({
         x0: x0, y0: y0, dirX: dx / dist, dirY: dy / dist, totalDist: dist,
         traveled: 0,
@@ -619,21 +649,22 @@
         trailLength: weapon.trailRatio * H,
         pierce: weapon.pierce,
         color: color || null,
-        impacted: false, impactAt: 0, fadeStart: 0,
+        impacted: false, impactAt: 0, fadeStart: 0, hitSomething: false,
         headX: x0, headY: y0, tailX: x0, tailY: y0
       });
     }
 
     // ---------- firing ----------
-    // Laser is the default weapon in BOTH modes — Rainbow Blizzard only
-    // recolors it (see drawProjectiles). Rocket/Mega only fire while a
-    // powerup bubble's effect is active.
+    // Laser is the default weapon in normal mode; Rainbow Blizzard Mode fires
+    // regular rockets by default instead and never fires lasers at all.
+    // Triple fans out 3 of whichever is currently the default. Mega is the
+    // one powerup shared by both modes (reskinned per mode — see drawProjectiles).
     function fire(now) {
       if (now - S.lastFireAt < FIRE_COOLDOWN) return;
       S.lastFireAt = now;
       var active = (S.powerup && now < S.powerupUntil) ? S.powerup : null;
-      var defaultWeapon = S.cfg.blizzard ? 'rocket' : 'laser'; // Rainbow Blizzard never fires lasers
-      var weaponKey = active === 'rocket' ? 'rocket' : active === 'mega' ? 'mega' : defaultWeapon;
+      var defaultWeapon = S.cfg.blizzard ? 'rocket' : 'laser';
+      var weaponKey = active === 'mega' ? 'mega' : defaultWeapon;
       playSound(weaponKey === 'laser' ? 'laser' : 'squish');
       var eye = getEyePos();
       var offsets = active === 'triple' ? [-W / 4, 0, W / 4] : [0];
@@ -656,6 +687,7 @@
         if (ty < 0 || ty > 1) continue; // cube's Y isn't within the current tail..head segment yet — not reachable this frame
         var bx = lerp(x0, x1, ty);
         if (Math.abs(bx - c.x) < half + c.size / 2 && c.y > -c.size && c.y < H) {
+          if (!pr.hitSomething) { pr.hitSomething = true; S.shotsHit++; }
           if (pr.weapon === 'mega') {
             detonateMega(pr, c.x, c.y);
           } else {
@@ -676,6 +708,7 @@
         if (ty2 >= 0 && ty2 <= 1) {
           var bx2 = lerp(x0, x1, ty2);
           if (Math.abs(bx2 - S.snow.x) < half + S.snow.r) {
+            if (!pr.hitSomething) { pr.hitSomething = true; S.shotsHit++; }
             onSnowflakeHit();
             if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
           }
@@ -686,6 +719,7 @@
         if (ty3 >= 0 && ty3 <= 1) {
           var bx3 = lerp(x0, x1, ty3);
           if (Math.abs(bx3 - S.bubble.x) < half + S.bubble.r) {
+            if (!pr.hitSomething) { pr.hitSomething = true; S.shotsHit++; }
             onPowerupBubbleHit();
             if (!pr.pierce) { pr.impacted = true; pr.impactAt = performance.now(); return; }
           }
@@ -778,7 +812,7 @@
     }
 
     // Life-restore pickup: adds a life, up to MAX_LIVES. Doesn't spawn at all
-    // in Kid Mode (see loop()), since lives aren't tracked there.
+    // in Casual Mode (see loop()), since lives aren't tracked there.
     function onSnowflakeHit() {
       spawnBurst(S.snow.x, S.snow.y, '#ffffff');
       S.snow = null;
@@ -787,7 +821,7 @@
 
     // Weapon powerup bubble: grants whichever effect it's currently showing
     // (Triple Laser / Rocket / Mega Rocket), independent of lives — works in
-    // Kid Mode too, same as the old triple-blast pickup did.
+    // Casual Mode too, same as the old triple-blast pickup did.
     function onPowerupBubbleHit() {
       spawnBurst(S.bubble.x, S.bubble.y, '#9de6ff');
       S.powerup = S.bubble.type;
@@ -900,7 +934,6 @@
       if (S) S.running = false;
       stopBlizzardTheme();
       blizzardBanner.hidden = true;
-      setModeLabel(rainbowToggleEl.checked);
       showScreen('start');
     };
     mount.querySelector('[data-rl-reset]').addEventListener('click', doReset);
@@ -972,6 +1005,67 @@
       bgSpecks.forEach(function (s) {
         s.y += s.speed * dt;
         if (s.y > H) { s.y = -4; s.x = rand(0, W); }
+      });
+    }
+
+    // ---------- wind (Rainbow Blizzard Mode only) ----------
+    // 3 elevation bands (top/mid/bottom third of the stage), each carrying
+    // its own horizontal gust velocity. Adjacent bands are constrained to
+    // stay within 60% of the max of each other so the wind's direction
+    // shifts gradually with elevation rather than snapping from a full
+    // gust one way to a full gust the other. Falling cubes blend smoothly
+    // between whichever two bands they're currently between.
+    function rollWindBands(maxPxPerSec) {
+      if (!maxPxPerSec) return [0, 0, 0];
+      var bands = [rand(-maxPxPerSec, maxPxPerSec), 0, 0];
+      for (var i = 1; i < 3; i++) {
+        var step = maxPxPerSec * 0.6;
+        var lo = Math.max(-maxPxPerSec, bands[i - 1] - step);
+        var hi = Math.min(maxPxPerSec, bands[i - 1] + step);
+        bands[i] = rand(lo, hi);
+      }
+      return bands;
+    }
+    function windAt(y) {
+      var bands = S.wind.bands;
+      var third = H / 3;
+      var c0 = third * 0.5, c1 = third * 1.5, c2 = third * 2.5; // band centers
+      if (y <= c0) return bands[0];
+      if (y >= c2) return bands[2];
+      if (y <= c1) return lerp(bands[0], bands[1], (y - c0) / (c1 - c0));
+      return lerp(bands[1], bands[2], (y - c1) / (c2 - c1));
+    }
+    function spawnWindStreak() {
+      var fromLeft = windAt(rand(0, H)) >= 0;
+      S.wind.streaks.push({
+        y: rand(H * 0.08, H * 0.92),
+        x: fromLeft ? -30 : W + 30,
+        vx: (fromLeft ? 1 : -1) * rand(90, 150),
+        len: rand(28, 60), life: 1
+      });
+    }
+    function updateWind(now, dt) {
+      if (now >= S.wind.nextRollAt) {
+        S.wind.bands = rollWindBands(S.wind.maxPxPerSec);
+        S.wind.nextRollAt = now + rand(6000, 9000);
+      }
+      if (Math.random() < dt * 0.6) spawnWindStreak(); // roughly one every ~1.5s on average
+      for (var i = S.wind.streaks.length - 1; i >= 0; i--) {
+        var st = S.wind.streaks[i];
+        st.x += st.vx * dt; st.life -= dt * 0.5;
+        if (st.life <= 0 || st.x < -60 || st.x > W + 60) S.wind.streaks.splice(i, 1);
+      }
+    }
+    function drawWindStreaks() {
+      S.wind.streaks.forEach(function (st) {
+        ctx.save();
+        ctx.globalAlpha = clamp(st.life, 0, 1) * 0.22;
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(st.x, st.y);
+        ctx.lineTo(st.x - Math.sign(st.vx) * st.len, st.y);
+        ctx.stroke();
+        ctx.restore();
       });
     }
 
@@ -1228,12 +1322,12 @@
           spawnCube(diff.size);
           S.nextSpawnAt = now + diff.interval * rand(0.8, 1.2);
         }
-        // Life-restore pickup doesn't spawn in Kid Mode — lives aren't tracked there.
+        // Life-restore pickup doesn't spawn in Casual Mode — lives aren't tracked there.
         if (!S.cfg.kidMode && !S.snow && (now - S.startedAt) >= S.nextSnowAt) {
           spawnSnowflake();
           S.nextSnowAt += SNOWFLAKE_INTERVAL;
         }
-        // Weapon powerup bubble spawns regardless of Kid Mode — the rocket/
+        // Weapon powerup bubble spawns regardless of Casual Mode — the rocket/
         // mega/triple effects are all fun independent of the life system.
         if (!S.bubble && (now - S.startedAt) >= S.nextBubbleAt) {
           spawnPowerupBubble();
@@ -1244,6 +1338,7 @@
         for (var i = S.cubes.length - 1; i >= 0; i--) {
           var c = S.cubes[i];
           c.y += c.speed * dt;
+          if (S.cfg.blizzard) c.x = clamp(c.x + windAt(c.y) * dt, c.size / 2, W - c.size / 2);
           if (c.y - c.size / 2 > floorY) {
             S.cubes.splice(i, 1);
             spawnShatter(clamp(c.x, c.size, W - c.size), floorY, c.size);
@@ -1261,6 +1356,7 @@
         updateProjectiles(dt, now);
         updateBlasts(now);
         updateBgSpecks(dt);
+        if (S.cfg.blizzard) updateWind(now, dt);
       }
 
       var shakeX = 0, shakeY = 0;
@@ -1272,6 +1368,7 @@
       ctx.save();
       ctx.translate(shakeX, shakeY);
       drawBackground(now);
+      if (S.cfg.blizzard) drawWindStreaks();
       var eye = getEyePos();
       drawProjectiles(now);
       drawLoon(eye);
@@ -1292,8 +1389,11 @@
       S.running = false;
       stopBlizzardTheme();
       blizzardBanner.hidden = true;
+      S.accuracy = S.shotsFired > 0 ? S.shotsHit / S.shotsFired : 0;
       finalScoreEl.textContent = S.melted;
+      finalAccuracyEl.textContent = Math.round(S.accuracy * 100) + '%';
       boardInline.hidden = true;
+      boardInlineNote.hidden = true;
       submitError.textContent = '';
       initialInputs.forEach(function (inp) { inp.value = ''; });
       scoreSubmitBlock.hidden = S.cfg.kidMode;
@@ -1319,10 +1419,11 @@
       submitError.textContent = '';
       if (initials.length !== 3) { submitError.textContent = 'Enter 3 letters.'; return; }
       btn.setAttribute('disabled', 'disabled'); btn.textContent = 'Saving…';
+      var submitTier = S.cfg.blizzard ? (S.cfg.tier + '-blizzard') : S.cfg.tier;
       fetch(BASE + '/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initials: initials, tier: S.cfg.blizzard ? (S.cfg.tier + '-blizzard') : S.cfg.tier, score: S.melted, character: S.cfg.character })
+        body: JSON.stringify({ initials: initials, tier: submitTier, score: S.melted, accuracy: S.accuracy, character: S.cfg.character })
       })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
         .then(function (res) {
@@ -1332,7 +1433,9 @@
             return;
           }
           boardInline.hidden = false;
-          renderBoard(boardInline, res.data.board, res.data.board.length ? res.data.board[0].ts : null);
+          boardInlineNote.hidden = false;
+          boardInlineNote.textContent = SET_LABELS[S.cfg.blizzard ? 'blizzard' : 'normal'];
+          renderBoard(boardInline, sortBoard(res.data.board, 'score'), res.data.submittedTs);
           btn.textContent = 'Saved';
         })
         .catch(function () {
@@ -1344,7 +1447,6 @@
     mount.querySelector('[data-rl-restart]').addEventListener('click', function () {
       var btn = mount.querySelector('[data-rl-submit-score]');
       btn.removeAttribute('disabled'); btn.textContent = 'Save Score';
-      setModeLabel(rainbowToggleEl.checked);
       showScreen('start');
     });
 
