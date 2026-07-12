@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>KYR Scene Builder</title>
+<style>
+  :root{
+    --bg:#141416; --panel:#1c1c1f; --panel2:#232327; --line:#33333a;
+    --text:#e8e8ea; --dim:#9a9aa2; --accent:#c9302c; --accent2:#4a7fd6;
+    --ok:#3fa66a; --warn:#d69a3f; --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.4;}
+  header{position:sticky;top:0;z-index:50;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 12px;}
+  header h1{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin:0 0 8px;font-weight:600;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .field{display:flex;flex-direction:column;gap:2px;flex:1;min-width:110px;}
+  .field label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;}
+  input[type=text],input[type=number],input[type=password],textarea,select{
+    background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:7px 8px;border-radius:6px;font-size:14px;font-family:inherit;width:100%;
+  }
+  textarea{resize:vertical;min-height:36px;}
+  button{
+    background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:7px 11px;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;
+  }
+  button:hover{border-color:#555;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  button.secondary{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+  button.ghost{background:transparent;}
+  button.small{padding:4px 8px;font-size:12px;}
+  button.danger{color:#ff7a7a;}
+  .tabs{display:flex;gap:4px;margin-top:8px;}
+  .tab{padding:7px 12px;border-radius:6px 6px 0 0;background:var(--panel2);color:var(--dim);cursor:pointer;font-size:13px;border:1px solid var(--line);border-bottom:none;}
+  .tab.active{color:var(--text);background:var(--bg);font-weight:600;}
+  main{padding:14px 10px 120px;max-width:900px;margin:0 auto;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;}
+  .panel h2{font-size:14px;margin:0 0 10px;color:var(--text);}
+  .panel h3{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px;}
+  .hint{font-size:12px;color:var(--dim);margin:4px 0 10px;}
+  .grid-cards{display:flex;flex-direction:column;gap:0;}
+  .card-block{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:2px;overflow:hidden;}
+  .card-block.start{border-color:var(--ok);}
+  .card-block.end{border-color:var(--accent);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer;background:var(--panel2);}
+  .card-head .tag{font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:2px 6px;border-radius:4px;background:var(--line);color:var(--dim);margin-right:6px;}
+  .card-block.start .card-head .tag{background:var(--ok);color:#062;}
+  .card-block.end .card-head .tag{background:var(--accent);color:#fff;}
+  .card-id{font-family:var(--mono);font-size:13px;}
+  .card-summary{font-size:12px;color:var(--dim);margin-top:2px;}
+  .card-body{padding:12px;border-top:1px solid var(--line);display:none;}
+  .card-body.open{display:block;}
+  .insert-row{display:flex;justify-content:center;padding:4px 0;}
+  .insert-row button{font-size:11px;padding:3px 10px;border-radius:20px;color:var(--dim);}
+  .layer-item,.beat-block,.answer-block{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:6px;}
+  .layer-list{display:flex;flex-direction:column;gap:6px;}
+  .layer-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;touch-action:pan-y;}
+  .layer-row.dragging{opacity:.5;}
+  .layer-row .grip{cursor:grab;color:var(--dim);font-size:16px;user-select:none;padding:0 2px;}
+  .layer-row img{width:34px;height:30px;object-fit:cover;border-radius:3px;border:1px solid var(--line);background:#000;}
+  .layer-row .lbl{flex:1;font-size:13px;}
+  .layer-row input[type=checkbox]{width:18px;height:18px;}
+  .beat-block{border-left:3px solid var(--accent2);}
+  .beat-head{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .variant-row{display:flex;gap:6px;margin-bottom:4px;align-items:flex-start;}
+  .variant-row textarea{flex:1;}
+  .answer-block{border-left:3px solid var(--accent);}
+  .effects-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .meter-effect{display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:130px;}
+  .meter-effect .presets{display:flex;gap:3px;flex-wrap:wrap;}
+  .meter-effect .presets button{padding:2px 6px;font-size:10px;}
+  .credit-flag{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px;}
+  .thumb-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .thumb{width:84px;text-align:center;}
+  .thumb img{width:84px;height:76px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#000;display:block;}
+  .thumb input{margin-top:3px;font-size:11px;padding:4px;}
+  .thumb .thumb-id{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:2px;}
+  .thumb .del{margin-top:3px;}
+  .upload-btn{border:1px dashed #555;border-radius:6px;padding:10px;text-align:center;color:var(--dim);cursor:pointer;font-size:12px;}
+  .config-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;}
+  .config-row input[type=text]{flex:1;}
+  .config-row input[type=number]{width:70px;}
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);padding:8px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;z-index:60;}
+  #log{font-family:var(--mono);font-size:11px;color:var(--dim);max-height:70px;overflow-y:auto;background:#0e0e10;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:8px 0 0;white-space:pre-wrap;}
+  #log .err{color:#ff7a7a;} #log .ok{color:var(--ok);}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);display:inline-block;margin-right:5px;}
+  .status-dot.saved{background:var(--ok);}
+  #pat-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
+  #pat-modal.open{display:flex;}
+  #pat-modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;max-width:420px;width:100%;}
+  #pat-modal p{font-size:13px;color:var(--dim);}
+  .close-x{float:right;cursor:pointer;color:var(--dim);}
+  .empty-note{font-size:12px;color:var(--dim);font-style:italic;padding:8px 0;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Know Your Rights — Scene Builder</h1>
+  <div class="row">
+    <div class="field"><label>Scene slug</label><input type="text" id="sceneSlug" placeholder="know-your-rights-door"></div>
+    <div class="field"><label>Scene title</label><input type="text" id="sceneTitle" placeholder="The Door"></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-view="cards">Cards</div>
+    <div class="tab" data-view="settings">Scene Settings</div>
+  </div>
+</header>
+
+<main>
+  <!-- CARDS VIEW -->
+  <div class="view active" id="view-cards">
+    <div class="hint">Card list order is just an authoring convenience — actual flow is controlled by each answer's <b>goto</b> link. Start and End cards are required and can't be removed or reordered away from the ends.</div>
+    <div class="grid-cards" id="cardList"></div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div class="view" id="view-settings">
+    <div class="panel">
+      <h2>Layers</h2>
+      <div class="hint">Upload art per layer, or leave on the shared placeholder for now. Layers uploaded here become checkbox options on every card.</div>
+      <div class="thumb-grid" id="layerThumbs"></div>
+      <div class="upload-btn" id="addLayerBtn" style="margin-top:8px;">+ Add layer</div>
+      <input type="file" id="layerFileInput" accept="image/*" multiple style="display:none;">
+    </div>
+
+    <div class="panel">
+      <h2>NPCs</h2>
+      <div class="hint">Portraits + names used for the speaker select on each dialogue beat.</div>
+      <div class="thumb-grid" id="npcThumbs"></div>
+      <div class="upload-btn" id="addNpcBtn" style="margin-top:8px;">+ Add NPC</div>
+      <input type="file" id="npcFileInput" accept="image/*" multiple style="display:none;">
+    </div>
+
+    <div class="panel">
+      <h2>Effects</h2>
+      <div class="hint">These become the toggle/number options on every answer. Meters are numeric (e.g. detainment risk); credits are simple checkmarks for the result screen. Defaults are pre-seeded — edit or add your own.</div>
+      <h3>Meters</h3>
+      <div id="meterConfig"></div>
+      <button class="small ghost" id="addMeterBtn">+ Add meter</button>
+      <h3>Credit flags</h3>
+      <div id="creditConfig"></div>
+      <button class="small ghost" id="addCreditBtn">+ Add credit flag</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span><span class="status-dot" id="saveDot"></span><span id="saveLabel" style="font-size:11px;color:var(--dim);">not saved</span></span>
+  <button class="small" id="btnExport">Export JSON</button>
+  <button class="small" id="btnImport">Import JSON</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none;">
+  <button class="small secondary" id="btnPush">Push to GitHub</button>
+  <button class="small ghost" id="btnPat" style="margin-left:auto;">GitHub token</button>
+</footer>
+
+<div id="log"></div>
+
+<div id="pat-modal">
+  <div class="box">
+    <span class="close-x" id="patClose">✕</span>
+    <h2 style="font-size:14px;">GitHub token</h2>
+    <p>Paste a fine-grained PAT with Contents Read/Write on <b>munsdev/CTA</b>. Stored only in this browser's local storage — never sent anywhere but api.github.com.</p>
+    <input type="password" id="patInput" placeholder="github_pat_...">
+    <div class="row" style="margin-top:10px;">
+      <button class="primary small" id="patSave">Save</button>
+      <button class="small ghost danger" id="patClear">Clear stored token</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+const REPO = "munsdev/CTA";
+const BASE_PATH = "games/know-your-rights";
+const LAYER_DIR = BASE_PATH + "/layers";
+const NPC_DIR = BASE_PATH + "/npcs";
+const SCENES_PATH = BASE_PATH + "/scenes.json";
+const PLACEHOLDER_FILE = "_placeholder.png";
+const LS_KEY = "kyr_builder_state_v1";
+const LS_PAT = "kyr_builder_pat_v1";
+
+function uid(prefix){ return prefix + "-" + Math.random().toString(36).slice(2,7); }
+function log(msg, cls){
+  const el = document.getElementById("log");
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  const t = new Date().toLocaleTimeString();
+  line.textContent = "[" + t + "] " + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ---------------------------------------------------------------------------
+// Default state
+// ---------------------------------------------------------------------------
+function defaultEffects(){
+  return {
+    meters: [
+      { key:"detain", label:"Detainment Risk", max:100, fatalAt:100,
+        presets:[
+          {label:"Hold",value:0}, {label:"Soft",value:5}, {label:"Harmful",value:15},
+          {label:"Severe",value:40}, {label:"Fatal",value:100}
+        ]
+      }
+    ],
+    credits: [
+      { key:"judge", label:"Asked for a judge's signature" },
+      { key:"badge", label:"Asked to see ID / badge" },
+      { key:"silent", label:"Invoked right to remain silent" },
+      { key:"record", label:"Recorded the interaction" },
+      { key:"closed", label:"Kept the door closed" }
+    ]
+  };
+}
+
+function defaultState(){
+  return {
+    slug: "", title: "",
+    layers: [],
+    npcs: [],
+    effects: defaultEffects(),
+    cards: [
+      { id:"start", type:"start", layers:[], responses:[], answers:[
+        { id: uid("ans"), text:"Begin", goto:null, effects:{ meters:{}, credits:{} } }
+      ]},
+      { id:"end", type:"end", layers:[], responses:[], answers:[] }
+    ]
+  };
+}
+
+let state = loadLocal() || defaultState();
+
+// ---------------------------------------------------------------------------
+// Persistence (autosave to localStorage)
+// ---------------------------------------------------------------------------
+function saveLocal(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    document.getElementById("saveDot").classList.add("saved");
+    document.getElementById("saveLabel").textContent = "saved locally " + new Date().toLocaleTimeString();
+  }catch(e){
+    log("Local autosave failed: " + e.message, "err");
+  }
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+let saveTimer = null;
+function touch(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveLocal, 300);
+  render();
+}
+
+// ---------------------------------------------------------------------------
+// Tabs
+// ---------------------------------------------------------------------------
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("view-" + tab.dataset.view).classList.add("active");
+  });
+});
+
+document.getElementById("sceneSlug").addEventListener("input", e=>{ state.slug = e.target.value; touch(); });
+document.getElementById("sceneTitle").addEventListener("input", e=>{ state.title = e.target.value; touch(); });
+
+// ---------------------------------------------------------------------------
+// File -> base64 helper
+// ---------------------------------------------------------------------------
+function fileToDataUrl(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = ()=>rej(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+function slugifyFilename(name){
+  return name.toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+}
+
+// ---------------------------------------------------------------------------
+// Layers & NPCs (Scene Settings)
+// ---------------------------------------------------------------------------
+document.getElementById("addLayerBtn").addEventListener("click", ()=>document.getElementById("layerFileInput").click());
+document.getElementById("addNpcBtn").addEventListener("click", ()=>document.getElementById("npcFileInput").click());
+
+document.getElementById("layerFileInput").addEventListener("change", async e=>{
+  for (const file of e.target.files){
+    const dataUrl = await fileToDataUrl(file);
+    const id = slugifyFilename(file.name) || uid("layer");
+    state.layers.push({ id, label: file.name.replace(/\.[^.]+$/,""), file: id + ".png", dataUrl, dirty:true, placeholder:false });
+  }
+  e.target.value = "";
+  touch();
+});
+document.getElementById("npcFileInput").addEventListener("change", async e=>{
+  for (const file of e.target.files){
+    const dataUrl = await fileToDataUrl(file);
+    const id = slugifyFilename(file.name) || uid("npc");
+    state.npcs.push({ id, label: file.name.replace(/\.[^.]+$/,""), file: id + ".png", dataUrl, dirty:true, placeholder:false });
+  }
+  e.target.value = "";
+  touch();
+});
+
+function addPlaceholderLayer(){
+  const id = uid("layer");
+  state.layers.push({ id, label:"New layer", file: PLACEHOLDER_FILE, dataUrl:null, dirty:false, placeholder:true });
+  touch();
+}
+
+function renderThumbs(containerId, list, kind){
+  const c = document.getElementById(containerId);
+  c.innerHTML = "";
+  list.forEach((item, idx)=>{
+    const div = document.createElement("div");
+    div.className = "thumb";
+    const imgSrc = item.dataUrl || ("https://raw.githubusercontent.com/" + REPO + "/main/" + (kind==="layer"?LAYER_DIR:NPC_DIR) + "/" + item.file);
+    div.innerHTML = `
+      <img src="${imgSrc}" onerror="this.style.opacity=.2">
+      <input type="text" value="${escapeAttr(item.label)}" data-idx="${idx}" class="lbl-input">
+      <div class="thumb-id">${item.id}${item.placeholder?" · placeholder":""}</div>
+      <button class="small danger del" data-idx="${idx}">remove</button>
+    `;
+    c.appendChild(div);
+  });
+  // placeholder "add empty" tile for layers only
+  if (kind === "layer"){
+    const div = document.createElement("div");
+    div.className = "thumb";
+    div.innerHTML = `<div class="upload-btn" style="height:76px;display:flex;align-items:center;justify-content:center;">+ placeholder<br>layer</div>`;
+    div.querySelector(".upload-btn").addEventListener("click", addPlaceholderLayer);
+    c.appendChild(div);
+  }
+  c.querySelectorAll(".lbl-input").forEach(inp=>{
+    inp.addEventListener("input", e=>{
+      list[+e.target.dataset.idx].label = e.target.value;
+      touch();
+    });
+  });
+  c.querySelectorAll(".del").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.target.dataset.idx;
+      const removed = list[idx];
+      if (!confirm("Remove '" + removed.label + "'? Cards referencing it will just drop the reference.")) return;
+      list.splice(idx,1);
+      // scrub references
+      state.cards.forEach(c=>{ c.layers = c.layers.filter(l=>l!==removed.id); });
+      touch();
+    });
+  });
+}
+function escapeAttr(s){ return String(s||"").replace(/"/g,"&quot;"); }
+function escapeHtml(s){ return String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// ---------------------------------------------------------------------------
+// Effects config
+// ---------------------------------------------------------------------------
+function renderMeterConfig(){
+  const c = document.getElementById("meterConfig");
+  c.innerHTML = "";
+  state.effects.meters.forEach((m, idx)=>{
+    const row = document.createElement("div");
+    row.className = "config-row";
+    row.innerHTML = `
+      <input type="text" class="m-label" data-idx="${idx}" value="${escapeAttr(m.label)}" placeholder="Label">
+      <input type="text" class="m-key" data-idx="${idx}" value="${escapeAttr(m.key)}" placeholder="key" style="width:90px;font-family:monospace;">
+      <input type="number" class="m-fatal" data-idx="${idx}" value="${m.fatalAt}" title="Fatal threshold" style="width:70px;">
+      <button class="small danger m-del" data-idx="${idx}">✕</button>
+    `;
+    c.appendChild(row);
+  });
+  c.querySelectorAll(".m-label").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].label = e.target.value; touch(); }));
+  c.querySelectorAll(".m-key").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].key = e.target.value; touch(); }));
+  c.querySelectorAll(".m-fatal").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].fatalAt = +e.target.value; touch(); }));
+  c.querySelectorAll(".m-del").forEach(b=>b.addEventListener("click", e=>{ state.effects.meters.splice(+e.target.dataset.idx,1); touch(); }));
+}
+function renderCreditConfig(){
+  const c = document.getElementById("creditConfig");
+  c.innerHTML = "";
+  state.effects.credits.forEach((cr, idx)=>{
+    const row = document.createElement("div");
+    row.className = "config-row";
+    row.innerHTML = `
+      <input type="text" class="c-label" data-idx="${idx}" value="${escapeAttr(cr.label)}" placeholder="Label">
+      <input type="text" class="c-key" data-idx="${idx}" value="${escapeAttr(cr.key)}" placeholder="key" style="width:90px;font-family:monospace;">
+      <button class="small danger c-del" data-idx="${idx}">✕</button>
+    `;
+    c.appendChild(row);
+  });
+  c.querySelectorAll(".c-label").forEach(i=>i.addEventListener("input", e=>{ state.effects.credits[+e.target.dataset.idx].label = e.target.value; touch(); }));
+  c.querySelectorAll(".c-key").forEach(i=>i.addEventListener("input", e=>{ state.effects.credits[+e.target.dataset.idx].key = e.target.value; touch(); }));
+  c.querySelectorAll(".c-del").forEach(b=>b.addEventListener("click", e=>{ state.effects.credits.splice(+e.target.dataset.idx,1); touch(); }));
+}
+document.getElementById("addMeterBtn").addEventListener("click", ()=>{
+  state.effects.meters.push({ key:"new_meter", label:"New meter", max:100, fatalAt:100, presets:[{label:"Hold",value:0},{label:"Soft",value:5},{label:"Harmful",value:15},{label:"Severe",value:40},{label:"Fatal",value:100}] });
+  touch();
+});
+document.getElementById("addCreditBtn").addEventListener("click", ()=>{
+  state.effects.credits.push({ key:"new_credit", label:"New credit flag" });
+  touch();
+});
+
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+let openCardIds = new Set(["start"]);
+
+function newCard(){
+  return { id: uid("card"), type:"normal", layers:[], responses:[], answers:[] };
+}
+function newBeat(){
+  return { speaker: state.npcs[0] ? state.npcs[0].id : null, texts:[""], variantMode:"sequence" };
+}
+function newAnswer(){
+  return { id: uid("ans"), text:"", goto:null, effects:{ meters:{}, credits:{} } };
+}
+
+function cardLabel(card){
+  if (card.type === "start") return "START";
+  if (card.type === "end") return "END";
+  const firstText = (card.responses[0] && card.responses[0].texts[0]) ? card.responses[0].texts[0] : "(no dialogue yet)";
+  return firstText.slice(0,40) + (firstText.length>40 ? "…" : "");
+}
+
+function insertCardAt(index){
+  const c = newCard();
+  state.cards.splice(index, 0, c);
+  openCardIds.add(c.id);
+  touch();
+}
+
+function renderCardList(){
+  const wrap = document.getElementById("cardList");
+  wrap.innerHTML = "";
+  state.cards.forEach((card, idx)=>{
+    // insert-between button before this card (skip before "start")
+    if (idx > 0){
+      const insertRow = document.createElement("div");
+      insertRow.className = "insert-row";
+      const btn = document.createElement("button");
+      btn.textContent = "+ insert card here";
+      btn.addEventListener("click", ()=>insertCardAt(idx));
+      insertRow.appendChild(btn);
+      wrap.appendChild(insertRow);
+    }
+    wrap.appendChild(renderCardBlock(card, idx));
+  });
+}
+
+function renderCardBlock(card, idx){
+  const block = document.createElement("div");
+  block.className = "card-block " + (card.type === "start" ? "start" : card.type === "end" ? "end" : "");
+
+  const head = document.createElement("div");
+  head.className = "card-head";
+  head.innerHTML = `
+    <div>
+      <span class="tag">${card.type}</span><span class="card-id">${card.id}</span>
+      <div class="card-summary">${escapeHtml(cardLabel(card))} · ${card.answers.length} answer${card.answers.length!==1?"s":""}</div>
+    </div>
+    <div>${openCardIds.has(card.id) ? "▲" : "▼"}</div>
+  `;
+  head.addEventListener("click", ()=>{
+    if (openCardIds.has(card.id)) openCardIds.delete(card.id); else openCardIds.add(card.id);
+    render();
+  });
+  block.appendChild(head);
+
+  const body = document.createElement("div");
+  body.className = "card-body" + (openCardIds.has(card.id) ? " open" : "");
+
+  // --- card id editor (not for start/end) ---
+  if (card.type === "normal"){
+    const idRow = document.createElement("div");
+    idRow.className = "row";
+    idRow.style.marginBottom = "8px";
+    idRow.innerHTML = `
+      <div class="field"><label>Card ID</label><input type="text" class="card-id-input" value="${escapeAttr(card.id)}"></div>
+      <button class="small danger delete-card">Delete card</button>
+    `;
+    idRow.querySelector(".card-id-input").addEventListener("change", e=>{
+      const newId = e.target.value.trim().replace(/\s+/g,"-");
+      if (!newId) return;
+      if (state.cards.some(c=>c!==card && c.id===newId)){ alert("That card ID is already in use."); e.target.value = card.id; return; }
+      const oldId = card.id;
+      card.id = newId;
+      // update any goto pointers
+      state.cards.forEach(c=>c.answers.forEach(a=>{ if (a.goto === oldId) a.goto = newId; }));
+      openCardIds.delete(oldId); openCardIds.add(newId);
+      touch();
+    });
+    idRow.querySelector(".delete-card").addEventListener("click", ()=>{
+      if (!confirm("Delete card '" + card.id + "'? Answers pointing to it will be cleared.")) return;
+      state.cards.forEach(c=>c.answers.forEach(a=>{ if (a.goto === card.id) a.goto = null; }));
+      state.cards = state.cards.filter(c=>c!==card);
+      touch();
+    });
+    body.appendChild(idRow);
+  }
+
+  // --- layers checklist (draggable) ---
+  const layerSection = document.createElement("div");
+  layerSection.innerHTML = `<h3>Layers shown on this card</h3>`;
+  const layerList = document.createElement("div");
+  layerList.className = "layer-list";
+  if (state.layers.length === 0){
+    layerList.innerHTML = `<div class="empty-note">No layers uploaded yet — add some in Scene Settings.</div>`;
+  } else {
+    // order: card.layers first (in their order), then remaining unchecked layers in scene order
+    const orderedIds = [...card.layers, ...state.layers.map(l=>l.id).filter(id=>!card.layers.includes(id))];
+    orderedIds.forEach(layerId=>{
+      const layer = state.layers.find(l=>l.id===layerId);
+      if (!layer) return;
+      const checked = card.layers.includes(layerId);
+      const row = document.createElement("div");
+      row.className = "layer-row";
+      row.dataset.layerId = layerId;
+      const imgSrc = layer.dataUrl || ("https://raw.githubusercontent.com/" + REPO + "/main/" + LAYER_DIR + "/" + layer.file);
+      row.innerHTML = `
+        <span class="grip">⠿</span>
+        <img src="${imgSrc}" onerror="this.style.opacity=.2">
+        <span class="lbl">${escapeHtml(layer.label)}</span>
+        <input type="checkbox" ${checked?"checked":""}>
+      `;
+      row.querySelector('input[type=checkbox]').addEventListener("change", e=>{
+        if (e.target.checked){ if (!card.layers.includes(layerId)) card.layers.push(layerId); }
+        else { card.layers = card.layers.filter(id=>id!==layerId); }
+        touch();
+      });
+      layerList.appendChild(row);
+    });
+    makeSortable(layerList, ()=>{
+      const newOrder = [...layerList.querySelectorAll(".layer-row")].map(r=>r.dataset.layerId);
+      // preserve only checked ones, in new order
+      card.layers = newOrder.filter(id=>card.layers.includes(id));
+      touch();
+    });
+  }
+  layerSection.appendChild(layerList);
+  body.appendChild(layerSection);
+
+  // --- responses (NPC dialogue beats) ---
+  const respSection = document.createElement("div");
+  respSection.innerHTML = `<h3>NPC dialogue (plays in order, tap to advance)</h3>`;
+  card.responses.forEach((beat, bIdx)=>{
+    respSection.appendChild(renderBeat(card, beat, bIdx));
+  });
+  const addBeatBtn = document.createElement("button");
+  addBeatBtn.className = "small ghost";
+  addBeatBtn.textContent = "+ Add dialogue beat";
+  addBeatBtn.addEventListener("click", ()=>{ card.responses.push(newBeat()); touch(); });
+  respSection.appendChild(addBeatBtn);
+  body.appendChild(respSection);
+
+  // --- answers ---
+  const ansSection = document.createElement("div");
+  ansSection.innerHTML = `<h3>Answers${card.type==="end" ? " (end cards have none)" : ""}</h3>`;
+  if (card.type !== "end"){
+    card.answers.forEach((ans, aIdx)=>{
+      ansSection.appendChild(renderAnswer(card, ans, aIdx));
+    });
+    const addAnsBtn = document.createElement("button");
+    addAnsBtn.className = "small ghost";
+    addAnsBtn.textContent = "+ Add answer";
+    addAnsBtn.addEventListener("click", ()=>{ card.answers.push(newAnswer()); touch(); });
+    ansSection.appendChild(addAnsBtn);
+  }
+  body.appendChild(ansSection);
+
+  block.appendChild(body);
+  return block;
+}
+
+function renderBeat(card, beat, bIdx){
+  const b = document.createElement("div");
+  b.className = "beat-block";
+  const head = document.createElement("div");
+  head.className = "beat-head";
+  const npcOptions = state.npcs.map(n=>`<option value="${n.id}" ${beat.speaker===n.id?"selected":""}>${escapeHtml(n.label)}</option>`).join("");
+  head.innerHTML = `
+    <select class="beat-speaker">${npcOptions || '<option value="">(no NPCs yet)</option>'}</select>
+    <span style="flex:1;font-size:11px;color:var(--dim);">beat ${bIdx+1}</span>
+    <button class="small ghost beat-up">↑</button>
+    <button class="small ghost beat-down">↓</button>
+    <button class="small danger beat-del">✕</button>
+  `;
+  head.querySelector(".beat-speaker").addEventListener("change", e=>{ beat.speaker = e.target.value; touch(); });
+  head.querySelector(".beat-up").addEventListener("click", ()=>{
+    const i = card.responses.indexOf(beat); if (i>0){ card.responses.splice(i,1); card.responses.splice(i-1,0,beat); touch(); }
+  });
+  head.querySelector(".beat-down").addEventListener("click", ()=>{
+    const i = card.responses.indexOf(beat); if (i<card.responses.length-1){ card.responses.splice(i,1); card.responses.splice(i+1,0,beat); touch(); }
+  });
+  head.querySelector(".beat-del").addEventListener("click", ()=>{ card.responses = card.responses.filter(x=>x!==beat); touch(); });
+  b.appendChild(head);
+
+  beat.texts.forEach((txt, tIdx)=>{
+    const vrow = document.createElement("div");
+    vrow.className = "variant-row";
+    vrow.innerHTML = `
+      <textarea rows="2" placeholder="What the NPC says...">${escapeHtml(txt)}</textarea>
+      <button class="small danger v-del" ${beat.texts.length<=1?"disabled":""}>✕</button>
+    `;
+    vrow.querySelector("textarea").addEventListener("input", e=>{ beat.texts[tIdx] = e.target.value; touch(); });
+    vrow.querySelector(".v-del").addEventListener("click", ()=>{ if (beat.texts.length>1){ beat.texts.splice(tIdx,1); touch(); } });
+    b.appendChild(vrow);
+  });
+
+  const vFooter = document.createElement("div");
+  vFooter.className = "row";
+  vFooter.innerHTML = `
+    <button class="small ghost v-add">+ variant phrasing</button>
+    ${beat.texts.length>1 ? `
+      <select class="v-mode" style="width:auto;">
+        <option value="sequence" ${beat.variantMode==="sequence"?"selected":""}>cycle in order</option>
+        <option value="random" ${beat.variantMode==="random"?"selected":""}>pick at random</option>
+      </select>` : ""}
+  `;
+  vFooter.querySelector(".v-add").addEventListener("click", ()=>{ beat.texts.push(""); touch(); });
+  const modeSel = vFooter.querySelector(".v-mode");
+  if (modeSel) modeSel.addEventListener("change", e=>{ beat.variantMode = e.target.value; touch(); });
+  b.appendChild(vFooter);
+
+  return b;
+}
+
+function renderAnswer(card, ans, aIdx){
+  const b = document.createElement("div");
+  b.className = "answer-block";
+
+  const gotoOptions = state.cards
+    .filter(c=>c.type!=="start")
+    .map(c=>`<option value="${c.id}" ${ans.goto===c.id?"selected":""}>${c.id === card.id ? "(self) " : ""}${c.id} — ${escapeHtml(cardLabel(c)).slice(0,24)}</option>`)
+    .join("");
+
+  b.innerHTML = `
+    <div class="row">
+      <textarea rows="2" placeholder="Answer text..." style="flex:2;" class="ans-text">${escapeHtml(ans.text)}</textarea>
+      <div class="field" style="flex:1;min-width:150px;">
+        <label>Goto card</label>
+        <select class="ans-goto"><option value="">— none —</option>${gotoOptions}</select>
+      </div>
+      <button class="small danger ans-del">✕</button>
+    </div>
+  `;
+  b.querySelector(".ans-text").addEventListener("input", e=>{ ans.text = e.target.value; touch(); });
+  b.querySelector(".ans-goto").addEventListener("change", e=>{ ans.goto = e.target.value || null; touch(); });
+  b.querySelector(".ans-del").addEventListener("click", ()=>{ card.answers = card.answers.filter(x=>x!==ans); touch(); });
+
+  const eff = document.createElement("div");
+  eff.className = "effects-row";
+  state.effects.meters.forEach(m=>{
+    const val = ans.effects.meters[m.key] ?? 0;
+    const wrap = document.createElement("div");
+    wrap.className = "meter-effect";
+    wrap.innerHTML = `
+      <label style="font-size:11px;color:var(--dim);">${escapeHtml(m.label)}</label>
+      <input type="number" class="meter-input" value="${val}">
+      <div class="presets">${m.presets.map(p=>`<button type="button" data-v="${p.value}">${escapeHtml(p.label)}</button>`).join("")}</div>
+    `;
+    wrap.querySelector(".meter-input").addEventListener("input", e=>{ ans.effects.meters[m.key] = Number(e.target.value)||0; touch(); });
+    wrap.querySelectorAll(".presets button").forEach(pb=>{
+      pb.addEventListener("click", ()=>{ ans.effects.meters[m.key] = Number(pb.dataset.v); render(); saveLocal(); });
+    });
+    eff.appendChild(wrap);
+  });
+  state.effects.credits.forEach(cr=>{
+    const checked = !!ans.effects.credits[cr.key];
+    const wrap = document.createElement("label");
+    wrap.className = "credit-flag";
+    wrap.innerHTML = `<input type="checkbox" ${checked?"checked":""}> ${escapeHtml(cr.label)}`;
+    wrap.querySelector("input").addEventListener("change", e=>{ ans.effects.credits[cr.key] = e.target.checked; touch(); });
+    eff.appendChild(wrap);
+  });
+  b.appendChild(eff);
+
+  return b;
+}
+
+// ---------------------------------------------------------------------------
+// Generic pointer-based sortable list (touch + mouse)
+// ---------------------------------------------------------------------------
+function makeSortable(listEl, onReorder){
+  let dragEl = null, startY = 0, placeholder = null;
+  listEl.querySelectorAll(".grip").forEach(grip=>{
+    grip.addEventListener("pointerdown", e=>{
+      e.preventDefault();
+      dragEl = grip.closest(".layer-row");
+      dragEl.classList.add("dragging");
+      placeholder = document.createElement("div");
+      placeholder.style.height = dragEl.offsetHeight + "px";
+      placeholder.style.border = "1px dashed #555";
+      placeholder.style.borderRadius = "6px";
+      dragEl.after(placeholder);
+      startY = e.clientY;
+      const onMove = ev=>{
+        const y = ev.clientY;
+        const rows = [...listEl.querySelectorAll(".layer-row:not(.dragging)")];
+        let target = null;
+        for (const r of rows){
+          const rect = r.getBoundingClientRect();
+          if (y < rect.top + rect.height/2){ target = r; break; }
+        }
+        if (target) listEl.insertBefore(placeholder, target);
+        else listEl.appendChild(placeholder);
+        dragEl.style.position = "relative";
+        dragEl.style.top = (y - startY) + "px";
+      };
+      const onUp = ()=>{
+        placeholder.replaceWith(dragEl);
+        dragEl.classList.remove("dragging");
+        dragEl.style.position = ""; dragEl.style.top = "";
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        onReorder();
+      };
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function render(){
+  document.getElementById("sceneSlug").value = state.slug;
+  document.getElementById("sceneTitle").value = state.title;
+  renderThumbs("layerThumbs", state.layers, "layer");
+  renderThumbs("npcThumbs", state.npcs, "npc");
+  renderMeterConfig();
+  renderCreditConfig();
+  renderCardList();
+}
+render();
+
+// ---------------------------------------------------------------------------
+// Export / Import
+// ---------------------------------------------------------------------------
+function buildExportJson(){
+  const clean = JSON.parse(JSON.stringify(state));
+  // strip dataUrls from export — those are local-only previews
+  clean.layers.forEach(l=>{ delete l.dataUrl; delete l.dirty; });
+  clean.npcs.forEach(n=>{ delete n.dataUrl; delete n.dirty; });
+  return clean;
+}
+
+document.getElementById("btnExport").addEventListener("click", ()=>{
+  const data = buildExportJson();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = (state.slug || "scene") + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  log("Exported " + a.download, "ok");
+});
+
+document.getElementById("btnImport").addEventListener("click", ()=>document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", async e=>{
+  const file = e.target.files[0];
+  if (!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.cards || !Array.isArray(data.cards)) throw new Error("missing cards array");
+    // merge: keep existing dataUrls if ids match (so previews don't vanish), else null
+    data.layers = (data.layers||[]).map(l=>{
+      const existing = state.layers.find(x=>x.id===l.id);
+      return { ...l, dataUrl: existing ? existing.dataUrl : null, dirty:false };
+    });
+    data.npcs = (data.npcs||[]).map(n=>{
+      const existing = state.npcs.find(x=>x.id===n.id);
+      return { ...n, dataUrl: existing ? existing.dataUrl : null, dirty:false };
+    });
+    if (!data.effects) data.effects = defaultEffects();
+    state = data;
+    openCardIds = new Set(["start"]);
+    touch();
+    log("Imported " + file.name, "ok");
+  }catch(err){
+    log("Import failed: " + err.message, "err");
+    alert("Import failed: " + err.message);
+  }
+  e.target.value = "";
+});
+
+// ---------------------------------------------------------------------------
+// GitHub PAT modal
+// ---------------------------------------------------------------------------
+function getPat(){ return localStorage.getItem(LS_PAT) || ""; }
+document.getElementById("btnPat").addEventListener("click", ()=>{
+  document.getElementById("patInput").value = getPat();
+  document.getElementById("pat-modal").classList.add("open");
+});
+document.getElementById("patClose").addEventListener("click", ()=>document.getElementById("pat-modal").classList.remove("open"));
+document.getElementById("patSave").addEventListener("click", ()=>{
+  const v = document.getElementById("patInput").value.trim();
+  if (v) localStorage.setItem(LS_PAT, v);
+  document.getElementById("pat-modal").classList.remove("open");
+  log("GitHub token saved to this browser.", "ok");
+});
+document.getElementById("patClear").addEventListener("click", ()=>{
+  localStorage.removeItem(LS_PAT);
+  document.getElementById("patInput").value = "";
+  log("GitHub token cleared.", "ok");
+});
+
+// ---------------------------------------------------------------------------
+// GitHub push
+// ---------------------------------------------------------------------------
+async function ghGetSha(path){
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+    headers: { "Authorization": "Bearer " + getPat(), "Accept": "application/vnd.github+json" }
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("GET " + path + " -> " + res.status);
+  const data = await res.json();
+  return data.sha;
+}
+async function ghPut(path, base64Content, message){
+  const sha = await ghGetSha(path);
+  const body = { message, content: base64Content, branch: "main" };
+  if (sha) body.sha = sha;
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": "Bearer " + getPat(),
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok){
+    const errText = await res.text();
+    throw new Error("PUT " + path + " -> " + res.status + " " + errText.slice(0,200));
+  }
+  return res.json();
+}
+function stripDataUrlPrefix(dataUrl){
+  return dataUrl.split(",")[1];
+}
+
+document.getElementById("btnPush").addEventListener("click", async ()=>{
+  if (!getPat()){
+    alert("Add a GitHub token first (bottom right button).");
+    document.getElementById("pat-modal").classList.add("open");
+    return;
+  }
+  if (!state.slug){ alert("Set a scene slug first."); return; }
+  const btn = document.getElementById("btnPush");
+  btn.disabled = true; btn.textContent = "Pushing…";
+  try{
+    // push dirty layer images
+    for (const l of state.layers){
+      if (l.dirty && l.dataUrl){
+        log("Uploading layer " + l.file + "...");
+        await ghPut(LAYER_DIR + "/" + l.file, stripDataUrlPrefix(l.dataUrl), "KYR builder: upload layer " + l.file);
+        l.dirty = false;
+        log("Uploaded " + l.file, "ok");
+      }
+    }
+    // push dirty npc images
+    for (const n of state.npcs){
+      if (n.dirty && n.dataUrl){
+        log("Uploading NPC " + n.file + "...");
+        await ghPut(NPC_DIR + "/" + n.file, stripDataUrlPrefix(n.dataUrl), "KYR builder: upload npc " + n.file);
+        n.dirty = false;
+        log("Uploaded " + n.file, "ok");
+      }
+    }
+    // push scenes.json (multi-scene file: keyed by slug, so multiple scenes can coexist)
+    log("Fetching current scenes.json...");
+    let sceneCollection = {};
+    let existingSha = null;
+    const shaCheck = await ghGetSha(SCENES_PATH);
+    if (shaCheck){
+      existingSha = shaCheck;
+      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${SCENES_PATH}`, {
+        headers: { "Authorization": "Bearer " + getPat(), "Accept": "application/vnd.github+json" }
+      });
+      const data = await res.json();
+      try{ sceneCollection = JSON.parse(atob(data.content.replace(/\n/g,""))); }catch(e){ sceneCollection = {}; }
+    }
+    sceneCollection[state.slug] = buildExportJson();
+    const jsonStr = JSON.stringify(sceneCollection, null, 2);
+    const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+    await ghPut(SCENES_PATH, b64, "KYR builder: update scene '" + state.slug + "'");
+    log("Pushed scenes.json (scene: " + state.slug + ")", "ok");
+    saveLocal();
+    render();
+    alert("Pushed to GitHub: " + REPO + "/" + SCENES_PATH);
+  }catch(err){
+    log("Push failed: " + err.message, "err");
+    alert("Push failed — see log at bottom of page.\n\n" + err.message);
+  }finally{
+    btn.disabled = false; btn.textContent = "Push to GitHub";
+  }
+});
+
+log("Builder ready.");
+})();
+</script>
+</body>
+</html>
