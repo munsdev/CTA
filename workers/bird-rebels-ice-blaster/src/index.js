@@ -130,6 +130,10 @@ async function postLeaderboard(request, env) {
     return json({ error: 'invalid score' }, 400);
   }
 
+  let accuracy = Number(body && body.accuracy);
+  if (!Number.isFinite(accuracy)) accuracy = 0;
+  accuracy = Math.max(0, Math.min(1, accuracy));
+
   const key = 'board:' + tier;
   // Simple read-modify-write. KV is eventually consistent globally, but for a
   // low-traffic minigame leaderboard this is more than good enough — worst
@@ -137,12 +141,13 @@ async function postLeaderboard(request, env) {
   // corrupted board.
   const raw = await env.LEADERBOARD.get(key);
   const arr = raw ? JSON.parse(raw) : [];
-  arr.push({ initials: normalized, character, score, ts: Date.now() });
+  const submittedTs = Date.now();
+  arr.push({ initials: normalized, character, score, accuracy, ts: submittedTs });
   arr.sort((a, b) => b.score - a.score);
   const top = arr.slice(0, LB_MAX);
   await env.LEADERBOARD.put(key, JSON.stringify(top));
 
-  return json({ ok: true, board: top });
+  return json({ ok: true, board: top, submittedTs });
 }
 
 // ---------------------------------------------------------------------------
