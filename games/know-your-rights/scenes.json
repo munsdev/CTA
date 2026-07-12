@@ -1,0 +1,485 @@
+{
+  "dummy-scene-one": {
+    "slug": "dummy-scene-one",
+    "title": "Dummy Scene One (placeholder)",
+    "active": false,
+    "layers": [],
+    "npcs": [
+      {
+        "id": "npc-placeholder-1",
+        "label": "Officer (placeholder)",
+        "file": null,
+        "noImage": true
+      }
+    ],
+    "effects": {
+      "meters": [
+        {
+          "key": "detain",
+          "label": "Detainment Risk",
+          "max": 100,
+          "fatalAt": 100,
+          "presets": [
+            {
+              "label": "Hold",
+              "value": 0
+            },
+            {
+              "label": "Soft",
+              "value": 5
+            },
+            {
+              "label": "Harmful",
+              "value": 15
+            },
+            {
+              "label": "Severe",
+              "value": 40
+            },
+            {
+              "label": "Fatal",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "credits": [
+        {
+          "key": "judge",
+          "label": "Asked for a judge's signature"
+        },
+        {
+          "key": "badge",
+          "label": "Asked to see ID / badge"
+        },
+        {
+          "key": "silent",
+          "label": "Invoked right to remain silent"
+        },
+        {
+          "key": "record",
+          "label": "Recorded the interaction"
+        },
+        {
+          "key": "closed",
+          "label": "Kept the door closed"
+        }
+      ]
+    },
+    "cards": [
+      {
+        "id": "start",
+        "type": "start",
+        "layers": [],
+        "responses": [],
+        "answers": [
+          {
+            "id": "ans-begin",
+            "text": "Begin",
+            "goto": "card-1",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-1",
+        "type": "normal",
+        "layers": [],
+        "responses": [
+          {
+            "speaker": "npc-placeholder-1",
+            "texts": [
+              "PLACEHOLDER \u2014 first line of dialogue goes here."
+            ],
+            "variantMode": "sequence"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-placeh",
+            "text": "Placeholder answer A",
+            "goto": "card-2",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            }
+          },
+          {
+            "id": "ans-placeh",
+            "text": "Placeholder answer B",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 15
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-2",
+        "type": "normal",
+        "layers": [],
+        "responses": [
+          {
+            "speaker": "npc-placeholder-1",
+            "texts": [
+              "PLACEHOLDER \u2014 second beat, reacts to answer A."
+            ],
+            "variantMode": "sequence"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-wrap-i",
+            "text": "Wrap it up",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 5
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "layers": [],
+        "responses": [],
+        "answers": []
+      }
+    ]
+  },
+  "dummy-scene-two": {
+    "slug": "dummy-scene-two",
+    "title": "Dummy Scene Two (placeholder)",
+    "active": false,
+    "layers": [],
+    "npcs": [
+      {
+        "id": "npc-placeholder-2",
+        "label": "Landlord (placeholder)",
+        "file": null,
+        "noImage": true
+      }
+    ],
+    "effects": {
+      "meters": [
+        {
+          "key": "detain",
+          "label": "Detainment Risk",
+          "max": 100,
+          "fatalAt": 100,
+          "presets": [
+            {
+              "label": "Hold",
+              "value": 0
+            },
+            {
+              "label": "Soft",
+              "value": 5
+            },
+            {
+              "label": "Harmful",
+              "value": 15
+            },
+            {
+              "label": "Severe",
+              "value": 40
+            },
+            {
+              "label": "Fatal",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "credits": [
+        {
+          "key": "judge",
+          "label": "Asked for a judge's signature"
+        },
+        {
+          "key": "badge",
+          "label": "Asked to see ID / badge"
+        },
+        {
+          "key": "silent",
+          "label": "Invoked right to remain silent"
+        },
+        {
+          "key": "record",
+          "label": "Recorded the interaction"
+        },
+        {
+          "key": "closed",
+          "label": "Kept the door closed"
+        }
+      ]
+    },
+    "cards": [
+      {
+        "id": "start",
+        "type": "start",
+        "layers": [],
+        "responses": [],
+        "answers": [
+          {
+            "id": "ans-begin",
+            "text": "Begin",
+            "goto": "card-1",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-1",
+        "type": "normal",
+        "layers": [],
+        "responses": [
+          {
+            "speaker": "npc-placeholder-2",
+            "texts": [
+              "PLACEHOLDER \u2014 first line of dialogue goes here."
+            ],
+            "variantMode": "sequence"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-placeh",
+            "text": "Placeholder answer A",
+            "goto": "card-2",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            }
+          },
+          {
+            "id": "ans-placeh",
+            "text": "Placeholder answer B",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 15
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-2",
+        "type": "normal",
+        "layers": [],
+        "responses": [
+          {
+            "speaker": "npc-placeholder-2",
+            "texts": [
+              "PLACEHOLDER \u2014 second beat, reacts to answer A."
+            ],
+            "variantMode": "sequence"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-wrap-i",
+            "text": "Wrap it up",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 5
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "layers": [],
+        "responses": [],
+        "answers": []
+      }
+    ]
+  },
+  "dummy-scene-three": {
+    "slug": "dummy-scene-three",
+    "title": "Dummy Scene Three (placeholder)",
+    "active": true,
+    "layers": [],
+    "npcs": [
+      {
+        "id": "npc-placeholder-3",
+        "label": "HR Rep (placeholder)",
+        "file": null,
+        "noImage": true
+      }
+    ],
+    "effects": {
+      "meters": [
+        {
+          "key": "detain",
+          "label": "Detainment Risk",
+          "max": 100,
+          "fatalAt": 100,
+          "presets": [
+            {
+              "label": "Hold",
+              "value": 0
+            },
+            {
+              "label": "Soft",
+              "value": 5
+            },
+            {
+              "label": "Harmful",
+              "value": 15
+            },
+            {
+              "label": "Severe",
+              "value": 40
+            },
+            {
+              "label": "Fatal",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "credits": [
+        {
+          "key": "judge",
+          "label": "Asked for a judge's signature"
+        },
+        {
+          "key": "badge",
+          "label": "Asked to see ID / badge"
+        },
+        {
+          "key": "silent",
+          "label": "Invoked right to remain silent"
+        },
+        {
+          "key": "record",
+          "label": "Recorded the interaction"
+        },
+        {
+          "key": "closed",
+          "label": "Kept the door closed"
+        }
+      ]
+    },
+    "cards": [
+      {
+        "id": "start",
+        "type": "start",
+        "layers": [],
+        "responses": [],
+        "answers": [
+          {
+            "id": "ans-begin",
+            "text": "Begin",
+            "goto": "card-1",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-1",
+        "type": "normal",
+        "layers": [],
+        "responses": [
+          {
+            "speaker": "npc-placeholder-3",
+            "texts": [
+              "PLACEHOLDER \u2014 first line of dialogue goes here."
+            ],
+            "variantMode": "sequence"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-placeh",
+            "text": "Placeholder answer A",
+            "goto": "card-2",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            }
+          },
+          {
+            "id": "ans-placeh",
+            "text": "Placeholder answer B",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 15
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-2",
+        "type": "normal",
+        "layers": [],
+        "responses": [
+          {
+            "speaker": "npc-placeholder-3",
+            "texts": [
+              "PLACEHOLDER \u2014 second beat, reacts to answer A."
+            ],
+            "variantMode": "sequence"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-wrap-i",
+            "text": "Wrap it up",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 5
+              },
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "layers": [],
+        "responses": [],
+        "answers": []
+      }
+    ]
+  }
+}
