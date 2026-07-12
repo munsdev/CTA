@@ -27,6 +27,7 @@
     padding:7px 11px;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;
   }
   button:hover{border-color:#555;}
+  button:disabled{opacity:.4;cursor:default;}
   button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
   button.secondary{background:var(--accent2);border-color:var(--accent2);color:#fff;}
   button.ghost{background:transparent;}
@@ -77,9 +78,11 @@
   .thumb-grid{display:flex;flex-wrap:wrap;gap:8px;}
   .thumb{width:84px;text-align:center;}
   .thumb img{width:84px;height:76px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#000;display:block;}
+  .thumb .avatar-fallback{width:84px;height:76px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--dim);}
   .thumb input{margin-top:3px;font-size:11px;padding:4px;}
   .thumb .thumb-id{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:2px;}
   .thumb .del{margin-top:3px;}
+  .thumb .no-img-tag{font-size:9px;color:var(--dim);text-transform:uppercase;}
   .upload-btn{border:1px dashed #555;border-radius:6px;padding:10px;text-align:center;color:var(--dim);cursor:pointer;font-size:12px;}
   .config-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;}
   .config-row input[type=text]{flex:1;}
@@ -95,6 +98,18 @@
   #pat-modal p{font-size:13px;color:var(--dim);}
   .close-x{float:right;cursor:pointer;color:var(--dim);}
   .empty-note{font-size:12px;color:var(--dim);font-style:italic;padding:8px 0;}
+  .scene-row{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .scene-row .meta{flex:1;min-width:160px;}
+  .scene-row .meta .slug{font-family:var(--mono);font-size:13px;}
+  .scene-row .meta .title{font-size:12px;color:var(--dim);}
+  .scene-row .meta .count{font-size:11px;color:var(--dim);}
+  .active-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);}
+  .active-toggle.is-active{color:var(--ok);}
+  .switch{position:relative;width:36px;height:20px;background:#3a3a40;border-radius:20px;cursor:pointer;flex-shrink:0;}
+  .switch.on{background:var(--ok);}
+  .switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .15s;}
+  .switch.on .knob{left:18px;}
+  .current-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;background:var(--accent2);color:#fff;margin-left:6px;}
 </style>
 </head>
 <body>
@@ -104,16 +119,41 @@
   <div class="row">
     <div class="field"><label>Scene slug</label><input type="text" id="sceneSlug" placeholder="know-your-rights-door"></div>
     <div class="field"><label>Scene title</label><input type="text" id="sceneTitle" placeholder="The Door"></div>
+    <div class="field" style="max-width:120px;">
+      <label>Active</label>
+      <div class="switch" id="sceneActiveSwitch"><div class="knob"></div></div>
+    </div>
   </div>
   <div class="tabs">
-    <div class="tab active" data-view="cards">Cards</div>
+    <div class="tab active" data-view="scenes">Scenes</div>
+    <div class="tab" data-view="cards">Cards</div>
     <div class="tab" data-view="settings">Scene Settings</div>
   </div>
 </header>
 
 <main>
+  <!-- SCENES MANAGER VIEW -->
+  <div class="view active" id="view-scenes">
+    <div class="panel">
+      <h2>All scenes</h2>
+      <div class="hint">
+        Loads the full <code>scenes.json</code> from GitHub. <b>Active</b> controls whether a scene is meant to be public.
+        Note: the live game doesn't read <code>scenes.json</code> yet — that wiring is still pending on the engine side — so
+        toggling Active here won't yet affect what's playable on the site. It's ready for when that lands.
+        Planned convention for that future preview mode: the game will honor <code>?kyrPreview=all</code> in its URL to show
+        inactive scenes for testing.
+      </div>
+      <div class="row" style="margin-bottom:10px;">
+        <button class="secondary small" id="btnLoadScenes">Load scenes from GitHub</button>
+        <button class="small" id="btnNewScene">+ New scene</button>
+        <button class="small danger" id="btnPushSceneIndex" disabled>Push scene list changes</button>
+      </div>
+      <div id="sceneList"></div>
+    </div>
+  </div>
+
   <!-- CARDS VIEW -->
-  <div class="view active" id="view-cards">
+  <div class="view" id="view-cards">
     <div class="hint">Card list order is just an authoring convenience — actual flow is controlled by each answer's <b>goto</b> link. Start and End cards are required and can't be removed or reordered away from the ends.</div>
     <div class="grid-cards" id="cardList"></div>
   </div>
@@ -130,15 +170,18 @@
 
     <div class="panel">
       <h2>NPCs</h2>
-      <div class="hint">Portraits + names used for the speaker select on each dialogue beat.</div>
+      <div class="hint">Portraits are optional — an NPC can just be a name with no picture, and will show as a plain speaker label in-game. Players never get a picture or a roster entry; their side is just the answer text.</div>
       <div class="thumb-grid" id="npcThumbs"></div>
-      <div class="upload-btn" id="addNpcBtn" style="margin-top:8px;">+ Add NPC</div>
+      <div class="row" style="margin-top:8px;">
+        <div class="upload-btn" id="addNpcBtn" style="flex:1;">+ Add NPC with image</div>
+        <div class="upload-btn" id="addNpcNoImgBtn" style="flex:1;">+ Add NPC (name only)</div>
+      </div>
       <input type="file" id="npcFileInput" accept="image/*" multiple style="display:none;">
     </div>
 
     <div class="panel">
       <h2>Effects</h2>
-      <div class="hint">These become the toggle/number options on every answer. Meters are numeric (e.g. detainment risk); credits are simple checkmarks for the result screen. Defaults are pre-seeded — edit or add your own.</div>
+      <div class="hint">These become the toggle/number options on every answer. Meters are numeric (e.g. detainment risk); credits are simple checkmarks for the result screen. Defaults below are placeholders I seeded, not pulled from the live engine — check them against the real result-screen logic before relying on them.</div>
       <h3>Meters</h3>
       <div id="meterConfig"></div>
       <button class="small ghost" id="addMeterBtn">+ Add meter</button>
@@ -154,7 +197,7 @@
   <button class="small" id="btnExport">Export JSON</button>
   <button class="small" id="btnImport">Import JSON</button>
   <input type="file" id="importFile" accept="application/json" style="display:none;">
-  <button class="small secondary" id="btnPush">Push to GitHub</button>
+  <button class="small secondary" id="btnPush">Push scene to GitHub</button>
   <button class="small ghost" id="btnPat" style="margin-left:auto;">GitHub token</button>
 </footer>
 
@@ -199,6 +242,8 @@ function log(msg, cls){
   el.appendChild(line);
   el.scrollTop = el.scrollHeight;
 }
+function escapeAttr(s){ return String(s||"").replace(/"/g,"&quot;"); }
+function escapeHtml(s){ return String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 // ---------------------------------------------------------------------------
 // Default state
@@ -225,7 +270,7 @@ function defaultEffects(){
 
 function defaultState(){
   return {
-    slug: "", title: "",
+    slug: "", title: "", active: true,
     layers: [],
     npcs: [],
     effects: defaultEffects(),
@@ -239,9 +284,13 @@ function defaultState(){
 }
 
 let state = loadLocal() || defaultState();
+let sceneIndexCache = null;       // full scenes.json collection once loaded, keyed by slug
+let sceneIndexDirty = false;      // true when manager has staged toggle/delete changes not yet pushed
 
 // ---------------------------------------------------------------------------
-// Persistence (autosave to localStorage)
+// Persistence (autosave to localStorage) — split into "structural" (re-render)
+// and "silent" (state + save only) so typing never destroys the input you're
+// typing into.
 // ---------------------------------------------------------------------------
 function saveLocal(){
   try{
@@ -265,6 +314,14 @@ function touch(){
   saveTimer = setTimeout(saveLocal, 300);
   render();
 }
+// Use for every keystroke inside a text/number field: updates state + debounced
+// save, but never touches the DOM, so the element you're typing in is never
+// torn down and focus is never lost.
+let silentTimer = null;
+function touchSilent(){
+  clearTimeout(silentTimer);
+  silentTimer = setTimeout(saveLocal, 400);
+}
 
 // ---------------------------------------------------------------------------
 // Tabs
@@ -275,11 +332,16 @@ document.querySelectorAll(".tab").forEach(tab=>{
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     tab.classList.add("active");
     document.getElementById("view-" + tab.dataset.view).classList.add("active");
+    if (tab.dataset.view === "scenes") renderSceneList();
   });
 });
 
-document.getElementById("sceneSlug").addEventListener("input", e=>{ state.slug = e.target.value; touch(); });
-document.getElementById("sceneTitle").addEventListener("input", e=>{ state.title = e.target.value; touch(); });
+document.getElementById("sceneSlug").addEventListener("input", e=>{ state.slug = e.target.value; touchSilent(); });
+document.getElementById("sceneTitle").addEventListener("input", e=>{ state.title = e.target.value; touchSilent(); });
+document.getElementById("sceneActiveSwitch").addEventListener("click", ()=>{
+  state.active = !state.active;
+  touch();
+});
 
 // ---------------------------------------------------------------------------
 // File -> base64 helper
@@ -295,12 +357,23 @@ function fileToDataUrl(file){
 function slugifyFilename(name){
   return name.toLowerCase().replace(/\.[^.]+$/,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 }
+function promptSlug(base){
+  let s = base.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+  return s || uid("npc");
+}
 
 // ---------------------------------------------------------------------------
 // Layers & NPCs (Scene Settings)
 // ---------------------------------------------------------------------------
 document.getElementById("addLayerBtn").addEventListener("click", ()=>document.getElementById("layerFileInput").click());
 document.getElementById("addNpcBtn").addEventListener("click", ()=>document.getElementById("npcFileInput").click());
+document.getElementById("addNpcNoImgBtn").addEventListener("click", ()=>{
+  const name = prompt("NPC name (no image):");
+  if (!name) return;
+  const id = promptSlug(name);
+  state.npcs.push({ id, label: name, file: null, dataUrl: null, dirty:false, placeholder:false, noImage:true });
+  touch();
+});
 
 document.getElementById("layerFileInput").addEventListener("change", async e=>{
   for (const file of e.target.files){
@@ -315,7 +388,7 @@ document.getElementById("npcFileInput").addEventListener("change", async e=>{
   for (const file of e.target.files){
     const dataUrl = await fileToDataUrl(file);
     const id = slugifyFilename(file.name) || uid("npc");
-    state.npcs.push({ id, label: file.name.replace(/\.[^.]+$/,""), file: id + ".png", dataUrl, dirty:true, placeholder:false });
+    state.npcs.push({ id, label: file.name.replace(/\.[^.]+$/,""), file: id + ".png", dataUrl, dirty:true, placeholder:false, noImage:false });
   }
   e.target.value = "";
   touch();
@@ -333,11 +406,18 @@ function renderThumbs(containerId, list, kind){
   list.forEach((item, idx)=>{
     const div = document.createElement("div");
     div.className = "thumb";
-    const imgSrc = item.dataUrl || ("https://raw.githubusercontent.com/" + REPO + "/main/" + (kind==="layer"?LAYER_DIR:NPC_DIR) + "/" + item.file);
+    let mediaHtml;
+    if (kind === "npc" && item.noImage){
+      const initial = (item.label||"?").trim().charAt(0).toUpperCase() || "?";
+      mediaHtml = `<div class="avatar-fallback">${escapeHtml(initial)}</div>`;
+    } else {
+      const imgSrc = item.dataUrl || ("https://raw.githubusercontent.com/" + REPO + "/main/" + (kind==="layer"?LAYER_DIR:NPC_DIR) + "/" + item.file);
+      mediaHtml = `<img src="${imgSrc}" onerror="this.style.opacity=.2">`;
+    }
     div.innerHTML = `
-      <img src="${imgSrc}" onerror="this.style.opacity=.2">
+      ${mediaHtml}
       <input type="text" value="${escapeAttr(item.label)}" data-idx="${idx}" class="lbl-input">
-      <div class="thumb-id">${item.id}${item.placeholder?" · placeholder":""}</div>
+      <div class="thumb-id">${item.id}${item.placeholder?" · placeholder":""}${item.noImage?" · no image":""}</div>
       <button class="small danger del" data-idx="${idx}">remove</button>
     `;
     c.appendChild(div);
@@ -353,7 +433,7 @@ function renderThumbs(containerId, list, kind){
   c.querySelectorAll(".lbl-input").forEach(inp=>{
     inp.addEventListener("input", e=>{
       list[+e.target.dataset.idx].label = e.target.value;
-      touch();
+      touchSilent();
     });
   });
   c.querySelectorAll(".del").forEach(btn=>{
@@ -362,14 +442,13 @@ function renderThumbs(containerId, list, kind){
       const removed = list[idx];
       if (!confirm("Remove '" + removed.label + "'? Cards referencing it will just drop the reference.")) return;
       list.splice(idx,1);
-      // scrub references
-      state.cards.forEach(c=>{ c.layers = c.layers.filter(l=>l!==removed.id); });
+      if (kind === "layer"){
+        state.cards.forEach(c=>{ c.layers = c.layers.filter(l=>l!==removed.id); });
+      }
       touch();
     });
   });
 }
-function escapeAttr(s){ return String(s||"").replace(/"/g,"&quot;"); }
-function escapeHtml(s){ return String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 // ---------------------------------------------------------------------------
 // Effects config
@@ -388,9 +467,9 @@ function renderMeterConfig(){
     `;
     c.appendChild(row);
   });
-  c.querySelectorAll(".m-label").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].label = e.target.value; touch(); }));
-  c.querySelectorAll(".m-key").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].key = e.target.value; touch(); }));
-  c.querySelectorAll(".m-fatal").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].fatalAt = +e.target.value; touch(); }));
+  c.querySelectorAll(".m-label").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].label = e.target.value; touchSilent(); }));
+  c.querySelectorAll(".m-key").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].key = e.target.value; touchSilent(); }));
+  c.querySelectorAll(".m-fatal").forEach(i=>i.addEventListener("input", e=>{ state.effects.meters[+e.target.dataset.idx].fatalAt = +e.target.value; touchSilent(); }));
   c.querySelectorAll(".m-del").forEach(b=>b.addEventListener("click", e=>{ state.effects.meters.splice(+e.target.dataset.idx,1); touch(); }));
 }
 function renderCreditConfig(){
@@ -406,8 +485,8 @@ function renderCreditConfig(){
     `;
     c.appendChild(row);
   });
-  c.querySelectorAll(".c-label").forEach(i=>i.addEventListener("input", e=>{ state.effects.credits[+e.target.dataset.idx].label = e.target.value; touch(); }));
-  c.querySelectorAll(".c-key").forEach(i=>i.addEventListener("input", e=>{ state.effects.credits[+e.target.dataset.idx].key = e.target.value; touch(); }));
+  c.querySelectorAll(".c-label").forEach(i=>i.addEventListener("input", e=>{ state.effects.credits[+e.target.dataset.idx].label = e.target.value; touchSilent(); }));
+  c.querySelectorAll(".c-key").forEach(i=>i.addEventListener("input", e=>{ state.effects.credits[+e.target.dataset.idx].key = e.target.value; touchSilent(); }));
   c.querySelectorAll(".c-del").forEach(b=>b.addEventListener("click", e=>{ state.effects.credits.splice(+e.target.dataset.idx,1); touch(); }));
 }
 document.getElementById("addMeterBtn").addEventListener("click", ()=>{
@@ -452,7 +531,6 @@ function renderCardList(){
   const wrap = document.getElementById("cardList");
   wrap.innerHTML = "";
   state.cards.forEach((card, idx)=>{
-    // insert-between button before this card (skip before "start")
     if (idx > 0){
       const insertRow = document.createElement("div");
       insertRow.className = "insert-row";
@@ -488,7 +566,6 @@ function renderCardBlock(card, idx){
   const body = document.createElement("div");
   body.className = "card-body" + (openCardIds.has(card.id) ? " open" : "");
 
-  // --- card id editor (not for start/end) ---
   if (card.type === "normal"){
     const idRow = document.createElement("div");
     idRow.className = "row";
@@ -503,7 +580,6 @@ function renderCardBlock(card, idx){
       if (state.cards.some(c=>c!==card && c.id===newId)){ alert("That card ID is already in use."); e.target.value = card.id; return; }
       const oldId = card.id;
       card.id = newId;
-      // update any goto pointers
       state.cards.forEach(c=>c.answers.forEach(a=>{ if (a.goto === oldId) a.goto = newId; }));
       openCardIds.delete(oldId); openCardIds.add(newId);
       touch();
@@ -517,7 +593,6 @@ function renderCardBlock(card, idx){
     body.appendChild(idRow);
   }
 
-  // --- layers checklist (draggable) ---
   const layerSection = document.createElement("div");
   layerSection.innerHTML = `<h3>Layers shown on this card</h3>`;
   const layerList = document.createElement("div");
@@ -525,7 +600,6 @@ function renderCardBlock(card, idx){
   if (state.layers.length === 0){
     layerList.innerHTML = `<div class="empty-note">No layers uploaded yet — add some in Scene Settings.</div>`;
   } else {
-    // order: card.layers first (in their order), then remaining unchecked layers in scene order
     const orderedIds = [...card.layers, ...state.layers.map(l=>l.id).filter(id=>!card.layers.includes(id))];
     orderedIds.forEach(layerId=>{
       const layer = state.layers.find(l=>l.id===layerId);
@@ -550,7 +624,6 @@ function renderCardBlock(card, idx){
     });
     makeSortable(layerList, ()=>{
       const newOrder = [...layerList.querySelectorAll(".layer-row")].map(r=>r.dataset.layerId);
-      // preserve only checked ones, in new order
       card.layers = newOrder.filter(id=>card.layers.includes(id));
       touch();
     });
@@ -558,7 +631,6 @@ function renderCardBlock(card, idx){
   layerSection.appendChild(layerList);
   body.appendChild(layerSection);
 
-  // --- responses (NPC dialogue beats) ---
   const respSection = document.createElement("div");
   respSection.innerHTML = `<h3>NPC dialogue (plays in order, tap to advance)</h3>`;
   card.responses.forEach((beat, bIdx)=>{
@@ -571,7 +643,6 @@ function renderCardBlock(card, idx){
   respSection.appendChild(addBeatBtn);
   body.appendChild(respSection);
 
-  // --- answers ---
   const ansSection = document.createElement("div");
   ansSection.innerHTML = `<h3>Answers${card.type==="end" ? " (end cards have none)" : ""}</h3>`;
   if (card.type !== "end"){
@@ -620,7 +691,7 @@ function renderBeat(card, beat, bIdx){
       <textarea rows="2" placeholder="What the NPC says...">${escapeHtml(txt)}</textarea>
       <button class="small danger v-del" ${beat.texts.length<=1?"disabled":""}>✕</button>
     `;
-    vrow.querySelector("textarea").addEventListener("input", e=>{ beat.texts[tIdx] = e.target.value; touch(); });
+    vrow.querySelector("textarea").addEventListener("input", e=>{ beat.texts[tIdx] = e.target.value; touchSilent(); });
     vrow.querySelector(".v-del").addEventListener("click", ()=>{ if (beat.texts.length>1){ beat.texts.splice(tIdx,1); touch(); } });
     b.appendChild(vrow);
   });
@@ -662,7 +733,7 @@ function renderAnswer(card, ans, aIdx){
       <button class="small danger ans-del">✕</button>
     </div>
   `;
-  b.querySelector(".ans-text").addEventListener("input", e=>{ ans.text = e.target.value; touch(); });
+  b.querySelector(".ans-text").addEventListener("input", e=>{ ans.text = e.target.value; touchSilent(); });
   b.querySelector(".ans-goto").addEventListener("change", e=>{ ans.goto = e.target.value || null; touch(); });
   b.querySelector(".ans-del").addEventListener("click", ()=>{ card.answers = card.answers.filter(x=>x!==ans); touch(); });
 
@@ -677,9 +748,9 @@ function renderAnswer(card, ans, aIdx){
       <input type="number" class="meter-input" value="${val}">
       <div class="presets">${m.presets.map(p=>`<button type="button" data-v="${p.value}">${escapeHtml(p.label)}</button>`).join("")}</div>
     `;
-    wrap.querySelector(".meter-input").addEventListener("input", e=>{ ans.effects.meters[m.key] = Number(e.target.value)||0; touch(); });
+    wrap.querySelector(".meter-input").addEventListener("input", e=>{ ans.effects.meters[m.key] = Number(e.target.value)||0; touchSilent(); });
     wrap.querySelectorAll(".presets button").forEach(pb=>{
-      pb.addEventListener("click", ()=>{ ans.effects.meters[m.key] = Number(pb.dataset.v); render(); saveLocal(); });
+      pb.addEventListener("click", ()=>{ ans.effects.meters[m.key] = Number(pb.dataset.v); touch(); });
     });
     eff.appendChild(wrap);
   });
@@ -740,11 +811,151 @@ function makeSortable(listEl, onReorder){
 }
 
 // ---------------------------------------------------------------------------
+// Scene manager
+// ---------------------------------------------------------------------------
+function renderSceneList(){
+  const wrap = document.getElementById("sceneList");
+  wrap.innerHTML = "";
+  if (!sceneIndexCache){
+    wrap.innerHTML = `<div class="empty-note">Nothing loaded yet — hit "Load scenes from GitHub".</div>`;
+    return;
+  }
+  const slugs = Object.keys(sceneIndexCache).sort();
+  if (slugs.length === 0){
+    wrap.innerHTML = `<div class="empty-note">scenes.json exists but has no scenes in it yet.</div>`;
+    return;
+  }
+  slugs.forEach(slug=>{
+    const sc = sceneIndexCache[slug];
+    const row = document.createElement("div");
+    row.className = "scene-row";
+    const isCurrent = state.slug === slug;
+    row.innerHTML = `
+      <div class="meta">
+        <div class="slug">${escapeHtml(slug)}${isCurrent ? '<span class="current-badge">open in editor</span>' : ""}</div>
+        <div class="title">${escapeHtml(sc.title || "(untitled)")}</div>
+        <div class="count">${(sc.cards||[]).length} card${(sc.cards||[]).length!==1?"s":""}</div>
+      </div>
+      <div class="active-toggle ${sc.active ? "is-active" : ""}">
+        <div class="switch ${sc.active ? "on" : ""}" data-slug="${escapeAttr(slug)}"><div class="knob"></div></div>
+        <span>${sc.active ? "active" : "inactive"}</span>
+      </div>
+      <button class="small edit-scene" data-slug="${escapeAttr(slug)}">Edit</button>
+      <button class="small danger del-scene" data-slug="${escapeAttr(slug)}">Delete</button>
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll(".switch").forEach(sw=>{
+    sw.addEventListener("click", ()=>{
+      const slug = sw.dataset.slug;
+      sceneIndexCache[slug].active = !sceneIndexCache[slug].active;
+      sceneIndexDirty = true;
+      document.getElementById("btnPushSceneIndex").disabled = false;
+      renderSceneList();
+    });
+  });
+  wrap.querySelectorAll(".edit-scene").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const slug = btn.dataset.slug;
+      if (state.cards.some(c=>c.responses.length || c.answers.some(a=>a.text)) || state.slug){
+        if (!confirm("Load '" + slug + "' into the editor? Any unsaved local changes to the currently open scene may be overwritten (export first if you want a backup).")) return;
+      }
+      loadSceneForEditing(slug);
+    });
+  });
+  wrap.querySelectorAll(".del-scene").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const slug = btn.dataset.slug;
+      if (!confirm("Delete scene '" + slug + "'? This cannot be undone from here.")) return;
+      const typed = prompt("Type the scene slug to confirm permanent deletion:\n\n" + slug);
+      if (typed !== slug){ alert("Slug didn't match — deletion cancelled."); return; }
+      delete sceneIndexCache[slug];
+      sceneIndexDirty = true;
+      document.getElementById("btnPushSceneIndex").disabled = false;
+      if (state.slug === slug){ state = defaultState(); render(); }
+      renderSceneList();
+      log("Staged deletion of '" + slug + "' — click 'Push scene list changes' to make it permanent.", "ok");
+    });
+  });
+}
+
+function loadSceneForEditing(slug){
+  const raw = sceneIndexCache[slug];
+  const loaded = JSON.parse(JSON.stringify(raw));
+  if (!loaded.effects) loaded.effects = defaultEffects();
+  if (typeof loaded.active !== "boolean") loaded.active = true;
+  loaded.layers = (loaded.layers||[]).map(l=>({...l, dataUrl:null, dirty:false}));
+  loaded.npcs = (loaded.npcs||[]).map(n=>({...n, dataUrl:null, dirty:false}));
+  state = loaded;
+  openCardIds = new Set(["start"]);
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelector('.tab[data-view="cards"]').classList.add("active");
+  document.getElementById("view-cards").classList.add("active");
+  touch();
+  log("Loaded '" + slug + "' into editor.", "ok");
+}
+
+document.getElementById("btnNewScene").addEventListener("click", ()=>{
+  if (!confirm("Start a new blank scene? Unsaved changes to the currently open scene may be lost.")) return;
+  state = defaultState();
+  openCardIds = new Set(["start"]);
+  touch();
+  document.querySelector('.tab[data-view="cards"]').click();
+});
+
+document.getElementById("btnLoadScenes").addEventListener("click", async ()=>{
+  if (!getPat()){ alert("Add a GitHub token first (bottom right button)."); document.getElementById("pat-modal").classList.add("open"); return; }
+  try{
+    log("Loading scenes.json from GitHub...");
+    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${SCENES_PATH}`, {
+      headers: { "Authorization": "Bearer " + getPat(), "Accept": "application/vnd.github+json" }
+    });
+    if (res.status === 404){
+      sceneIndexCache = {};
+      log("No scenes.json exists yet on GitHub — starts empty.", "ok");
+    } else if (!res.ok){
+      throw new Error("GET scenes.json -> " + res.status);
+    } else {
+      const data = await res.json();
+      sceneIndexCache = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,"")))));
+      log("Loaded " + Object.keys(sceneIndexCache).length + " scene(s).", "ok");
+    }
+    sceneIndexDirty = false;
+    document.getElementById("btnPushSceneIndex").disabled = true;
+    renderSceneList();
+  }catch(err){
+    log("Load failed: " + err.message, "err");
+    alert("Couldn't load scenes.json: " + err.message);
+  }
+});
+
+document.getElementById("btnPushSceneIndex").addEventListener("click", async ()=>{
+  if (!sceneIndexCache) return;
+  const btn = document.getElementById("btnPushSceneIndex");
+  btn.disabled = true; btn.textContent = "Pushing…";
+  try{
+    const jsonStr = JSON.stringify(sceneIndexCache, null, 2);
+    const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+    await ghPut(SCENES_PATH, b64, "KYR builder: scene list changes (active toggles / deletions)");
+    sceneIndexDirty = false;
+    log("Pushed scene list changes to GitHub.", "ok");
+  }catch(err){
+    log("Push failed: " + err.message, "err");
+    alert("Push failed: " + err.message);
+  }finally{
+    btn.textContent = "Push scene list changes";
+    btn.disabled = !sceneIndexDirty;
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 function render(){
   document.getElementById("sceneSlug").value = state.slug;
   document.getElementById("sceneTitle").value = state.title;
+  document.getElementById("sceneActiveSwitch").classList.toggle("on", !!state.active);
   renderThumbs("layerThumbs", state.layers, "layer");
   renderThumbs("npcThumbs", state.npcs, "npc");
   renderMeterConfig();
@@ -758,7 +969,6 @@ render();
 // ---------------------------------------------------------------------------
 function buildExportJson(){
   const clean = JSON.parse(JSON.stringify(state));
-  // strip dataUrls from export — those are local-only previews
   clean.layers.forEach(l=>{ delete l.dataUrl; delete l.dirty; });
   clean.npcs.forEach(n=>{ delete n.dataUrl; delete n.dirty; });
   return clean;
@@ -783,7 +993,6 @@ document.getElementById("importFile").addEventListener("change", async e=>{
     const text = await file.text();
     const data = JSON.parse(text);
     if (!data.cards || !Array.isArray(data.cards)) throw new Error("missing cards array");
-    // merge: keep existing dataUrls if ids match (so previews don't vanish), else null
     data.layers = (data.layers||[]).map(l=>{
       const existing = state.layers.find(x=>x.id===l.id);
       return { ...l, dataUrl: existing ? existing.dataUrl : null, dirty:false };
@@ -793,6 +1002,7 @@ document.getElementById("importFile").addEventListener("change", async e=>{
       return { ...n, dataUrl: existing ? existing.dataUrl : null, dirty:false };
     });
     if (!data.effects) data.effects = defaultEffects();
+    if (typeof data.active !== "boolean") data.active = true;
     state = data;
     openCardIds = new Set(["start"]);
     touch();
@@ -870,7 +1080,6 @@ document.getElementById("btnPush").addEventListener("click", async ()=>{
   const btn = document.getElementById("btnPush");
   btn.disabled = true; btn.textContent = "Pushing…";
   try{
-    // push dirty layer images
     for (const l of state.layers){
       if (l.dirty && l.dataUrl){
         log("Uploading layer " + l.file + "...");
@@ -879,7 +1088,6 @@ document.getElementById("btnPush").addEventListener("click", async ()=>{
         log("Uploaded " + l.file, "ok");
       }
     }
-    // push dirty npc images
     for (const n of state.npcs){
       if (n.dirty && n.dataUrl){
         log("Uploading NPC " + n.file + "...");
@@ -888,24 +1096,22 @@ document.getElementById("btnPush").addEventListener("click", async ()=>{
         log("Uploaded " + n.file, "ok");
       }
     }
-    // push scenes.json (multi-scene file: keyed by slug, so multiple scenes can coexist)
     log("Fetching current scenes.json...");
     let sceneCollection = {};
-    let existingSha = null;
     const shaCheck = await ghGetSha(SCENES_PATH);
     if (shaCheck){
-      existingSha = shaCheck;
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${SCENES_PATH}`, {
         headers: { "Authorization": "Bearer " + getPat(), "Accept": "application/vnd.github+json" }
       });
       const data = await res.json();
-      try{ sceneCollection = JSON.parse(atob(data.content.replace(/\n/g,""))); }catch(e){ sceneCollection = {}; }
+      try{ sceneCollection = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,""))))); }catch(e){ sceneCollection = {}; }
     }
     sceneCollection[state.slug] = buildExportJson();
     const jsonStr = JSON.stringify(sceneCollection, null, 2);
     const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
     await ghPut(SCENES_PATH, b64, "KYR builder: update scene '" + state.slug + "'");
     log("Pushed scenes.json (scene: " + state.slug + ")", "ok");
+    sceneIndexCache = sceneCollection;
     saveLocal();
     render();
     alert("Pushed to GitHub: " + REPO + "/" + SCENES_PATH);
@@ -913,7 +1119,7 @@ document.getElementById("btnPush").addEventListener("click", async ()=>{
     log("Push failed: " + err.message, "err");
     alert("Push failed — see log at bottom of page.\n\n" + err.message);
   }finally{
-    btn.disabled = false; btn.textContent = "Push to GitHub";
+    btn.disabled = false; btn.textContent = "Push scene to GitHub";
   }
 });
 
