@@ -253,17 +253,18 @@ function defaultEffects(){
     meters: [
       { key:"detain", label:"Detainment Risk", max:100, fatalAt:100,
         presets:[
-          {label:"Hold",value:0}, {label:"Soft",value:5}, {label:"Harmful",value:15},
-          {label:"Severe",value:40}, {label:"Fatal",value:100}
+          {label:"Shield",value:0}, {label:"Steady",value:-8}, {label:"Soft",value:12},
+          {label:"Harmful",value:30}, {label:"Severe",value:45}, {label:"Fatal",value:100}
         ]
       }
     ],
     credits: [
-      { key:"judge", label:"Asked for a judge's signature" },
-      { key:"badge", label:"Asked to see ID / badge" },
-      { key:"silent", label:"Invoked right to remain silent" },
-      { key:"record", label:"Recorded the interaction" },
-      { key:"closed", label:"Kept the door closed" }
+      { key:"closed_door", label:"Kept the door closed" },
+      { key:"asked_judge_warrant", label:"Asked for a warrant signed by a judge" },
+      { key:"asked_slide_under_door", label:"Asked them to slide it under the door" },
+      { key:"said_no_consent", label:'Said "I do not consent"' },
+      { key:"stayed_silent", label:"Stayed silent" },
+      { key:"asked_lawyer", label:"Asked for a lawyer" }
     ]
   };
 }
@@ -490,7 +491,7 @@ function renderCreditConfig(){
   c.querySelectorAll(".c-del").forEach(b=>b.addEventListener("click", e=>{ state.effects.credits.splice(+e.target.dataset.idx,1); touch(); }));
 }
 document.getElementById("addMeterBtn").addEventListener("click", ()=>{
-  state.effects.meters.push({ key:"new_meter", label:"New meter", max:100, fatalAt:100, presets:[{label:"Hold",value:0},{label:"Soft",value:5},{label:"Harmful",value:15},{label:"Severe",value:40},{label:"Fatal",value:100}] });
+  state.effects.meters.push({ key:"new_meter", label:"New meter", max:100, fatalAt:100, presets:[{label:"Shield",value:0},{label:"Steady",value:-8},{label:"Soft",value:12},{label:"Harmful",value:30},{label:"Severe",value:45},{label:"Fatal",value:100}] });
   touch();
 });
 document.getElementById("addCreditBtn").addEventListener("click", ()=>{
