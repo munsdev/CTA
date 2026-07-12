@@ -481,5 +481,825 @@
         "answers": []
       }
     ]
+  },
+  "at-the-door": {
+    "slug": "at-the-door",
+    "title": "At the Door",
+    "active": false,
+    "layers": [
+      {
+        "id": "sky",
+        "label": "Sky",
+        "file": "0-sky.svg"
+      },
+      {
+        "id": "floor",
+        "label": "Floor",
+        "file": "1-floor.svg"
+      },
+      {
+        "id": "walls",
+        "label": "Walls (mask)",
+        "file": "4-walls.svg"
+      },
+      {
+        "id": "door-closed",
+        "label": "Door \u2014 closed",
+        "file": "5-door-closed.svg"
+      },
+      {
+        "id": "door-cracked",
+        "label": "Door \u2014 cracked",
+        "file": "5-door-cracked.svg"
+      },
+      {
+        "id": "door-open",
+        "label": "Door \u2014 open",
+        "file": "5-door-open.svg"
+      },
+      {
+        "id": "agent-lead-at-door",
+        "label": "Lead officer \u2014 at door",
+        "file": "2-agent-1-at-door.svg"
+      },
+      {
+        "id": "agent-partner-at-door",
+        "label": "Partner officer \u2014 at door",
+        "file": "3-agent-2-at-door.svg"
+      },
+      {
+        "id": "agent-papers-window",
+        "label": "Lead officer \u2014 papers at window",
+        "file": "2-agent-3-papers-at-window.svg"
+      },
+      {
+        "id": "agent-looking-window",
+        "label": "Lead officer \u2014 looking in window",
+        "file": "2-agent-4-looking-in-window.svg"
+      }
+    ],
+    "npcs": [
+      {
+        "id": "officer-lead",
+        "label": "Immigration Officer",
+        "file": null,
+        "noImage": true
+      },
+      {
+        "id": "officer-partner",
+        "label": "Partner Officer",
+        "file": null,
+        "noImage": true
+      }
+    ],
+    "effects": {
+      "meters": [
+        {
+          "key": "detain",
+          "label": "Detainment Risk",
+          "max": 100,
+          "fatalAt": 100,
+          "presets": [
+            {
+              "label": "Shield",
+              "value": 0
+            },
+            {
+              "label": "Steady",
+              "value": -8
+            },
+            {
+              "label": "Soft",
+              "value": 12
+            },
+            {
+              "label": "Harmful",
+              "value": 30
+            },
+            {
+              "label": "Severe",
+              "value": 45
+            },
+            {
+              "label": "Fatal",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "credits": [
+        {
+          "key": "closed_door",
+          "label": "Kept the door closed"
+        },
+        {
+          "key": "asked_judge_warrant",
+          "label": "Asked for a warrant signed by a judge"
+        },
+        {
+          "key": "asked_slide_under_door",
+          "label": "Asked them to slide it under the door"
+        },
+        {
+          "key": "said_no_consent",
+          "label": "Said \"I do not consent\""
+        },
+        {
+          "key": "stayed_silent",
+          "label": "Stayed silent"
+        },
+        {
+          "key": "asked_lawyer",
+          "label": "Asked for a lawyer"
+        }
+      ]
+    },
+    "cards": [
+      {
+        "id": "start",
+        "type": "start",
+        "layers": [],
+        "responses": [],
+        "answers": [
+          {
+            "id": "ans-begin",
+            "text": "Begin",
+            "goto": "card-knock",
+            "effects": {
+              "meters": {},
+              "credits": {}
+            }
+          }
+        ]
+      },
+      {
+        "id": "card-knock",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "Open up. Police.",
+              "Immigration. Open the door."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-speak-through-the-cl",
+            "text": "Speak through the closed door. Don't open it.",
+            "goto": "card-verify",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {
+                "closed_door": true
+              }
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-crack-the-door-to-se",
+            "text": "Crack the door to see who it is.",
+            "goto": "card-cracked",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-open-the-door-fully-",
+            "text": "Open the door fully \u2014 it's the police.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 100
+              },
+              "credits": {}
+            },
+            "grade": "fatal",
+            "note": "Opening the door functions as consent. The scene ends here regardless of what happens next."
+          }
+        ]
+      },
+      {
+        "id": "card-cracked",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-looking-window",
+          "agent-partner-at-door",
+          "door-cracked"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "I can see you. Go ahead and open it the rest of the way.",
+              "Just a few questions \u2014 open up."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-pull-it-shut-again.-",
+            "text": "Pull it shut again. Speak only through the gap.",
+            "goto": "card-verify",
+            "effects": {
+              "meters": {
+                "detain": -8
+              },
+              "credits": {
+                "closed_door": true
+              }
+            },
+            "grade": "steady"
+          },
+          {
+            "id": "ans-leave-it-cracked-and",
+            "text": "Leave it cracked and ask what they want.",
+            "goto": "card-verify",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-open-it-the-rest-of-",
+            "text": "Open it the rest of the way.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 100
+              },
+              "credits": {}
+            },
+            "grade": "fatal",
+            "note": "A cracked door is still an open door, legally. Opening it further is consent."
+          }
+        ]
+      },
+      {
+        "id": "card-verify",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "We just want to ask a few questions.",
+              "This goes faster if you open up."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-say:-\"i-do-not-answe",
+            "text": "Say: \"I do not answer questions. Do you have a warrant signed by a judge?\"",
+            "goto": "card-warrant",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {
+                "stayed_silent": true,
+                "asked_lawyer": true
+              }
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-ask-what-this-is-abo",
+            "text": "Ask what this is about.",
+            "goto": "card-questions",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-give-your-name-and-w",
+            "text": "Give your name and where you were born.",
+            "goto": "card-after-answered",
+            "effects": {
+              "meters": {
+                "detain": 45
+              },
+              "credits": {}
+            },
+            "grade": "severe"
+          }
+        ]
+      },
+      {
+        "id": "card-questions",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "We're looking for someone who used to live here.",
+              "Just routine. Need to confirm a few details."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-stop-mid-sentence:-\"",
+            "text": "Stop mid-sentence: \"I'm not answering anything else. I want a lawyer.\"",
+            "goto": "card-warrant",
+            "effects": {
+              "meters": {
+                "detain": -8
+              },
+              "credits": {
+                "stayed_silent": true,
+                "asked_lawyer": true
+              }
+            },
+            "grade": "steady"
+          },
+          {
+            "id": "ans-ask-if-they-have-a-w",
+            "text": "Ask if they have a warrant, but keep talking.",
+            "goto": "card-warrant",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-explain-who-lives-he",
+            "text": "Explain who lives here and for how long.",
+            "goto": "card-after-answered",
+            "effects": {
+              "meters": {
+                "detain": 30
+              },
+              "credits": {}
+            },
+            "grade": "harmful"
+          }
+        ]
+      },
+      {
+        "id": "card-after-answered",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "Good. Can you confirm your legal status?",
+              "That's helpful. Are you a US citizen?"
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-stop-talking-now.-as",
+            "text": "Stop talking now. Ask for a lawyer.",
+            "goto": "card-warrant",
+            "effects": {
+              "meters": {
+                "detain": -8
+              },
+              "credits": {
+                "asked_lawyer": true
+              }
+            },
+            "grade": "steady"
+          },
+          {
+            "id": "ans-answer-the-status-qu",
+            "text": "Answer the status question honestly.",
+            "goto": "card-warrant",
+            "effects": {
+              "meters": {
+                "detain": 30
+              },
+              "credits": {}
+            },
+            "grade": "harmful"
+          },
+          {
+            "id": "ans-claim-to-be-a-citize",
+            "text": "Claim to be a citizen without being sure that's wise.",
+            "goto": "card-warrant",
+            "effects": {
+              "meters": {
+                "detain": 45
+              },
+              "credits": {}
+            },
+            "grade": "severe",
+            "note": "Lying to a federal agent carries its own legal risk, separate from immigration status."
+          }
+        ]
+      },
+      {
+        "id": "card-warrant",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-papers-window",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "We have a warrant right here.",
+              "Here \u2014 see for yourself."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-ask-them-to-hold-it-",
+            "text": "Ask them to hold it to the window, or slide it under the door.",
+            "goto": "card-inspect",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {
+                "asked_slide_under_door": true
+              }
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-take-their-word-for-",
+            "text": "Take their word for it without checking.",
+            "goto": "card-pressure",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-open-the-door-to-get",
+            "text": "Open the door to get a better look.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 100
+              },
+              "credits": {}
+            },
+            "grade": "fatal"
+          }
+        ]
+      },
+      {
+        "id": "card-inspect",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-papers-window",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "Satisfied?",
+              "See? Signed and everything."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-its-signed-by-an-of",
+            "text": "It's signed by an officer, not a judge \u2014 this is administrative. State you don't consent.",
+            "goto": "card-refused",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {
+                "asked_judge_warrant": true,
+                "said_no_consent": true
+              }
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-youre-not-sure-what",
+            "text": "You're not sure what you're looking at, but refuse to open the door anyway.",
+            "goto": "card-refused",
+            "effects": {
+              "meters": {
+                "detain": -8
+              },
+              "credits": {}
+            },
+            "grade": "steady"
+          },
+          {
+            "id": "ans-it-looks-official-en",
+            "text": "It looks official enough. Open the door.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 100
+              },
+              "credits": {}
+            },
+            "grade": "fatal",
+            "note": "Only a warrant signed by a judge authorizes entry. An ICE or DHS signature does not."
+          }
+        ]
+      },
+      {
+        "id": "card-pressure",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-partner",
+            "texts": [
+              "Come on, just let us in. It'll be easier for everyone.",
+              "We're not leaving. Open up."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-repeat:-\"i-do-not-co",
+            "text": "Repeat: \"I do not consent. I want to see the warrant.\"",
+            "goto": "card-inspect",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {
+                "said_no_consent": true
+              }
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-ask-if-theyll-come-",
+            "text": "Ask if they'll come back with an actual judge's order.",
+            "goto": "card-refused",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-give-in-\u2014-it-seems-e",
+            "text": "Give in \u2014 it seems easier.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 100
+              },
+              "credits": {}
+            },
+            "grade": "fatal"
+          }
+        ]
+      },
+      {
+        "id": "card-refused",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "Fine. We'll note the refusal.",
+              "We can come back with backup."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-stay-silent-keep-th",
+            "text": "Stay silent, keep the door closed, say nothing further.",
+            "goto": "card-resolution-good",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {
+                "stayed_silent": true,
+                "said_no_consent": true
+              }
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-ask-them-to-leave-co",
+            "text": "Ask them to leave contact information through the door.",
+            "goto": "card-resolution-good",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          },
+          {
+            "id": "ans-open-the-door-partwa",
+            "text": "Open the door partway to hand them something to write on.",
+            "goto": "card-cracked-late",
+            "effects": {
+              "meters": {
+                "detain": 45
+              },
+              "credits": {}
+            },
+            "grade": "severe"
+          }
+        ]
+      },
+      {
+        "id": "card-cracked-late",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "agent-lead-at-door",
+          "agent-partner-at-door",
+          "door-cracked"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "Thanks.",
+              "That's all we needed."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-pull-the-door-shut-a",
+            "text": "Pull the door shut again immediately. Hand nothing through.",
+            "goto": "card-resolution-good",
+            "effects": {
+              "meters": {
+                "detain": -8
+              },
+              "credits": {}
+            },
+            "grade": "steady"
+          },
+          {
+            "id": "ans-let-the-door-stay-op",
+            "text": "Let the door stay open now that it's cracked.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 100
+              },
+              "credits": {}
+            },
+            "grade": "fatal"
+          }
+        ]
+      },
+      {
+        "id": "card-resolution-good",
+        "type": "normal",
+        "layers": [
+          "sky",
+          "floor",
+          "walls",
+          "door-closed"
+        ],
+        "responses": [
+          {
+            "speaker": "officer-lead",
+            "texts": [
+              "They leave.",
+              "After a while, you hear their car pull away.",
+              "They slide a card under the door and go."
+            ],
+            "variantMode": "random"
+          }
+        ],
+        "answers": [
+          {
+            "id": "ans-note-the-time-and-ba",
+            "text": "Note the time and badge numbers for your emergency contact.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 0
+              },
+              "credits": {}
+            },
+            "grade": "shield"
+          },
+          {
+            "id": "ans-just-relax.-no-need-",
+            "text": "Just relax. No need to write anything down.",
+            "goto": "end",
+            "effects": {
+              "meters": {
+                "detain": 12
+              },
+              "credits": {}
+            },
+            "grade": "soft"
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "layers": [],
+        "responses": [],
+        "answers": []
+      }
+    ]
   }
 }
