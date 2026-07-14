@@ -85,8 +85,8 @@ async function getCharacters(url, env) {
   // actually owns it — otherwise there'd be no way to ever select it.
   const placeholders = ownedCodes.map(() => '?').join(',');
   const sql = ownedCodes.length
-    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
-    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
+    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
+    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
   const stmt = ownedCodes.length
     ? env.CHARACTERS_DB.prepare(sql).bind(...ownedCodes)
     : env.CHARACTERS_DB.prepare(sql);
@@ -103,6 +103,8 @@ async function getCharacters(url, env) {
     primaryColor: r.primary_color || null,
     secondaryColor: r.secondary_color || null,
     trueAccentColor: r.accent_color || null,
+    autoUnlock: !!r.auto_unlock,
+    priceCents: r.price_cents || 0,
     laserOriginX: r.laser_origin_x != null ? r.laser_origin_x : null,
     laserOriginY: r.laser_origin_y != null ? r.laser_origin_y : null,
     visible: !!r.visible,
@@ -213,15 +215,35 @@ async function grantEntitlement(request, env) {
 // Coupon redemption. A code can grant more than one item (bundle codes) —
 // coupon_items holds one row per (coupon, item) pair. All granted items
 // share the same coupon_code in entitlements, so it's traceable later.
-async function loadValidCoupon(code, env) {
+async function loadValidCoupon(code, device, env) {
   const coupon = await env.CHARACTERS_DB.prepare(
-    'SELECT code, grant_type, item_type, max_redemptions, redemptions_used, expires_at, active FROM coupons WHERE code = ?'
+    'SELECT code, grant_type, item_type, max_redemptions, max_redemptions_per_user, redemptions_used, expires_at, active FROM coupons WHERE code = ?'
   ).bind(code).first();
   if (!coupon) return { error: json({ error: 'That code isn\'t valid.' }, 404) };
   if (!coupon.active) return { error: json({ error: 'That code is no longer active.' }, 410) };
   if (coupon.expires_at && Date.now() > coupon.expires_at) return { error: json({ error: 'That code has expired.' }, 410) };
-  if (coupon.redemptions_used >= coupon.max_redemptions) return { error: json({ error: 'That code has already been fully redeemed.' }, 410) };
+  // NULL max_redemptions / max_redemptions_per_user means unlimited on that axis.
+  if (coupon.max_redemptions != null && coupon.redemptions_used >= coupon.max_redemptions) {
+    return { error: json({ error: 'That code has already been fully redeemed.' }, 410) };
+  }
+  if (coupon.max_redemptions_per_user != null) {
+    const row = await env.CHARACTERS_DB.prepare(
+      'SELECT COUNT(*) as c FROM coupon_redemptions WHERE device_id = ? AND coupon_code = ?'
+    ).bind(device, code).first();
+    if ((row && row.c) >= coupon.max_redemptions_per_user) {
+      return { error: json({ error: 'You\'ve already used this code the maximum number of times.' }, 410) };
+    }
+  }
   return { coupon };
+}
+
+async function recordRedemption(device, code, env) {
+  await env.CHARACTERS_DB.prepare(
+    'INSERT INTO coupon_redemptions (device_id, coupon_code, redeemed_at) VALUES (?, ?, ?)'
+  ).bind(device, code, Date.now()).run();
+  await env.CHARACTERS_DB.prepare(
+    'UPDATE coupons SET redemptions_used = redemptions_used + 1 WHERE code = ?'
+  ).bind(code).run();
 }
 
 // Rebels not already owned by this device — the eligible pool for an
@@ -231,7 +253,10 @@ async function unownedRebels(device, env) {
     "SELECT item_code FROM entitlements WHERE device_id = ? AND item_type = 'rebel'"
   ).bind(device).all();
   const ownedCodes = new Set(owned.map((r) => r.item_code));
-  ownedCodes.add('OG'); // always free, never offered as a "choice"
+  const { results: autoUnlocked } = await env.CHARACTERS_DB.prepare(
+    'SELECT code FROM characters WHERE auto_unlock = 1'
+  ).all();
+  autoUnlocked.forEach((c) => ownedCodes.add(c.code)); // free-and-automatic birds are never offered as a "choice"
   const { results: chars } = await env.CHARACTERS_DB.prepare(
     'SELECT code, label FROM characters WHERE active = 1 AND visible = 1'
   ).all();
@@ -245,7 +270,7 @@ async function redeemCoupon(request, env) {
   const code = String((body && body.code) || '').trim().toUpperCase();
   if (!device || !code) return json({ error: 'missing device or code' }, 400);
 
-  const { coupon, error } = await loadValidCoupon(code, env);
+  const { coupon, error } = await loadValidCoupon(code, device, env);
   if (error) return error;
 
   if (coupon.grant_type === 'any_one') {
@@ -282,9 +307,7 @@ async function redeemCoupon(request, env) {
       'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, coupon_code, created_at) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(device, item.item_type, item.item_code, 'coupon', code, now).run();
   }
-  await env.CHARACTERS_DB.prepare(
-    'UPDATE coupons SET redemptions_used = redemptions_used + 1 WHERE code = ?'
-  ).bind(code).run();
+  await recordRedemption(device, code, env);
 
   return json({ ok: true, granted: items.map((i) => ({ itemType: i.item_type, itemCode: i.item_code })) });
 }
@@ -299,7 +322,7 @@ async function redeemCouponChoice(request, env) {
   const itemCode = String((body && body.itemCode) || '');
   if (!device || !code || !itemCode) return json({ error: 'missing device, code, or itemCode' }, 400);
 
-  const { coupon, error } = await loadValidCoupon(code, env);
+  const { coupon, error } = await loadValidCoupon(code, device, env);
   if (error) return error;
   if (coupon.grant_type !== 'any_one') return json({ error: 'That code doesn\'t work that way.' }, 400);
 
@@ -317,9 +340,7 @@ async function redeemCouponChoice(request, env) {
   await env.CHARACTERS_DB.prepare(
     'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, coupon_code, created_at) VALUES (?, ?, ?, ?, ?, ?)'
   ).bind(device, coupon.item_type, itemCode, 'coupon', code, Date.now()).run();
-  await env.CHARACTERS_DB.prepare(
-    'UPDATE coupons SET redemptions_used = redemptions_used + 1 WHERE code = ?'
-  ).bind(code).run();
+  await recordRedemption(device, code, env);
 
   return json({ ok: true, granted: [{ itemType: coupon.item_type, itemCode: itemCode }] });
 }
