@@ -1,19 +1,3 @@
-@font-face{
-  font-family:'Black Elite';
-  src:url('fonts/BlackElite-Regular.ttf') format('truetype');
-  font-weight:400 900; font-display:swap;
-}
-@font-face{
-  font-family:'Black Elite Grunge';
-  src:url('fonts/BlackElite-Grunge.ttf') format('truetype');
-  font-weight:400 900; font-display:swap;
-}
-@font-face{
-  font-family:'Genos';
-  src:url('fonts/Genos-Variable.woff2') format('woff2-variations'), url('fonts/Genos-Variable.woff2') format('woff2');
-  font-weight:100 900; font-display:swap;
-}
-
 .rl-root{
   --rl-font-display: var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
   --rl-font-body:    var(--_typography---font-styles--body,    'Spline Sans Mono', ui-monospace, monospace);
@@ -95,7 +79,7 @@
 .rl-char-card.rl-selected{ border-color:var(--rl-ice); background:rgba(191,233,255,.08); }
 .rl-char-card.rl-selected span{ color:var(--rl-ice); font-weight:700; }
 
-/* Native flock tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
+/* Native flock/shop tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
 .rl-char-emblem{
   width:100%; aspect-ratio:887/937; display:flex; align-items:center; justify-content:center;
   margin-bottom:4px; border-radius:6px; background:rgba(255,255,255,.03);
@@ -105,6 +89,7 @@
   display:flex; align-items:center; justify-content:center;
   font-family:var(--rl-font-display); font-weight:800; font-size:20px; color:var(--rl-dim); line-height:1;
 }
+.rl-char-card.rl-char-shop-tile{ border-style:dashed; }
 
 /* ---------- difficulty tier selector ---------- */
 .rl-tier-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
@@ -148,45 +133,28 @@
   border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-dim);
   font-family:var(--rl-font-display); font-weight:800; font-size:15px; line-height:1;
 }
-.rl-gear-btn{
-  display:none; /* shown only under .rl-native below */
-  position:absolute; top:0; left:0; z-index:2;
-  width:30px; height:30px; border-radius:50%; appearance:none; cursor:pointer;
-  border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-dim);
-  font-size:15px; line-height:1;
-}
+.rl-logo{ display:none; } /* shown only under .rl-native below */
 .rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
 
-.rl-slider-row{ margin:0 0 20px; }
-.rl-slider-row label{ display:block; font-size:12px; color:var(--rl-dim); margin-bottom:6px; letter-spacing:.02em; }
-.rl-slider-row input[type="range"]{
-  width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px;
-  background:var(--rl-panel-line); outline:none;
-}
-.rl-slider-row input[type="range"]::-webkit-slider-thumb{
-  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
-  background:var(--rl-ice); box-shadow:0 1px 3px rgba(0,0,0,.4); cursor:pointer;
-}
-
 .rl-native [data-rl-screen="start"] .rl-sub,
 .rl-native [data-rl-screen="start"] .rl-tier-note,
-.rl-native [data-rl-screen="start"] .rl-check-row small{
+.rl-native [data-rl-screen="start"] .rl-check-row small,
+.rl-native [data-rl-screen="start"] .rl-h1{
   display:none;
 }
 .rl-native [data-rl-screen="start"] .rl-info-btn{ display:block; }
-.rl-native [data-rl-screen="start"] .rl-gear-btn{ display:block; }
+.rl-native [data-rl-screen="start"] .rl-logo{
+  display:block; width:50%; max-width:220px; margin:0 auto 14px;
+}
 .rl-native [data-rl-screen="start"] .rl-screen-inner{
   position:relative; display:flex; flex-direction:column; height:100%;
 }
 .rl-native [data-rl-screen="start"].rl-screen{ justify-content:flex-start; }
-/* Native replaces the inline grid with a button that opens the full-screen
-   Select Rebel screen — web keeps the original inline grid untouched. */
-.rl-native [data-rl-screen="start"] .rl-char-label-row,
-.rl-native [data-rl-screen="start"] .rl-char-grid{ display:none; }
-[data-rl-open-select]{ display:none; }
-.rl-native [data-rl-screen="start"] [data-rl-open-select]{ display:block; margin:2px 0 12px; }
-.rl-native [data-rl-screen="start"] [data-rl-start]{ margin-top:auto; }
+.rl-native [data-rl-screen="start"] .rl-char-grid{
+  flex:1 1 auto; min-height:0; max-height:none;
+  align-content:start; align-items:start; /* cards keep their own size instead of stretching to fill leftover space */
+}
 .rl-native [data-rl-screen="start"] .rl-check-row{ margin:8px 0; padding:9px 12px; }
 
 /* Two toggles side by side, native only */
@@ -197,18 +165,11 @@
 .rl-native .rl-pause-hint{ display:none; }
 
 /* Per-bird accent color as the selected-tile highlight, native only */
-.rl-native .rl-char-card.rl-selected{
+.rl-native [data-rl-screen="start"] .rl-char-card.rl-selected{
   border-color:var(--tile-accent, var(--rl-ice));
   background:color-mix(in srgb, var(--tile-accent, var(--rl-ice)) 12%, transparent);
 }
-.rl-native .rl-char-card.rl-selected span{ color:var(--tile-accent, var(--rl-ice)); }
-
-/* Locked tiles in the Select Rebel screen */
-.rl-char-card.rl-locked{ position:relative; opacity:.62; }
-.rl-lock-badge{
-  position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%;
-  background:rgba(5,9,15,.75); display:flex; align-items:center; justify-content:center; font-size:11px;
-}
+.rl-native [data-rl-screen="start"] .rl-char-card.rl-selected span{ color:var(--tile-accent, var(--rl-ice)); }
 
 /* Give Casual Mode the same pill-toggle treatment as Rainbow Blizzard, native only */
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]{
@@ -223,47 +184,29 @@
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked{ background:var(--rl-ice); }
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked::before{ transform:translateX(18px); }
 
-/* Select Rebel screen — full-screen instead of a narrow modal, native only */
-.rl-native [data-rl-screen="select"] .rl-screen-inner{ max-width:none; width:100%; }
-
-/* Long-list screens (Select Rebel grid, Leaderboard) use the full vertical
-   space instead of centering a short capped-height box, native only */
-.rl-native [data-rl-screen="select"],
-.rl-native [data-rl-screen="leaderboard"]{
-  justify-content:flex-start;
-}
-.rl-native [data-rl-screen="select"] .rl-screen-inner,
-.rl-native [data-rl-screen="leaderboard"] .rl-screen-inner{
-  display:flex; flex-direction:column; height:100%;
-}
-.rl-native [data-rl-screen="select"] .rl-char-grid{
-  flex:1 1 auto; min-height:0; max-height:none;
-  align-content:start; align-items:start;
-}
-.rl-native [data-rl-screen="leaderboard"] .rl-board{
-  flex:1 1 auto; min-height:0; max-height:none;
+/* Rebel Shop — near full-screen instead of a narrow modal, native only */
+.rl-native [data-rl-screen="shop"] .rl-screen-inner{ max-width:none; width:100%; }
+.rl-char-card .rl-shop-price{
+  display:block; margin-top:2px; font-family:var(--rl-font-display); font-weight:800;
+  font-size:10.5px; color:var(--rl-gold); letter-spacing:.02em;
 }
 
-/* Unlock action sheet — Purchase or Enter Code, replaces the old separate
-   shop detail/confirm cards with one modal that switches between states */
-.rl-unlock-modal{
+/* Rebel Shop item detail card — large image + Purchase, sits above the shop grid */
+.rl-shop-detail{
   position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
   padding:24px; background:rgba(5,9,15,.85);
 }
-.rl-unlock-panel{
+.rl-shop-detail-panel{
   width:100%; max-width:340px; text-align:center; padding:26px 22px; border-radius:14px;
   background:var(--rl-panel); border:1px solid var(--rl-panel-line);
 }
-.rl-unlock-panel img{
-  width:60%; max-width:180px; aspect-ratio:887/937; object-fit:contain; margin:0 auto 14px;
+.rl-shop-detail-panel img{
+  width:70%; max-width:220px; aspect-ratio:887/937; object-fit:contain; margin:0 auto 14px;
   display:block; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));
 }
-.rl-unlock-panel h3{ font-family:var(--rl-font-display); font-size:19px; margin:0 0 16px; }
-.rl-unlock-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
-.rl-code-input{
-  width:100%; padding:11px 12px; margin-bottom:10px; text-align:center; letter-spacing:.12em;
-  text-transform:uppercase; border-radius:9px; border:1px solid var(--rl-panel-line);
-  background:var(--rl-bg-top,#0a1420); color:var(--rl-ink); font-family:var(--rl-font-display); font-size:15px;
+.rl-shop-detail-panel h3{ font-family:var(--rl-font-display); font-size:19px; margin:0 0 6px; }
+.rl-shop-detail-price{
+  font-family:var(--rl-font-display); font-weight:800; font-size:20px; color:var(--rl-gold); margin-bottom:18px;
 }
 
 
@@ -381,29 +324,21 @@
 .rl-board-row:last-child{ border-bottom:none; }
 .rl-board-row .rl-rank{ color:var(--rl-dim); width:22px; flex:none; font-family:var(--rl-font-display); }
 .rl-board-row .rl-char-tag{
-  flex:none; font-size:11px; font-weight:800; letter-spacing:.04em;
-  color:var(--tile-accent, var(--rl-dim));
-  border:1px solid var(--tile-accent, var(--rl-panel-line)); border-radius:5px; padding:3px 7px; margin-right:8px;
+  flex:none; font-size:9.5px; font-weight:800; letter-spacing:.04em; color:var(--rl-dim);
+  border:1px solid var(--rl-panel-line); border-radius:5px; padding:2px 5px; margin-right:8px;
   font-family:var(--rl-font-display);
-  background:color-mix(in srgb, var(--tile-accent, transparent) 14%, transparent);
 }
 .rl-board-row .rl-init{ flex:1; font-family:var(--rl-font-display); font-weight:800; letter-spacing:.08em; color:var(--rl-ice); }
 .rl-board-row .rl-pts{ color:var(--rl-ink); font-weight:700; }
 .rl-board-row.rl-me{ background:rgba(255,207,77,.08); }
 .rl-board-empty{ padding:18px 12px; text-align:center; color:var(--rl-dim); font-size:12.5px; }
 .rl-lb-set-note{ text-align:center; font-size:11px; color:var(--rl-dim); margin:0 0 10px; letter-spacing:.02em; }
-.rl-lb-sort-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 10px; flex-wrap:wrap; }
+.rl-lb-sort-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 10px; }
 .rl-lb-sort-row label{ font-size:11px; color:var(--rl-dim); text-transform:uppercase; letter-spacing:.03em; }
 .rl-lb-sort-row select{
   background:var(--rl-panel); color:var(--rl-ink); border:1px solid var(--rl-panel-line); border-radius:7px;
   padding:5px 8px; font-family:var(--rl-font-body); font-size:12px;
 }
-.rl-lb-mods-check{
-  display:none; /* shown only under .rl-native below — no mod system exists on web yet */
-  align-items:center; gap:5px; cursor:pointer;
-}
-.rl-native .rl-lb-mods-check{ display:flex; }
-.rl-lb-mods-check input{ width:14px; height:14px; accent-color:var(--rl-ice); }
 .rl-board-row .rl-acc-bar{
   flex:none; width:36px; height:6px; border-radius:3px; background:rgba(255,255,255,.12);
   overflow:hidden; margin:0 8px;
@@ -413,91 +348,15 @@
 /* ---------- pause overlay ---------- */
 .rl-pause-panel{ width:100%; max-width:280px; margin:0 auto; text-align:center; }
 
-/* ---------- boot splash (native only, injected by JS) ---------- */
-.rl-boot-splash{
-  position:absolute; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
-  background:#0a0f1e; opacity:1; transition:opacity .5s ease;
+/* ---------- rebel shop purchase confirm (native only, harmless if unused) ---------- */
+.rl-shop-confirm{
+  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:rgba(5,9,15,.72);
 }
-.rl-boot-splash-fade{ opacity:0; }
-.rl-boot-splash-img{ width:55%; max-width:260px; filter:drop-shadow(0 0 24px rgba(191,233,255,.25)); }
-
-/* ---------- active rebel display (native only) ---------- */
-.rl-active-rebel{ display:none; }
-.rl-native [data-rl-screen="start"] .rl-active-rebel{
-  display:flex; flex-direction:column; align-items:center; margin:4px 0 12px;
+.rl-shop-confirm-panel{
+  width:100%; max-width:280px; text-align:center; padding:20px 18px; border-radius:12px;
+  background:var(--rl-panel); border:1px solid var(--rl-panel-line);
 }
-.rl-native [data-rl-screen="start"] .rl-active-rebel img{
-  width:32%; max-width:120px; aspect-ratio:887/937; object-fit:contain;
-  filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))
-    drop-shadow(0 0 10px color-mix(in srgb, var(--tile-accent, var(--rl-ice)) 45%, transparent));
-}
-.rl-native [data-rl-screen="start"] .rl-active-rebel span{
-  margin-top:6px; font-family:var(--rl-font-display); font-weight:800; font-size:14px;
-  color:var(--tile-accent, var(--rl-ice)); letter-spacing:.06em; text-transform:uppercase;
-}
-
-/* ---------- scene select dropdown (native only) ---------- */
-.rl-mode-select{ display:none; }
-.rl-native [data-rl-screen="start"] .rl-mode-select{ margin:4px 0 10px; }
-.rl-native [data-rl-screen="start"] [data-rl-rainbow-row]{ display:none; } /* replaced by the dropdown above */
-[data-rl-mode-picker]{
-  width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--rl-panel-line);
-  background:var(--rl-panel); color:var(--rl-ink); font-family:var(--rl-font-body); font-size:13px;
-  appearance:none; -webkit-appearance:none;
-}
-
-/* Selecting Rainbow Blizzard from the scene dropdown visibly shifts the
-   menu itself, not just gameplay — a slow hue drift over the same rotating
-   background used for bird accent tinting. */
-.rl-native.rl-scene-rainbow .rl-frame{
-  animation:rl-bg-rotate 22s ease-in-out infinite, rl-rainbow-hue 9s linear infinite;
-}
-@keyframes rl-rainbow-hue{
-  0%   { filter:hue-rotate(0deg); }
-  100% { filter:hue-rotate(360deg); }
-}
-
-/* ---------- brand fonts + textures (native only) ---------- */
-.rl-native{
-  --rl-font-display:'Black Elite', var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
-  --rl-font-body:'Genos', var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
-}
-.rl-native .rl-frame{
-  background-image:url('textures/diamonds-dark.png'),
-    linear-gradient(var(--rl-bg-angle), var(--rl-bg-top), var(--rl-bg-mid, var(--rl-bg-top)) 50%, var(--rl-bg-bottom));
-  background-size:220px 220px, cover;
-  background-blend-mode:soft-light, normal;
-  animation:rl-bg-rotate 22s ease-in-out infinite;
-}
-.rl-native .rl-hud{
-  background-image:url('textures/knobs.png');
-  background-repeat:repeat;
-  background-blend-mode:overlay;
-}
-
-/* ---------- cockpit-HUD ambient background (native only) ----------
-   Rotates slowly through the selected bird's primary -> secondary tones
-   instead of a single flat tint. Falls back to the fixed dark base when
-   nothing is tinted (e.g. Random selected). */
-@property --rl-bg-angle{ syntax:'<angle>'; inherits:false; initial-value:135deg; }
-@keyframes rl-bg-rotate{
-  0%   { --rl-bg-angle: 115deg; }
-  50%  { --rl-bg-angle: 225deg; }
-  100% { --rl-bg-angle: 115deg; }
-}
-
-/* ---------- general cockpit-HUD panel treatment (native only) ----------
-   Angled corners instead of plain rounded rectangles, plus a subtle glow
-   on the accent-colored borders already in place elsewhere. */
-.rl-native .rl-frame{
-  border:1px solid rgba(191,233,255,.12);
-}
-.rl-native [data-rl-screen="start"] .rl-active-rebel img{
-  clip-path:polygon(8% 0, 100% 0, 100% 92%, 92% 100%, 0 100%, 0 8%);
-}
-.rl-native .rl-tier-row .rl-tier-btn,
-.rl-native .rl-char-card{
-  clip-path:polygon(6% 0, 100% 0, 100% 94%, 94% 100%, 0 100%, 0 6%);
-}
+.rl-shop-confirm-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
 
 [hidden]{ display:none !important; }
