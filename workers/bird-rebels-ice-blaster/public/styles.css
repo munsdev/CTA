@@ -1,3 +1,19 @@
+@font-face{
+  font-family:'Black Elite';
+  src:url('fonts/BlackElite-Regular.ttf') format('truetype');
+  font-weight:400 900; font-display:swap;
+}
+@font-face{
+  font-family:'Black Elite Grunge';
+  src:url('fonts/BlackElite-Grunge.ttf') format('truetype');
+  font-weight:400 900; font-display:swap;
+}
+@font-face{
+  font-family:'Genos';
+  src:url('fonts/Genos-Variable.woff2') format('woff2-variations'), url('fonts/Genos-Variable.woff2') format('woff2');
+  font-weight:100 900; font-display:swap;
+}
+
 .rl-root{
   --rl-font-display: var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
   --rl-font-body:    var(--_typography---font-styles--body,    'Spline Sans Mono', ui-monospace, monospace);
@@ -362,21 +378,29 @@
 .rl-board-row:last-child{ border-bottom:none; }
 .rl-board-row .rl-rank{ color:var(--rl-dim); width:22px; flex:none; font-family:var(--rl-font-display); }
 .rl-board-row .rl-char-tag{
-  flex:none; font-size:9.5px; font-weight:800; letter-spacing:.04em; color:var(--rl-dim);
-  border:1px solid var(--rl-panel-line); border-radius:5px; padding:2px 5px; margin-right:8px;
+  flex:none; font-size:11px; font-weight:800; letter-spacing:.04em;
+  color:var(--tile-accent, var(--rl-dim));
+  border:1px solid var(--tile-accent, var(--rl-panel-line)); border-radius:5px; padding:3px 7px; margin-right:8px;
   font-family:var(--rl-font-display);
+  background:color-mix(in srgb, var(--tile-accent, transparent) 14%, transparent);
 }
 .rl-board-row .rl-init{ flex:1; font-family:var(--rl-font-display); font-weight:800; letter-spacing:.08em; color:var(--rl-ice); }
 .rl-board-row .rl-pts{ color:var(--rl-ink); font-weight:700; }
 .rl-board-row.rl-me{ background:rgba(255,207,77,.08); }
 .rl-board-empty{ padding:18px 12px; text-align:center; color:var(--rl-dim); font-size:12.5px; }
 .rl-lb-set-note{ text-align:center; font-size:11px; color:var(--rl-dim); margin:0 0 10px; letter-spacing:.02em; }
-.rl-lb-sort-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 10px; }
+.rl-lb-sort-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 10px; flex-wrap:wrap; }
 .rl-lb-sort-row label{ font-size:11px; color:var(--rl-dim); text-transform:uppercase; letter-spacing:.03em; }
 .rl-lb-sort-row select{
   background:var(--rl-panel); color:var(--rl-ink); border:1px solid var(--rl-panel-line); border-radius:7px;
   padding:5px 8px; font-family:var(--rl-font-body); font-size:12px;
 }
+.rl-lb-mods-check{
+  display:none; /* shown only under .rl-native below — no mod system exists on web yet */
+  align-items:center; gap:5px; cursor:pointer;
+}
+.rl-native .rl-lb-mods-check{ display:flex; }
+.rl-lb-mods-check input{ width:14px; height:14px; accent-color:var(--rl-ice); }
 .rl-board-row .rl-acc-bar{
   flex:none; width:36px; height:6px; border-radius:3px; background:rgba(255,255,255,.12);
   overflow:hidden; margin:0 8px;
@@ -420,30 +444,50 @@
   color:var(--tile-accent, var(--rl-ice)); letter-spacing:.06em; text-transform:uppercase;
 }
 
-/* ---------- mode select segmented control (native only) ---------- */
+/* ---------- scene select dropdown (native only) ---------- */
 .rl-mode-select{ display:none; }
-.rl-native [data-rl-screen="start"] .rl-mode-select{
-  display:flex; gap:0; margin:4px 0 10px; border:1px solid var(--rl-panel-line); border-radius:9px; overflow:hidden;
+.rl-native [data-rl-screen="start"] .rl-mode-select{ margin:4px 0 10px; }
+.rl-native [data-rl-screen="start"] [data-rl-rainbow-row]{ display:none; } /* replaced by the dropdown above */
+[data-rl-mode-picker]{
+  width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--rl-panel-line);
+  background:var(--rl-panel); color:var(--rl-ink); font-family:var(--rl-font-body); font-size:13px;
+  appearance:none; -webkit-appearance:none;
 }
-.rl-native [data-rl-screen="start"] [data-rl-rainbow-row]{ display:none; } /* replaced by the segmented control above */
-.rl-mode-btn{
-  flex:1; padding:9px 6px; background:transparent; border:none; color:var(--rl-dim);
-  font-family:var(--rl-font-body); font-size:12px; letter-spacing:.02em; cursor:pointer;
-  border-right:1px solid var(--rl-panel-line);
+
+/* Selecting Rainbow Blizzard from the scene dropdown visibly shifts the
+   menu itself, not just gameplay — a slow hue drift over the same rotating
+   background used for bird accent tinting. */
+.rl-native.rl-scene-rainbow .rl-frame{
+  animation:rl-bg-rotate 22s ease-in-out infinite, rl-rainbow-hue 9s linear infinite;
 }
-.rl-mode-btn:last-child{ border-right:none; }
-.rl-mode-btn.rl-selected{ background:rgba(191,233,255,.1); color:var(--rl-ice); font-weight:700; }
+@keyframes rl-rainbow-hue{
+  0%   { filter:hue-rotate(0deg); }
+  100% { filter:hue-rotate(360deg); }
+}
+
+/* ---------- brand fonts + textures (native only) ---------- */
+.rl-native{
+  --rl-font-display:'Black Elite', var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
+  --rl-font-body:'Genos', var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
+}
+.rl-native .rl-frame{
+  background-image:url('textures/diamonds-dark.png'),
+    linear-gradient(var(--rl-bg-angle), var(--rl-bg-top), var(--rl-bg-mid, var(--rl-bg-top)) 50%, var(--rl-bg-bottom));
+  background-size:220px 220px, cover;
+  background-blend-mode:soft-light, normal;
+  animation:rl-bg-rotate 22s ease-in-out infinite;
+}
+.rl-native .rl-hud{
+  background-image:url('textures/knobs.png');
+  background-repeat:repeat;
+  background-blend-mode:overlay;
+}
 
 /* ---------- cockpit-HUD ambient background (native only) ----------
    Rotates slowly through the selected bird's primary -> secondary tones
    instead of a single flat tint. Falls back to the fixed dark base when
    nothing is tinted (e.g. Random selected). */
 @property --rl-bg-angle{ syntax:'<angle>'; inherits:false; initial-value:135deg; }
-.rl-native .rl-frame{
-  background:linear-gradient(var(--rl-bg-angle),
-    var(--rl-bg-top), var(--rl-bg-mid, var(--rl-bg-top)) 50%, var(--rl-bg-bottom));
-  animation:rl-bg-rotate 22s ease-in-out infinite;
-}
 @keyframes rl-bg-rotate{
   0%   { --rl-bg-angle: 115deg; }
   50%  { --rl-bg-angle: 225deg; }
@@ -459,7 +503,6 @@
 .rl-native [data-rl-screen="start"] .rl-active-rebel img{
   clip-path:polygon(8% 0, 100% 0, 100% 92%, 92% 100%, 0 100%, 0 8%);
 }
-.rl-native .rl-mode-select,
 .rl-native .rl-tier-row .rl-tier-btn,
 .rl-native .rl-char-card{
   clip-path:polygon(6% 0, 100% 0, 100% 94%, 94% 100%, 0 100%, 0 6%);
