@@ -79,6 +79,21 @@
 .rl-char-card.rl-selected{ border-color:var(--rl-ice); background:rgba(191,233,255,.08); }
 .rl-char-card.rl-selected span{ color:var(--rl-ice); font-weight:700; }
 
+/* Native flock/shop tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
+.rl-char-card.rl-owned{ border-color:var(--rl-gold); box-shadow:inset 0 0 0 1px rgba(255,207,77,.35); }
+.rl-char-card.rl-owned.rl-selected{ border-color:var(--rl-gold); background:rgba(255,207,77,.1); }
+.rl-char-card.rl-owned.rl-selected span{ color:var(--rl-gold); }
+.rl-char-card.rl-char-random .rl-char-mystery{
+  width:100%; aspect-ratio:887/937; display:flex; align-items:center; justify-content:center;
+  margin-bottom:4px; border-radius:6px; background:rgba(255,255,255,.03);
+  font-family:var(--rl-font-display); font-weight:800; font-size:26px; color:var(--rl-dim);
+}
+.rl-char-card.rl-char-shop-tile{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  border-style:dashed;
+}
+.rl-char-shop-plus{ font-family:var(--rl-font-display); font-weight:800; font-size:22px; color:var(--rl-dim); line-height:1; }
+
 /* ---------- difficulty tier selector ---------- */
 .rl-tier-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
 .rl-tier-btn{
