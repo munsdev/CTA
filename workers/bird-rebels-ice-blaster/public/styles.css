@@ -133,28 +133,47 @@
   border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-dim);
   font-family:var(--rl-font-display); font-weight:800; font-size:15px; line-height:1;
 }
-.rl-logo{ display:none; } /* shown only under .rl-native below */
+.rl-gear-btn{
+  display:none; /* shown only under .rl-native below */
+  position:absolute; top:0; left:0; z-index:2;
+  width:30px; height:30px; border-radius:50%; appearance:none; cursor:pointer;
+  border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-dim);
+  font-size:15px; line-height:1;
+}
 .rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
 
+.rl-slider-row{ margin:0 0 20px; }
+.rl-slider-row label{ display:block; font-size:12px; color:var(--rl-dim); margin-bottom:6px; letter-spacing:.02em; }
+.rl-slider-row input[type="range"]{
+  width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px;
+  background:var(--rl-panel-line); outline:none;
+}
+.rl-slider-row input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  background:var(--rl-ice); box-shadow:0 1px 3px rgba(0,0,0,.4); cursor:pointer;
+}
+
 .rl-native [data-rl-screen="start"] .rl-sub,
 .rl-native [data-rl-screen="start"] .rl-tier-note,
-.rl-native [data-rl-screen="start"] .rl-check-row small,
-.rl-native [data-rl-screen="start"] .rl-h1{
+.rl-native [data-rl-screen="start"] .rl-check-row small{
   display:none;
 }
 .rl-native [data-rl-screen="start"] .rl-info-btn{ display:block; }
-.rl-native [data-rl-screen="start"] .rl-logo{
-  display:block; width:50%; max-width:220px; margin:0 auto 14px;
-}
+.rl-native [data-rl-screen="start"] .rl-gear-btn{ display:block; }
 .rl-native [data-rl-screen="start"] .rl-screen-inner{
   position:relative; display:flex; flex-direction:column; height:100%;
 }
 .rl-native [data-rl-screen="start"].rl-screen{ justify-content:flex-start; }
 .rl-native [data-rl-screen="start"] .rl-char-grid{
-  flex:1 1 auto; min-height:0; max-height:none;
-  align-content:start; align-items:start; /* cards keep their own size instead of stretching to fill leftover space */
+  display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:visible;
+  gap:8px; max-height:none; grid-template-columns:none; /* overrides the base grid rule */
+  padding-bottom:2px; scroll-snap-type:x proximity;
 }
+.rl-native [data-rl-screen="start"] .rl-char-grid .rl-char-card{
+  flex:0 0 74px; scroll-snap-align:start;
+}
+.rl-native [data-rl-screen="start"] [data-rl-start]{ margin-top:auto; }
 .rl-native [data-rl-screen="start"] .rl-check-row{ margin:8px 0; padding:9px 12px; }
 
 /* Two toggles side by side, native only */
@@ -377,5 +396,73 @@
   background:var(--rl-panel); border:1px solid var(--rl-panel-line);
 }
 .rl-shop-confirm-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
+
+/* ---------- boot splash (native only, injected by JS) ---------- */
+.rl-boot-splash{
+  position:absolute; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+  background:#0a0f1e; opacity:1; transition:opacity .5s ease;
+}
+.rl-boot-splash-fade{ opacity:0; }
+.rl-boot-splash-img{ width:55%; max-width:260px; filter:drop-shadow(0 0 24px rgba(191,233,255,.25)); }
+
+/* ---------- active rebel display (native only) ---------- */
+.rl-active-rebel{ display:none; }
+.rl-native [data-rl-screen="start"] .rl-active-rebel{
+  display:flex; flex-direction:column; align-items:center; margin:4px 0 12px;
+}
+.rl-native [data-rl-screen="start"] .rl-active-rebel img{
+  width:32%; max-width:120px; aspect-ratio:887/937; object-fit:contain;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))
+    drop-shadow(0 0 10px color-mix(in srgb, var(--tile-accent, var(--rl-ice)) 45%, transparent));
+}
+.rl-native [data-rl-screen="start"] .rl-active-rebel span{
+  margin-top:6px; font-family:var(--rl-font-display); font-weight:800; font-size:14px;
+  color:var(--tile-accent, var(--rl-ice)); letter-spacing:.06em; text-transform:uppercase;
+}
+
+/* ---------- mode select segmented control (native only) ---------- */
+.rl-mode-select{ display:none; }
+.rl-native [data-rl-screen="start"] .rl-mode-select{
+  display:flex; gap:0; margin:4px 0 10px; border:1px solid var(--rl-panel-line); border-radius:9px; overflow:hidden;
+}
+.rl-native [data-rl-screen="start"] [data-rl-rainbow-row]{ display:none; } /* replaced by the segmented control above */
+.rl-mode-btn{
+  flex:1; padding:9px 6px; background:transparent; border:none; color:var(--rl-dim);
+  font-family:var(--rl-font-body); font-size:12px; letter-spacing:.02em; cursor:pointer;
+  border-right:1px solid var(--rl-panel-line);
+}
+.rl-mode-btn:last-child{ border-right:none; }
+.rl-mode-btn.rl-selected{ background:rgba(191,233,255,.1); color:var(--rl-ice); font-weight:700; }
+
+/* ---------- cockpit-HUD ambient background (native only) ----------
+   Rotates slowly through the selected bird's primary -> secondary tones
+   instead of a single flat tint. Falls back to the fixed dark base when
+   nothing is tinted (e.g. Random selected). */
+@property --rl-bg-angle{ syntax:'<angle>'; inherits:false; initial-value:135deg; }
+.rl-native .rl-frame{
+  background:linear-gradient(var(--rl-bg-angle),
+    var(--rl-bg-top), var(--rl-bg-mid, var(--rl-bg-top)) 50%, var(--rl-bg-bottom));
+  animation:rl-bg-rotate 22s ease-in-out infinite;
+}
+@keyframes rl-bg-rotate{
+  0%   { --rl-bg-angle: 115deg; }
+  50%  { --rl-bg-angle: 225deg; }
+  100% { --rl-bg-angle: 115deg; }
+}
+
+/* ---------- general cockpit-HUD panel treatment (native only) ----------
+   Angled corners instead of plain rounded rectangles, plus a subtle glow
+   on the accent-colored borders already in place elsewhere. */
+.rl-native .rl-frame{
+  border:1px solid rgba(191,233,255,.12);
+}
+.rl-native [data-rl-screen="start"] .rl-active-rebel img{
+  clip-path:polygon(8% 0, 100% 0, 100% 92%, 92% 100%, 0 100%, 0 8%);
+}
+.rl-native .rl-mode-select,
+.rl-native .rl-tier-row .rl-tier-btn,
+.rl-native .rl-char-card{
+  clip-path:polygon(6% 0, 100% 0, 100% 94%, 94% 100%, 0 100%, 0 6%);
+}
 
 [hidden]{ display:none !important; }
