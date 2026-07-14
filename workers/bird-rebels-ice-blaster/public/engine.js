@@ -168,17 +168,19 @@
     + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
     + '      </div>'
     + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
-    + '      <div class="rl-check-row">'
-    + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
-    + '        <label for="rl-kidmode-toggle">Casual Mode'
-    + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
-    + '        </label>'
-    + '      </div>'
-    + '      <div class="rl-check-row">'
-    + '        <input type="checkbox" id="rl-rainbow-toggle" data-rl-rainbow-toggle>'
-    + '        <label for="rl-rainbow-toggle">Rainbow Blizzard Mode'
-    + '          <small>Swaps your laser for rockets, adds a separate leaderboard</small>'
-    + '        </label>'
+    + '      <div class="rl-toggle-row">'
+    + '        <div class="rl-check-row">'
+    + '          <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
+    + '          <label for="rl-kidmode-toggle">Casual Mode'
+    + '            <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
+    + '          </label>'
+    + '        </div>'
+    + '        <div class="rl-check-row">'
+    + '          <input type="checkbox" id="rl-rainbow-toggle" data-rl-rainbow-toggle>'
+    + '          <label for="rl-rainbow-toggle"><span data-rl-rainbow-label>Rainbow Blizzard Mode</span>'
+    + '            <small>Swaps your laser for rockets, adds a separate leaderboard</small>'
+    + '          </label>'
+    + '        </div>'
     + '      </div>'
     + '      <button class="rl-btn" data-rl-start>Start Game</button>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard>Leaderboard</button>'
@@ -270,7 +272,7 @@
     + '      <p class="rl-info-block">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
-    + '      <p class="rl-info-block"><b>Rainbow Blizzard Mode</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
+    + '      <p class="rl-info-block"><b>Rainbow Mode</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-info>Back</button>'
     + '    </div>'
     + '  </div>'
@@ -281,6 +283,15 @@
     + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
+    + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
+    + '        <div class="rl-shop-detail-panel">'
+    + '          <img data-rl-shop-detail-img alt="">'
+    + '          <h3 data-rl-shop-detail-name></h3>'
+    + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
+    + '          <button class="rl-btn" data-rl-shop-detail-buy>Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-back>Back</button>'
+    + '        </div>'
+    + '      </div>'
     + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
     + '        <div class="rl-shop-confirm-panel">'
     + '          <p data-rl-shop-confirm-text></p>'
@@ -309,7 +320,11 @@
     // Only the Capacitor wrapper sets data-rl-shop; the Webflow embed never
     // does, so this whole feature is inert on the live web game.
     var shopEnabled = mount.getAttribute('data-rl-shop') === '1';
-    if (shopEnabled) mount.classList.add('rl-native');
+    if (shopEnabled) {
+      mount.classList.add('rl-native');
+      var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
+      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Mode';
+    }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
     function getFlock() {
@@ -386,6 +401,19 @@
 
     function selectCard(card) {
       charGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
+      if (shopEnabled) updateMenuBg(card.getAttribute('data-rl-char'));
+    }
+
+    function updateMenuBg(code) {
+      var accent = code ? charAccent[code] : null;
+      if (!accent) {
+        mount.style.removeProperty('--rl-bg-top');
+        mount.style.removeProperty('--rl-bg-bottom');
+        return;
+      }
+      var colors = computeBgColors(accent);
+      mount.style.setProperty('--rl-bg-top', colors.top);
+      mount.style.setProperty('--rl-bg-bottom', colors.bottom);
     }
 
     function renderCharGrid() {
@@ -434,6 +462,7 @@
         card.type = 'button';
         card.className = 'rl-char-card' + (opts.code === wantSelected ? ' rl-selected' : '');
         if (opts.code) card.setAttribute('data-rl-char', opts.code);
+        if (opts.code && charAccent[opts.code]) card.style.setProperty('--tile-accent', charAccent[opts.code]);
         var img = document.createElement('img');
         img.alt = opts.label;
         img.src = opts.imgSrc;
@@ -476,6 +505,7 @@
       randomCard.insertBefore(mystery, randomCard.firstChild);
 
       selectedChar = wantSelected;
+      updateMenuBg(wantSelected);
 
       // Shop tile — always last
       var shopTile = document.createElement('button');
@@ -503,33 +533,61 @@
         card.type = 'button';
         card.className = 'rl-char-card';
         card.setAttribute('data-rl-char', ch.code);
+        if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
         var img = document.createElement('img');
         img.alt = ch.label;
         img.src = BASE + ch.src;
         var span = document.createElement('span');
         span.textContent = ch.label;
-        card.appendChild(img); card.appendChild(span);
+        var price = document.createElement('span');
+        price.className = 'rl-shop-price';
+        price.textContent = '$0.00';
+        card.appendChild(img); card.appendChild(span); card.appendChild(price);
         card.addEventListener('click', function () {
-          openShopConfirm(ch);
+          openShopDetail(ch);
         });
         shopGrid.appendChild(card);
       });
     }
 
+    var shopDetailEl = mount.querySelector('[data-rl-shop-detail]');
+    var shopDetailImg = mount.querySelector('[data-rl-shop-detail-img]');
+    var shopDetailName = mount.querySelector('[data-rl-shop-detail-name]');
+    var shopDetailBuy = mount.querySelector('[data-rl-shop-detail-buy]');
+    var shopDetailBack = mount.querySelector('[data-rl-shop-detail-back]');
     var shopConfirmEl = mount.querySelector('[data-rl-shop-confirm]');
     var shopConfirmText = mount.querySelector('[data-rl-shop-confirm-text]');
     var shopConfirmYes = mount.querySelector('[data-rl-shop-confirm-yes]');
     var shopConfirmNo = mount.querySelector('[data-rl-shop-confirm-no]');
     var pendingPurchase = null;
 
+    function openShopDetail(ch) {
+      if (!shopDetailEl) return;
+      pendingPurchase = ch;
+      shopDetailImg.src = BASE + ch.src;
+      shopDetailImg.alt = ch.label;
+      shopDetailName.textContent = ch.label;
+      shopDetailEl.hidden = false;
+    }
+    function closeShopDetail() {
+      if (shopDetailEl) shopDetailEl.hidden = true;
+    }
+    if (shopDetailBack) shopDetailBack.addEventListener('click', function () { pendingPurchase = null; closeShopDetail(); });
+    if (shopDetailBuy) {
+      shopDetailBuy.addEventListener('click', function () {
+        if (!pendingPurchase) return;
+        openShopConfirm(pendingPurchase);
+      });
+    }
+
     function openShopConfirm(ch) {
       if (!shopConfirmEl) return;
       pendingPurchase = ch;
       shopConfirmText.textContent = 'Purchase ' + ch.label + ' for $0.00 and add it to your flock?';
+      closeShopDetail();
       shopConfirmEl.hidden = false;
     }
     function closeShopConfirm() {
-      pendingPurchase = null;
       if (shopConfirmEl) shopConfirmEl.hidden = true;
     }
     if (shopConfirmYes) {
@@ -539,16 +597,24 @@
         addToFlock(ch.code);
         toast(ch.label + ' added to your flock!');
         selectedChar = ch.code;
+        pendingPurchase = null;
         closeShopConfirm();
         renderCharGrid();
         showScreen('shop-close');
       });
     }
-    if (shopConfirmNo) shopConfirmNo.addEventListener('click', closeShopConfirm);
+    if (shopConfirmNo) {
+      shopConfirmNo.addEventListener('click', function () {
+        // Cancel drops back to the detail card rather than closing everything,
+        // so a change of mind doesn't lose your place in the shop.
+        closeShopConfirm();
+        if (pendingPurchase) openShopDetail(pendingPurchase);
+      });
+    }
 
     if (shopEnabled) {
       var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
-      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopConfirm(); showScreen('shop-close'); });
+      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); closeShopConfirm(); pendingPurchase = null; showScreen('shop-close'); });
       var infoBtn = mount.querySelector('[data-rl-info-btn]');
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
