@@ -95,7 +95,7 @@
 .rl-char-card.rl-selected{ border-color:var(--rl-ice); background:rgba(191,233,255,.08); }
 .rl-char-card.rl-selected span{ color:var(--rl-ice); font-weight:700; }
 
-/* Native flock/shop tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
+/* Native flock tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
 .rl-char-emblem{
   width:100%; aspect-ratio:887/937; display:flex; align-items:center; justify-content:center;
   margin-bottom:4px; border-radius:6px; background:rgba(255,255,255,.03);
@@ -105,7 +105,6 @@
   display:flex; align-items:center; justify-content:center;
   font-family:var(--rl-font-display); font-weight:800; font-size:20px; color:var(--rl-dim); line-height:1;
 }
-.rl-char-card.rl-char-shop-tile{ border-style:dashed; }
 
 /* ---------- difficulty tier selector ---------- */
 .rl-tier-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
@@ -181,14 +180,12 @@
   position:relative; display:flex; flex-direction:column; height:100%;
 }
 .rl-native [data-rl-screen="start"].rl-screen{ justify-content:flex-start; }
-.rl-native [data-rl-screen="start"] .rl-char-grid{
-  display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:visible;
-  gap:8px; max-height:none; grid-template-columns:none; /* overrides the base grid rule */
-  padding-bottom:2px; scroll-snap-type:x proximity;
-}
-.rl-native [data-rl-screen="start"] .rl-char-grid .rl-char-card{
-  flex:0 0 74px; scroll-snap-align:start;
-}
+/* Native replaces the inline grid with a button that opens the full-screen
+   Select Rebel screen — web keeps the original inline grid untouched. */
+.rl-native [data-rl-screen="start"] .rl-char-label-row,
+.rl-native [data-rl-screen="start"] .rl-char-grid{ display:none; }
+[data-rl-open-select]{ display:none; }
+.rl-native [data-rl-screen="start"] [data-rl-open-select]{ display:block; margin:2px 0 12px; }
 .rl-native [data-rl-screen="start"] [data-rl-start]{ margin-top:auto; }
 .rl-native [data-rl-screen="start"] .rl-check-row{ margin:8px 0; padding:9px 12px; }
 
@@ -200,11 +197,18 @@
 .rl-native .rl-pause-hint{ display:none; }
 
 /* Per-bird accent color as the selected-tile highlight, native only */
-.rl-native [data-rl-screen="start"] .rl-char-card.rl-selected{
+.rl-native .rl-char-card.rl-selected{
   border-color:var(--tile-accent, var(--rl-ice));
   background:color-mix(in srgb, var(--tile-accent, var(--rl-ice)) 12%, transparent);
 }
-.rl-native [data-rl-screen="start"] .rl-char-card.rl-selected span{ color:var(--tile-accent, var(--rl-ice)); }
+.rl-native .rl-char-card.rl-selected span{ color:var(--tile-accent, var(--rl-ice)); }
+
+/* Locked tiles in the Select Rebel screen */
+.rl-char-card.rl-locked{ position:relative; opacity:.62; }
+.rl-lock-badge{
+  position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%;
+  background:rgba(5,9,15,.75); display:flex; align-items:center; justify-content:center; font-size:11px;
+}
 
 /* Give Casual Mode the same pill-toggle treatment as Rainbow Blizzard, native only */
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]{
@@ -219,24 +223,20 @@
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked{ background:var(--rl-ice); }
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked::before{ transform:translateX(18px); }
 
-/* Rebel Shop — near full-screen instead of a narrow modal, native only */
-.rl-native [data-rl-screen="shop"] .rl-screen-inner{ max-width:none; width:100%; }
-.rl-char-card .rl-shop-price{
-  display:block; margin-top:2px; font-family:var(--rl-font-display); font-weight:800;
-  font-size:10.5px; color:var(--rl-gold); letter-spacing:.02em;
-}
+/* Select Rebel screen — full-screen instead of a narrow modal, native only */
+.rl-native [data-rl-screen="select"] .rl-screen-inner{ max-width:none; width:100%; }
 
-/* Long-list screens (Shop grid, Leaderboard) use the full vertical space
-   instead of centering a short capped-height box, native only */
-.rl-native [data-rl-screen="shop"],
+/* Long-list screens (Select Rebel grid, Leaderboard) use the full vertical
+   space instead of centering a short capped-height box, native only */
+.rl-native [data-rl-screen="select"],
 .rl-native [data-rl-screen="leaderboard"]{
   justify-content:flex-start;
 }
-.rl-native [data-rl-screen="shop"] .rl-screen-inner,
+.rl-native [data-rl-screen="select"] .rl-screen-inner,
 .rl-native [data-rl-screen="leaderboard"] .rl-screen-inner{
   display:flex; flex-direction:column; height:100%;
 }
-.rl-native [data-rl-screen="shop"] .rl-char-grid{
+.rl-native [data-rl-screen="select"] .rl-char-grid{
   flex:1 1 auto; min-height:0; max-height:none;
   align-content:start; align-items:start;
 }
@@ -244,23 +244,26 @@
   flex:1 1 auto; min-height:0; max-height:none;
 }
 
-
-/* Rebel Shop item detail card — large image + Purchase, sits above the shop grid */
-.rl-shop-detail{
+/* Unlock action sheet — Purchase or Enter Code, replaces the old separate
+   shop detail/confirm cards with one modal that switches between states */
+.rl-unlock-modal{
   position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
   padding:24px; background:rgba(5,9,15,.85);
 }
-.rl-shop-detail-panel{
+.rl-unlock-panel{
   width:100%; max-width:340px; text-align:center; padding:26px 22px; border-radius:14px;
   background:var(--rl-panel); border:1px solid var(--rl-panel-line);
 }
-.rl-shop-detail-panel img{
-  width:70%; max-width:220px; aspect-ratio:887/937; object-fit:contain; margin:0 auto 14px;
+.rl-unlock-panel img{
+  width:60%; max-width:180px; aspect-ratio:887/937; object-fit:contain; margin:0 auto 14px;
   display:block; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));
 }
-.rl-shop-detail-panel h3{ font-family:var(--rl-font-display); font-size:19px; margin:0 0 6px; }
-.rl-shop-detail-price{
-  font-family:var(--rl-font-display); font-weight:800; font-size:20px; color:var(--rl-gold); margin-bottom:18px;
+.rl-unlock-panel h3{ font-family:var(--rl-font-display); font-size:19px; margin:0 0 16px; }
+.rl-unlock-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
+.rl-code-input{
+  width:100%; padding:11px 12px; margin-bottom:10px; text-align:center; letter-spacing:.12em;
+  text-transform:uppercase; border-radius:9px; border:1px solid var(--rl-panel-line);
+  background:var(--rl-bg-top,#0a1420); color:var(--rl-ink); font-family:var(--rl-font-display); font-size:15px;
 }
 
 
@@ -409,17 +412,6 @@
 
 /* ---------- pause overlay ---------- */
 .rl-pause-panel{ width:100%; max-width:280px; margin:0 auto; text-align:center; }
-
-/* ---------- rebel shop purchase confirm (native only, harmless if unused) ---------- */
-.rl-shop-confirm{
-  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
-  padding:24px; background:rgba(5,9,15,.72);
-}
-.rl-shop-confirm-panel{
-  width:100%; max-width:280px; text-align:center; padding:20px 18px; border-radius:12px;
-  background:var(--rl-panel); border:1px solid var(--rl-panel-line);
-}
-.rl-shop-confirm-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
 
 /* ---------- boot splash (native only, injected by JS) ---------- */
 .rl-boot-splash{
