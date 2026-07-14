@@ -156,6 +156,7 @@
     + '<div class="rl-frame">'
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-screen-inner">'
+    + '      <button class="rl-info-btn" data-rl-info-btn type="button" aria-label="How to play">?</button>'
     + '      <h1 class="rl-h1">Bird Rebels: Ice Blaster</h1>'
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
@@ -263,12 +264,30 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-overlay" data-rl-screen="info" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>How to Play</h2>'
+    + '      <p class="rl-info-block">Ice cubes are falling — laser them down before they reach the bottom.</p>'
+    + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
+    + '      <p class="rl-info-block"><b>Rainbow Blizzard Mode</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-info>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-overlay" data-rl-screen="shop" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2>Rebel Shop</h2>'
     + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
+    + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
+    + '        <div class="rl-shop-confirm-panel">'
+    + '          <p data-rl-shop-confirm-text></p>'
+    + '          <button class="rl-btn" data-rl-shop-confirm-yes>Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-confirm-no>Cancel</button>'
+    + '        </div>'
+    + '      </div>'
     + '    </div>'
     + '  </div>'
 
@@ -290,6 +309,7 @@
     // Only the Capacitor wrapper sets data-rl-shop; the Webflow embed never
     // does, so this whole feature is inert on the live web game.
     var shopEnabled = mount.getAttribute('data-rl-shop') === '1';
+    if (shopEnabled) mount.classList.add('rl-native');
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
     function getFlock() {
@@ -329,6 +349,7 @@
       screens.gameover.hidden = true;
       screens.leaderboard.hidden = true;
       if (screens.shop) screens.shop.hidden = true;
+      if (screens.info) screens.info.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
@@ -337,6 +358,8 @@
       else if (name === 'leaderboard-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'shop-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.shop) screens.shop.hidden = false; }
       else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
+      else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
     }
 
     // ---------- character roster (live from the API) ----------
@@ -409,7 +432,7 @@
       function addTile(opts) {
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'rl-char-card' + (opts.owned ? ' rl-owned' : '') + (opts.code === wantSelected ? ' rl-selected' : '');
+        card.className = 'rl-char-card' + (opts.code === wantSelected ? ' rl-selected' : '');
         if (opts.code) card.setAttribute('data-rl-char', opts.code);
         var img = document.createElement('img');
         img.alt = opts.label;
@@ -428,9 +451,21 @@
         onClick: function () { selectedChar = og.code; selectCard(ogCard); }
       });
 
-      // Random — resolves to a surprise pick from OG + your flock, but not until the round starts
+      // Owned flock birds, in the order they were added
+      flock.forEach(function (code) {
+        if (code === og.code) return;
+        var ch = rosterByCode(code);
+        if (!ch) return;
+        var card;
+        card = addTile({
+          code: ch.code, label: ch.label, imgSrc: BASE + ch.src,
+          onClick: function () { selectedChar = ch.code; selectCard(card); }
+        });
+      });
+
+      // Random — picks a surprise from the WHOLE roster, not just your flock, revealed only once the round starts
       var randomCard = addTile({
-        code: RANDOM_CODE, label: 'Random', imgSrc: '', owned: false,
+        code: RANDOM_CODE, label: 'Random', imgSrc: '',
         onClick: function () { selectedChar = RANDOM_CODE; selectCard(randomCard); }
       });
       randomCard.classList.add('rl-char-random');
@@ -439,18 +474,6 @@
       mystery.className = 'rl-char-mystery';
       mystery.textContent = '?';
       randomCard.insertBefore(mystery, randomCard.firstChild);
-
-      // Owned flock birds, framed to show they're yours
-      flock.forEach(function (code) {
-        if (code === og.code) return;
-        var ch = rosterByCode(code);
-        if (!ch) return;
-        var card;
-        card = addTile({
-          code: ch.code, label: ch.label, imgSrc: BASE + ch.src, owned: true,
-          onClick: function () { selectedChar = ch.code; selectCard(card); }
-        });
-      });
 
       selectedChar = wantSelected;
 
@@ -487,19 +510,49 @@
         span.textContent = ch.label;
         card.appendChild(img); card.appendChild(span);
         card.addEventListener('click', function () {
-          addToFlock(ch.code);
-          toast(ch.label + ' added to your flock!');
-          selectedChar = ch.code;
-          renderCharGrid();
-          showScreen('shop-close');
+          openShopConfirm(ch);
         });
         shopGrid.appendChild(card);
       });
     }
 
+    var shopConfirmEl = mount.querySelector('[data-rl-shop-confirm]');
+    var shopConfirmText = mount.querySelector('[data-rl-shop-confirm-text]');
+    var shopConfirmYes = mount.querySelector('[data-rl-shop-confirm-yes]');
+    var shopConfirmNo = mount.querySelector('[data-rl-shop-confirm-no]');
+    var pendingPurchase = null;
+
+    function openShopConfirm(ch) {
+      if (!shopConfirmEl) return;
+      pendingPurchase = ch;
+      shopConfirmText.textContent = 'Purchase ' + ch.label + ' for $0.00 and add it to your flock?';
+      shopConfirmEl.hidden = false;
+    }
+    function closeShopConfirm() {
+      pendingPurchase = null;
+      if (shopConfirmEl) shopConfirmEl.hidden = true;
+    }
+    if (shopConfirmYes) {
+      shopConfirmYes.addEventListener('click', function () {
+        if (!pendingPurchase) return;
+        var ch = pendingPurchase;
+        addToFlock(ch.code);
+        toast(ch.label + ' added to your flock!');
+        selectedChar = ch.code;
+        closeShopConfirm();
+        renderCharGrid();
+        showScreen('shop-close');
+      });
+    }
+    if (shopConfirmNo) shopConfirmNo.addEventListener('click', closeShopConfirm);
+
     if (shopEnabled) {
       var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
-      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { showScreen('shop-close'); });
+      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopConfirm(); showScreen('shop-close'); });
+      var infoBtn = mount.querySelector('[data-rl-info-btn]');
+      var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
+      if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
+      if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
     }
 
     fetch(BASE + '/api/characters')
@@ -1653,7 +1706,7 @@
       if (!selectedChar) { startError.textContent = 'Pick a rebel first.'; return; }
       var wasRandom = selectedChar === RANDOM_CODE;
       if (wasRandom) {
-        var pool = [OG_CODE].concat(getFlock().filter(function (c) { return c !== OG_CODE; }));
+        var pool = roster.map(function (ch) { return ch.code; });
         selectedChar = pool[Math.floor(Math.random() * pool.length)];
       }
       showScreen('game');
