@@ -80,9 +80,6 @@
 .rl-char-card.rl-selected span{ color:var(--rl-ice); font-weight:700; }
 
 /* Native flock/shop tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
-.rl-char-card.rl-owned{ border-color:var(--rl-gold); box-shadow:inset 0 0 0 1px rgba(255,207,77,.35); }
-.rl-char-card.rl-owned.rl-selected{ border-color:var(--rl-gold); background:rgba(255,207,77,.1); }
-.rl-char-card.rl-owned.rl-selected span{ color:var(--rl-gold); }
 .rl-char-card.rl-char-random .rl-char-mystery{
   width:100%; aspect-ratio:887/937; display:flex; align-items:center; justify-content:center;
   margin-bottom:4px; border-radius:6px; background:rgba(255,255,255,.03);
@@ -127,6 +124,46 @@
   background:linear-gradient(90deg,#ff5f5f,#ffab5f,#ffe95f,#5fe08a,#5fb8ff,#9d7bff,#ff7be0);
 }
 .rl-check-row input[data-rl-rainbow-toggle]:checked::before{ transform:translateX(18px); }
+
+/* ---------- native app simplified UI (data-rl-shop="1" only — never applies on web) ---------- */
+.rl-info-btn{
+  display:none; /* shown only under .rl-native below */
+  position:absolute; top:0; right:0; z-index:2;
+  width:30px; height:30px; border-radius:50%; appearance:none; cursor:pointer;
+  border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-dim);
+  font-family:var(--rl-font-display); font-weight:800; font-size:15px; line-height:1;
+}
+.rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
+.rl-info-block b{ color:var(--rl-ink); }
+
+.rl-native [data-rl-screen="start"] .rl-sub,
+.rl-native [data-rl-screen="start"] .rl-tier-note,
+.rl-native [data-rl-screen="start"] .rl-check-row small{
+  display:none;
+}
+.rl-native [data-rl-screen="start"] .rl-info-btn{ display:block; }
+.rl-native [data-rl-screen="start"] .rl-h1{ margin-right:36px; } /* keep title clear of the info button */
+.rl-native [data-rl-screen="start"] .rl-screen-inner{
+  position:relative; display:flex; flex-direction:column; height:100%;
+}
+.rl-native [data-rl-screen="start"].rl-screen{ justify-content:flex-start; }
+.rl-native [data-rl-screen="start"] .rl-char-grid{
+  flex:1 1 auto; min-height:0; max-height:none;
+}
+.rl-native [data-rl-screen="start"] .rl-check-row{ margin:8px 0; padding:9px 12px; }
+
+/* Give Casual Mode the same pill-toggle treatment as Rainbow Blizzard, native only */
+.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]{
+  appearance:none; -webkit-appearance:none; width:40px; height:22px; border-radius:11px;
+  background:var(--rl-panel-line); position:relative; cursor:pointer; flex:none;
+  transition:background .2s ease; outline:none;
+}
+.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]::before{
+  content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.4); transition:transform .2s ease;
+}
+.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked{ background:var(--rl-ice); }
+.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked::before{ transform:translateX(18px); }
 
 /* ---------- game screen ---------- */
 .rl-game-wrap{ padding:0; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:flex-start; }
@@ -265,5 +302,16 @@
 
 /* ---------- pause overlay ---------- */
 .rl-pause-panel{ width:100%; max-width:280px; margin:0 auto; text-align:center; }
+
+/* ---------- rebel shop purchase confirm (native only, harmless if unused) ---------- */
+.rl-shop-confirm{
+  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:rgba(5,9,15,.72);
+}
+.rl-shop-confirm-panel{
+  width:100%; max-width:280px; text-align:center; padding:20px 18px; border-radius:12px;
+  background:var(--rl-panel); border:1px solid var(--rl-panel-line);
+}
+.rl-shop-confirm-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
 
 [hidden]{ display:none !important; }
