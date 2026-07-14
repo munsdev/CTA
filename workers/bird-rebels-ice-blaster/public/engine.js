@@ -195,6 +195,7 @@
     + '        <img data-rl-active-rebel-img alt="">'
     + '        <span data-rl-active-rebel-label></span>'
     + '      </div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-open-select>Select Your Rebel</button>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
     + '      <div class="rl-field-label" style="margin-bottom:8px;">Difficulty</div>'
@@ -338,26 +339,32 @@
     + '    </div>'
     + '  </div>'
 
-    + '  <div class="rl-overlay" data-rl-screen="shop" hidden>'
+    + '  <div class="rl-overlay" data-rl-screen="select" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Rebel Shop</h2>'
-    + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
-    + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
-    + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
-    + '        <div class="rl-shop-detail-panel">'
-    + '          <img data-rl-shop-detail-img alt="">'
-    + '          <h3 data-rl-shop-detail-name></h3>'
-    + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
-    + '          <button class="rl-btn" data-rl-shop-detail-buy>Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-back>Back</button>'
-    + '        </div>'
-    + '      </div>'
-    + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
-    + '        <div class="rl-shop-confirm-panel">'
-    + '          <p data-rl-shop-confirm-text></p>'
-    + '          <button class="rl-btn" data-rl-shop-confirm-yes>Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-confirm-no>Cancel</button>'
+    + '      <h2>Select Your Rebel</h2>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-select-enter-code style="margin-bottom:10px;">Enter Code</button>'
+    + '      <div class="rl-char-grid" data-rl-select-grid></div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-select>Back</button>'
+    + '      <div class="rl-unlock-modal" data-rl-unlock-modal hidden>'
+    + '        <div class="rl-unlock-panel">'
+    + '          <img data-rl-unlock-img alt="" hidden>'
+    + '          <h3 data-rl-unlock-name></h3>'
+    + '          <div data-rl-unlock-actions>'
+    + '            <button class="rl-btn" data-rl-unlock-purchase>Purchase — $0.00</button>'
+    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-enter-code>Enter Code</button>'
+    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-cancel>Cancel</button>'
+    + '          </div>'
+    + '          <div data-rl-unlock-code-entry hidden>'
+    + '            <input type="text" class="rl-code-input" data-rl-unlock-code-input placeholder="ENTER CODE" maxlength="24">'
+    + '            <button class="rl-btn" data-rl-unlock-code-submit>Submit</button>'
+    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-code-back>Back</button>'
+    + '            <p class="rl-error" data-rl-unlock-code-error></p>'
+    + '          </div>'
+    + '          <div data-rl-unlock-confirm hidden>'
+    + '            <p data-rl-unlock-confirm-text></p>'
+    + '            <button class="rl-btn" data-rl-unlock-confirm-yes>Confirm</button>'
+    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-confirm-no>Back</button>'
+    + '          </div>'
     + '        </div>'
     + '      </div>'
     + '    </div>'
@@ -411,18 +418,71 @@
         setTimeout(function () { splash.remove(); }, 500);
       }, 1200);
     }
-    var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
-    function getFlock() {
-      try { var v = JSON.parse(localStorage.getItem(FLOCK_KEY) || '[]'); return Array.isArray(v) ? v : []; }
-      catch (e) { return []; }
+    var RANDOM_CODE = '__RANDOM__';
+
+    // ---------- device identity + entitlements (native app only) ----------
+    // A random ID generated once and stored locally stands in for a real
+    // account until Play Games Services (or similar) is wired in later.
+    // Ownership itself now lives in D1 (entitlements table), not localStorage
+    // — this ID is just the key it's stored under.
+    var DEVICE_KEY = 'rl_device_id';
+    function getDeviceId() {
+      try {
+        var id = localStorage.getItem(DEVICE_KEY);
+        if (!id) {
+          id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem(DEVICE_KEY, id);
+        }
+        return id;
+      } catch (e) { return 'dev_nostorage'; }
     }
-    function addToFlock(code) {
-      var flock = getFlock();
-      if (flock.indexOf(code) === -1) {
-        flock.push(code);
-        try { localStorage.setItem(FLOCK_KEY, JSON.stringify(flock)); } catch (e) {}
-      }
+    var DEVICE_ID = shopEnabled ? getDeviceId() : null;
+    var ownedRebels = []; // codes this device owns, synced from /api/entitlements
+
+    function isOwned(code) {
+      return code === OG_CODE || ownedRebels.indexOf(code) !== -1;
+    }
+    function loadEntitlements() {
+      if (!DEVICE_ID) return Promise.resolve();
+      return fetch(BASE + '/api/entitlements?device=' + encodeURIComponent(DEVICE_ID))
+        .then(function (r) { return r.json(); })
+        .then(function (arr) {
+          ownedRebels = (Array.isArray(arr) ? arr : [])
+            .filter(function (e) { return e.itemType === 'rebel'; })
+            .map(function (e) { return e.itemCode; });
+        })
+        .catch(function () { ownedRebels = []; });
+    }
+    // Placeholder $0 purchase — mimics a real transaction via the existing
+    // confirm-dialog UI, but doesn't charge anything yet. Swaps for real
+    // Play Billing later without anything else needing to change.
+    function purchaseRebel(code) {
+      return fetch(BASE + '/api/entitlements/grant', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device: DEVICE_ID, itemType: 'rebel', itemCode: code })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res && res.ok && ownedRebels.indexOf(code) === -1) ownedRebels.push(code);
+          return res;
+        });
+    }
+    // Coupon redemption — one code can grant several items at once (bundles).
+    function redeemCouponCode(code) {
+      return fetch(BASE + '/api/entitlements/redeem', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device: DEVICE_ID, code: code })
+      })
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          if (res.data && res.data.ok && Array.isArray(res.data.granted)) {
+            res.data.granted.forEach(function (g) {
+              if (g.itemType === 'rebel' && ownedRebels.indexOf(g.itemCode) === -1) ownedRebels.push(g.itemCode);
+            });
+          }
+          return res;
+        });
     }
 
     var toastTimer = null;
@@ -451,7 +511,7 @@
       screens.pause.hidden = true;
       screens.gameover.hidden = true;
       screens.leaderboard.hidden = true;
-      if (screens.shop) screens.shop.hidden = true;
+      if (screens.select) screens.select.hidden = true;
       if (screens.info) screens.info.hidden = true;
       if (screens.settings) screens.settings.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
@@ -460,8 +520,8 @@
       else if (name === 'gameover') { screens.start.hidden = true; screens.game.hidden = false; screens.gameover.hidden = false; }
       else if (name === 'leaderboard-from-start') { screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'shop-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.shop) screens.shop.hidden = false; }
-      else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'select-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.select) screens.select.hidden = false; }
+      else if (name === 'select-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
       else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'settings-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
@@ -470,7 +530,6 @@
 
     // ---------- character roster (live from the API) ----------
     var charGrid = mount.querySelector('[data-rl-char-grid]');
-    var shopGrid = mount.querySelector('[data-rl-shop-grid]');
     var startError = mount.querySelector('[data-rl-start-error]');
     var roster = [];
     var selectedChar = null;
@@ -575,20 +634,39 @@
         return;
       }
 
-      // ---- native flock/shop layout ----
-      charGrid.innerHTML = '';
+      // Native: no inline grid — just settle on a default selection.
+      // The actual picking UI lives in the full-screen Select Rebel screen.
       var og = rosterByCode(OG_CODE) || roster[0];
-      var flock = getFlock();
-      // Keep whatever was already selected (e.g. a bird just bought in the
-      // shop) across a re-render; only fall back to OG on the very first render.
-      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || selectedChar === og.code || flock.indexOf(selectedChar) !== -1))
+      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || rosterByCode(selectedChar)))
         ? selectedChar
         : og.code;
+      selectedChar = wantSelected;
+      updateMenuBg(wantSelected);
+      updateActiveRebel(wantSelected);
+    }
+
+    // Shared emblem box (same footprint as a bird portrait) so Random's tile
+    // holds its size consistently with real bird tiles.
+    function buildEmblem(symbol) {
+      var box = document.createElement('div');
+      box.className = 'rl-char-emblem';
+      var circle = document.createElement('div');
+      circle.className = 'rl-char-emblem-circle';
+      circle.textContent = symbol;
+      box.appendChild(circle);
+      return box;
+    }
+
+    var selectGrid = mount.querySelector('[data-rl-select-grid]');
+    function renderSelectGrid() {
+      if (!selectGrid || !roster.length) return;
+      selectGrid.innerHTML = '';
+      var og = rosterByCode(OG_CODE) || roster[0];
 
       function addTile(opts) {
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'rl-char-card' + (opts.code === wantSelected ? ' rl-selected' : '');
+        card.className = 'rl-char-card' + (opts.code === selectedChar ? ' rl-selected' : '') + (opts.locked ? ' rl-locked' : '');
         if (opts.code) card.setAttribute('data-rl-char', opts.code);
         if (opts.code && charAccent[opts.code]) card.style.setProperty('--tile-accent', charAccent[opts.code]);
         var img = document.createElement('img');
@@ -597,165 +675,153 @@
         var span = document.createElement('span');
         span.textContent = opts.label;
         card.appendChild(img); card.appendChild(span);
+        if (opts.locked) {
+          var lock = document.createElement('div');
+          lock.className = 'rl-lock-badge';
+          lock.textContent = '\uD83D\uDD12'; // 🔒
+          card.appendChild(lock);
+        }
         card.addEventListener('click', opts.onClick);
-        charGrid.appendChild(card);
+        selectGrid.appendChild(card);
         return card;
       }
 
-      // Shared emblem box (same footprint as a bird portrait) so Random/Shop
-      // tiles hold their size even when they land alone on the last row.
-      function buildEmblem(symbol) {
-        var box = document.createElement('div');
-        box.className = 'rl-char-emblem';
-        var circle = document.createElement('div');
-        circle.className = 'rl-char-emblem-circle';
-        circle.textContent = symbol;
-        box.appendChild(circle);
-        return box;
-      }
-
-      // OG — free default, always first
+      // OG — always owned, always first
       var ogCard = addTile({
         code: og.code, label: og.label, imgSrc: BASE + og.src,
-        onClick: function () { selectedChar = og.code; selectCard(ogCard); }
+        onClick: function () { selectedChar = og.code; updateMenuBg(og.code); updateActiveRebel(og.code); showScreen('select-close'); }
       });
 
-      // Owned flock birds, in the order they were added
-      flock.forEach(function (code) {
-        if (code === og.code) return;
-        var ch = rosterByCode(code);
-        if (!ch) return;
-        var card;
-        card = addTile({
-          code: ch.code, label: ch.label, imgSrc: BASE + ch.src,
-          onClick: function () { selectedChar = ch.code; selectCard(card); }
-        });
-      });
-
-      // Random — picks a surprise from the WHOLE roster, not just your flock, revealed only once the round starts
+      // Random — always available, resolves from the whole roster at round start
       var randomCard = addTile({
         code: RANDOM_CODE, label: 'Random', imgSrc: '',
-        onClick: function () { selectedChar = RANDOM_CODE; selectCard(randomCard); }
+        onClick: function () { selectedChar = RANDOM_CODE; updateMenuBg(null); updateActiveRebel(RANDOM_CODE); showScreen('select-close'); }
       });
       randomCard.classList.add('rl-char-random');
       randomCard.querySelector('img').remove();
       randomCard.insertBefore(buildEmblem('?'), randomCard.firstChild);
 
-      selectedChar = wantSelected;
-      updateMenuBg(wantSelected);
-      updateActiveRebel(wantSelected);
-
-      // Shop tile — always last
-      var shopTile = document.createElement('button');
-      shopTile.type = 'button';
-      shopTile.className = 'rl-char-card rl-char-shop-tile';
-      shopTile.appendChild(buildEmblem('+'));
-      var shopLabel = document.createElement('span');
-      shopLabel.textContent = 'Rebel Shop';
-      shopTile.appendChild(shopLabel);
-      shopTile.addEventListener('click', function () {
-        renderShopGrid();
-        showScreen('shop-from-start');
-      });
-      charGrid.appendChild(shopTile);
-    }
-
-    function renderShopGrid() {
-      if (!shopGrid) return;
-      var flock = getFlock();
-      var available = roster.filter(function (ch) { return ch.code !== OG_CODE && flock.indexOf(ch.code) === -1; });
-      if (!available.length) {
-        shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
-        return;
-      }
-      shopGrid.innerHTML = '';
-      available.forEach(function (ch) {
-        var card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'rl-char-card';
-        card.setAttribute('data-rl-char', ch.code);
-        if (charAccent[ch.code]) card.style.setProperty('--tile-accent', charAccent[ch.code]);
-        var img = document.createElement('img');
-        img.alt = ch.label;
-        img.src = BASE + ch.src;
-        var span = document.createElement('span');
-        span.textContent = ch.label;
-        var price = document.createElement('span');
-        price.className = 'rl-shop-price';
-        price.textContent = '$0.00';
-        card.appendChild(img); card.appendChild(span); card.appendChild(price);
-        card.addEventListener('click', function () {
-          openShopDetail(ch);
+      // Every other visible (or owned-but-hidden) rebel — locked or not
+      roster.forEach(function (ch) {
+        if (ch.code === og.code) return;
+        var owned = isOwned(ch.code);
+        addTile({
+          code: ch.code, label: ch.label, imgSrc: BASE + ch.src, locked: !owned,
+          onClick: owned
+            ? function () { selectedChar = ch.code; updateMenuBg(ch.code); updateActiveRebel(ch.code); showScreen('select-close'); }
+            : function () { openUnlockModal(ch); }
         });
-        shopGrid.appendChild(card);
       });
     }
 
-    var shopDetailEl = mount.querySelector('[data-rl-shop-detail]');
-    var shopDetailImg = mount.querySelector('[data-rl-shop-detail-img]');
-    var shopDetailName = mount.querySelector('[data-rl-shop-detail-name]');
-    var shopDetailBuy = mount.querySelector('[data-rl-shop-detail-buy]');
-    var shopDetailBack = mount.querySelector('[data-rl-shop-detail-back]');
-    var shopConfirmEl = mount.querySelector('[data-rl-shop-confirm]');
-    var shopConfirmText = mount.querySelector('[data-rl-shop-confirm-text]');
-    var shopConfirmYes = mount.querySelector('[data-rl-shop-confirm-yes]');
-    var shopConfirmNo = mount.querySelector('[data-rl-shop-confirm-no]');
-    var pendingPurchase = null;
+    // ---- Unlock action sheet: Purchase ($0 placeholder) or Enter Code (supports bundle codes) ----
+    var unlockModalEl = mount.querySelector('[data-rl-unlock-modal]');
+    var unlockImg = mount.querySelector('[data-rl-unlock-img]');
+    var unlockName = mount.querySelector('[data-rl-unlock-name]');
+    var unlockActions = mount.querySelector('[data-rl-unlock-actions]');
+    var unlockCodeEntry = mount.querySelector('[data-rl-unlock-code-entry]');
+    var unlockCodeInput = mount.querySelector('[data-rl-unlock-code-input]');
+    var unlockCodeError = mount.querySelector('[data-rl-unlock-code-error]');
+    var unlockConfirmBox = mount.querySelector('[data-rl-unlock-confirm]');
+    var unlockConfirmText = mount.querySelector('[data-rl-unlock-confirm-text]');
+    var pendingUnlockItem = null; // the specific locked rebel tapped, or null if opened via the general "Enter Code" button
 
-    function openShopDetail(ch) {
-      if (!shopDetailEl) return;
-      pendingPurchase = ch;
-      shopDetailImg.src = BASE + ch.src;
-      shopDetailImg.alt = ch.label;
-      shopDetailName.textContent = ch.label;
-      shopDetailEl.hidden = false;
+    function showUnlockStage(stage) {
+      if (unlockActions) unlockActions.hidden = stage !== 'actions';
+      if (unlockCodeEntry) unlockCodeEntry.hidden = stage !== 'code';
+      if (unlockConfirmBox) unlockConfirmBox.hidden = stage !== 'confirm';
     }
-    function closeShopDetail() {
-      if (shopDetailEl) shopDetailEl.hidden = true;
+    function openUnlockModal(ch) {
+      if (!unlockModalEl) return;
+      pendingUnlockItem = ch || null;
+      if (ch) {
+        if (unlockImg) { unlockImg.src = BASE + ch.src; unlockImg.alt = ch.label; unlockImg.hidden = false; }
+        if (unlockName) unlockName.textContent = ch.label;
+        showUnlockStage('actions');
+      } else {
+        // Opened from the general "Enter Code" button — no specific item, so
+        // this is for bundle/hidden codes rather than one visible tile.
+        if (unlockImg) unlockImg.hidden = true;
+        if (unlockName) unlockName.textContent = 'Redeem a Code';
+        showUnlockStage('code');
+      }
+      if (unlockCodeInput) unlockCodeInput.value = '';
+      if (unlockCodeError) unlockCodeError.textContent = '';
+      unlockModalEl.hidden = false;
     }
-    if (shopDetailBack) shopDetailBack.addEventListener('click', function () { pendingPurchase = null; closeShopDetail(); });
-    if (shopDetailBuy) {
-      shopDetailBuy.addEventListener('click', function () {
-        if (!pendingPurchase) return;
-        openShopConfirm(pendingPurchase);
+    function closeUnlockModal() {
+      pendingUnlockItem = null;
+      if (unlockModalEl) unlockModalEl.hidden = true;
+    }
+
+    var unlockPurchaseBtn = mount.querySelector('[data-rl-unlock-purchase]');
+    var unlockEnterCodeBtn = mount.querySelector('[data-rl-unlock-enter-code]');
+    var unlockCancelBtn = mount.querySelector('[data-rl-unlock-cancel]');
+    var unlockCodeSubmitBtn = mount.querySelector('[data-rl-unlock-code-submit]');
+    var unlockCodeBackBtn = mount.querySelector('[data-rl-unlock-code-back]');
+    var unlockConfirmYesBtn = mount.querySelector('[data-rl-unlock-confirm-yes]');
+    var unlockConfirmNoBtn = mount.querySelector('[data-rl-unlock-confirm-no]');
+
+    if (unlockPurchaseBtn) {
+      unlockPurchaseBtn.addEventListener('click', function () {
+        if (!pendingUnlockItem) return;
+        if (unlockConfirmText) unlockConfirmText.textContent = 'Purchase ' + pendingUnlockItem.label + ' for $0.00 and add it to your flock?';
+        showUnlockStage('confirm');
       });
     }
-
-    function openShopConfirm(ch) {
-      if (!shopConfirmEl) return;
-      pendingPurchase = ch;
-      shopConfirmText.textContent = 'Purchase ' + ch.label + ' for $0.00 and add it to your flock?';
-      closeShopDetail();
-      shopConfirmEl.hidden = false;
-    }
-    function closeShopConfirm() {
-      if (shopConfirmEl) shopConfirmEl.hidden = true;
-    }
-    if (shopConfirmYes) {
-      shopConfirmYes.addEventListener('click', function () {
-        if (!pendingPurchase) return;
-        var ch = pendingPurchase;
-        addToFlock(ch.code);
-        toast(ch.label + ' added to your flock!');
-        selectedChar = ch.code;
-        pendingPurchase = null;
-        closeShopConfirm();
-        renderCharGrid();
-        showScreen('shop-close');
+    if (unlockEnterCodeBtn) unlockEnterCodeBtn.addEventListener('click', function () { showUnlockStage('code'); });
+    if (unlockCancelBtn) unlockCancelBtn.addEventListener('click', closeUnlockModal);
+    if (unlockCodeBackBtn) {
+      unlockCodeBackBtn.addEventListener('click', function () {
+        if (pendingUnlockItem) showUnlockStage('actions'); else closeUnlockModal();
       });
     }
-    if (shopConfirmNo) {
-      shopConfirmNo.addEventListener('click', function () {
-        // Cancel drops back to the detail card rather than closing everything,
-        // so a change of mind doesn't lose your place in the shop.
-        closeShopConfirm();
-        if (pendingPurchase) openShopDetail(pendingPurchase);
+    if (unlockConfirmNoBtn) unlockConfirmNoBtn.addEventListener('click', function () { showUnlockStage('actions'); });
+    if (unlockConfirmYesBtn) {
+      unlockConfirmYesBtn.addEventListener('click', function () {
+        if (!pendingUnlockItem) return;
+        var ch = pendingUnlockItem;
+        purchaseRebel(ch.code).then(function (res) {
+          if (res && res.ok) {
+            toast(ch.label + ' added to your flock!');
+            selectedChar = ch.code;
+            updateMenuBg(ch.code); updateActiveRebel(ch.code);
+            closeUnlockModal();
+            renderSelectGrid();
+            showScreen('select-close');
+          } else {
+            toast('Something went wrong — try again.');
+          }
+        });
+      });
+    }
+    if (unlockCodeSubmitBtn) {
+      unlockCodeSubmitBtn.addEventListener('click', function () {
+        var code = unlockCodeInput ? unlockCodeInput.value.trim() : '';
+        if (!code) { if (unlockCodeError) unlockCodeError.textContent = 'Enter a code first.'; return; }
+        redeemCouponCode(code).then(function (res) {
+          if (res.data && res.data.ok) {
+            var count = (res.data.granted || []).length;
+            toast(count > 1 ? count + ' rebels unlocked!' : 'Rebel unlocked!');
+            closeUnlockModal();
+            // Re-fetch the roster too — a hidden rebel just granted via
+            // coupon won't be in the current roster array yet.
+            loadRoster().then(renderSelectGrid);
+          } else {
+            if (unlockCodeError) unlockCodeError.textContent = (res.data && res.data.error) || 'That code didn\'t work.';
+          }
+        });
       });
     }
 
     if (shopEnabled) {
-      var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
-      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); closeShopConfirm(); pendingPurchase = null; showScreen('shop-close'); });
+      var closeSelectBtn = mount.querySelector('[data-rl-close-select]');
+      var openSelectBtn = mount.querySelector('[data-rl-open-select]');
+      if (openSelectBtn) openSelectBtn.addEventListener('click', function () { renderSelectGrid(); showScreen('select-from-start'); });
+      if (closeSelectBtn) closeSelectBtn.addEventListener('click', function () { closeUnlockModal(); showScreen('select-close'); });
+      var selectEnterCodeBtn = mount.querySelector('[data-rl-select-enter-code]');
+      if (selectEnterCodeBtn) selectEnterCodeBtn.addEventListener('click', function () { openUnlockModal(null); });
+
       var infoBtn = mount.querySelector('[data-rl-info-btn]');
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
@@ -810,15 +876,17 @@
       }
     }
 
-    fetch(BASE + '/api/characters')
-      .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
-      .then(function (data) {
-        roster = Array.isArray(data) ? data : [];
-        renderCharGrid();
-      })
-      .catch(function () {
-        charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
-      });
+    function loadRoster() {
+      var url = BASE + '/api/characters' + (shopEnabled && DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : '');
+      return fetch(url)
+        .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
+        .then(function (data) { roster = Array.isArray(data) ? data : []; renderCharGrid(); })
+        .catch(function () {
+          charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
+        });
+    }
+
+    Promise.all([loadEntitlements(), loadRoster()]);
 
     // ---------- difficulty tier selector ----------
     var selectedTier = DEFAULT_TIER;
