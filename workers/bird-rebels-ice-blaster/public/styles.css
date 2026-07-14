@@ -134,6 +134,7 @@
   font-family:var(--rl-font-display); font-weight:800; font-size:15px; line-height:1;
 }
 .rl-logo{ display:none; } /* shown only under .rl-native below */
+[data-rl-claim-code]{ display:none; } /* shown only under .rl-native below */
 .rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
 
@@ -144,6 +145,7 @@
   display:none;
 }
 .rl-native [data-rl-screen="start"] .rl-info-btn{ display:block; }
+.rl-native [data-rl-screen="start"] [data-rl-claim-code]{ display:block; }
 .rl-native [data-rl-screen="start"] .rl-logo{
   display:block; width:50%; max-width:220px; margin:0 auto 14px;
 }
@@ -358,5 +360,23 @@
   background:var(--rl-panel); border:1px solid var(--rl-panel-line);
 }
 .rl-shop-confirm-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
+
+/* ---------- claim-a-code modal (native only, harmless if unused) ---------- */
+.rl-unlock-modal{
+  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:rgba(5,9,15,.72);
+}
+.rl-unlock-panel{
+  width:100%; max-width:320px; text-align:center; padding:20px 18px; border-radius:12px;
+  background:var(--rl-panel); border:1px solid var(--rl-panel-line);
+}
+.rl-unlock-panel h3{ font-family:var(--rl-font-display); font-size:17px; margin:0 0 14px; }
+.rl-unlock-panel p{ font-size:13px; color:var(--rl-dim); margin:0 0 10px; }
+.rl-code-input{
+  width:100%; padding:11px 12px; margin-bottom:10px; text-align:center; letter-spacing:.12em;
+  text-transform:uppercase; border-radius:9px; border:1px solid var(--rl-panel-line);
+  background:var(--rl-bg-top,#0a1420); color:var(--rl-ink); font-family:var(--rl-font-display); font-size:15px;
+}
+[data-rl-claim-picker-grid]{ max-height:260px; overflow-y:auto; margin-bottom:12px; }
 
 [hidden]{ display:none !important; }
