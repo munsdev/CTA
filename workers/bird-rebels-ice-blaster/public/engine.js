@@ -23,11 +23,7 @@
 
   // All character art shares one canvas template (same size/framing), so a
   // single standard eye position works for every bird — no per-emblem tuning.
-  var ART_CANVAS_W = 887, ART_CANVAS_H = 937; // the shared art canvas every bird image is drawn on
-  // Pixel coords (on that canvas) where the laser originates — the center
-  // of the north star on each emblem. Per-bird overrides come from D1
-  // (laser_origin_x/y); when a bird doesn't specify one, this is used.
-  var DEFAULT_LASER_ORIGIN = { x: 444, y: 72 };
+  var STANDARD_EYE = { xr: 0.55, yr: 0.165 };
   var CHAR_ASPECT = 937 / 887; // height / width of the shared art canvas
 
   var SNOWFLAKE_INTERVAL = 24000;
@@ -93,24 +89,20 @@
       window.addEventListener(evt, unlock, { once: true, passive: true });
     });
 
-    var sfxGain = 1; // 0-1 master multiplier, controlled by the Advanced Settings slider (native only)
-
     function play(key) {
       var buf = buffers[key];
       if (!buf) { console.warn('[rl sound] "' + key + '" not ready yet (ctx.state=' + ctx.state + ')'); return; }
-      if (sfxGain <= 0) return;
       try {
         unlock();
         var src = ctx.createBufferSource();
         src.buffer = buf;
         var gain = ctx.createGain();
-        gain.gain.value = (SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6) * sfxGain;
+        gain.gain.value = SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6;
         src.connect(gain).connect(ctx.destination);
         src.start(0);
       } catch (e) { console.error('[rl sound] play() threw for "' + key + '":', e); }
     }
-    function setVolume(v) { sfxGain = Math.max(0, Math.min(1, v)); }
-    return { play: play, unlock: unlock, setVolume: setVolume };
+    return { play: play, unlock: unlock };
   }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -161,16 +153,9 @@
     var bl = Math.round(a.b + (b.b - a.b) * amount);
     return 'rgb(' + r + ',' + g + ',' + bl + ')';
   }
-  function computeBgColors(primaryHex, secondaryHex) {
-    var top = hexToRgb(primaryHex) ? mixColor('#0a1420', primaryHex, 0.22) : '#0a1420';
-    var bottom = hexToRgb(secondaryHex) ? mixColor('#16283c', secondaryHex, 0.22) : '#16283c';
-    // Mid stop blends a touch of both, so the gradient reads as one
-    // continuous tone shifting from primary toward secondary rather than
-    // two unrelated tints stacked on top of each other.
-    var mid = (hexToRgb(primaryHex) && hexToRgb(secondaryHex))
-      ? mixColor(mixColor('#11202f', primaryHex, 0.18), secondaryHex, 0.18)
-      : '#11202f';
-    return { top: top, mid: mid, bottom: bottom };
+  function computeBgColors(accentHex) {
+    if (!accentHex || !hexToRgb(accentHex)) return { top: '#0a1420', bottom: '#16283c' };
+    return { top: mixColor('#0a1420', accentHex, 0.22), bottom: mixColor('#16283c', accentHex, 0.22) };
   }
   // Picks black or white for the life-marker background chip, whichever
   // contrasts better against the given accent color (simple perceived-
@@ -188,14 +173,9 @@
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-screen-inner">'
     + '      <button class="rl-info-btn" data-rl-info-btn type="button" aria-label="How to play">?</button>'
-    + '      <button class="rl-gear-btn" data-rl-gear-btn type="button" aria-label="Advanced settings">&#9881;</button>'
+    + '      <img class="rl-logo" data-rl-logo alt="Bird Rebels: Ice Blaster">'
     + '      <h1 class="rl-h1">Bird Rebels: Ice Blaster</h1>'
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
-    + '      <div class="rl-active-rebel" data-rl-active-rebel>'
-    + '        <img data-rl-active-rebel-img alt="">'
-    + '        <span data-rl-active-rebel-label></span>'
-    + '      </div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-open-select>Select Your Rebel</button>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
     + '      <div class="rl-field-label" style="margin-bottom:8px;">Difficulty</div>'
@@ -205,13 +185,6 @@
     + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
     + '      </div>'
     + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
-    + '      <div class="rl-mode-select" data-rl-mode-select>'
-    + '        <label for="rl-mode-picker" class="rl-field-label" style="margin-bottom:6px;">Scene</label>'
-    + '        <select id="rl-mode-picker" data-rl-mode-picker>'
-    + '          <option value="standard">Standard</option>'
-    + '          <option value="rainbow">Rainbow Blizzard</option>'
-    + '        </select>'
-    + '      </div>'
     + '      <div class="rl-toggle-row">'
     + '        <div class="rl-check-row">'
     + '          <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
@@ -219,7 +192,7 @@
     + '            <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
     + '          </label>'
     + '        </div>'
-    + '        <div class="rl-check-row" data-rl-rainbow-row>'
+    + '        <div class="rl-check-row">'
     + '          <input type="checkbox" id="rl-rainbow-toggle" data-rl-rainbow-toggle>'
     + '          <label for="rl-rainbow-toggle"><span data-rl-rainbow-label>Rainbow Blizzard Mode</span>'
     + '            <small>Swaps your laser for rockets, adds a separate leaderboard</small>'
@@ -304,9 +277,6 @@
     + '          <option value="initials">Name</option>'
     + '          <option value="ts">Date</option>'
     + '        </select>'
-    + '        <label class="rl-lb-mods-check" for="rl-lb-with-mods">'
-    + '          <input type="checkbox" id="rl-lb-with-mods" data-rl-lb-with-mods> With Mods'
-    + '        </label>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-leaderboard>Back</button>'
@@ -319,52 +289,31 @@
     + '      <p class="rl-info-block">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
-    + '      <p class="rl-info-block"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
+    + '      <p class="rl-info-block"><b>Rainbow Mode</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-info>Back</button>'
     + '    </div>'
     + '  </div>'
 
-    + '  <div class="rl-overlay" data-rl-screen="settings" hidden>'
+    + '  <div class="rl-overlay" data-rl-screen="shop" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Advanced Settings</h2>'
-    + '      <div class="rl-slider-row">'
-    + '        <label for="rl-sfx-volume">Sound Effects</label>'
-    + '        <input type="range" id="rl-sfx-volume" data-rl-sfx-volume min="0" max="100" value="100">'
+    + '      <h2>Rebel Shop</h2>'
+    + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
+    + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
+    + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
+    + '        <div class="rl-shop-detail-panel">'
+    + '          <img data-rl-shop-detail-img alt="">'
+    + '          <h3 data-rl-shop-detail-name></h3>'
+    + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
+    + '          <button class="rl-btn" data-rl-shop-detail-buy>Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-back>Back</button>'
+    + '        </div>'
     + '      </div>'
-    + '      <div class="rl-slider-row">'
-    + '        <label for="rl-music-volume">Music</label>'
-    + '        <input type="range" id="rl-music-volume" data-rl-music-volume min="0" max="100" value="100">'
-    + '      </div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-settings>Back</button>'
-    + '    </div>'
-    + '  </div>'
-
-    + '  <div class="rl-overlay" data-rl-screen="select" hidden>'
-    + '    <div class="rl-screen-inner">'
-    + '      <h2>Select Your Rebel</h2>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-select-enter-code style="margin-bottom:10px;">Enter Code</button>'
-    + '      <div class="rl-char-grid" data-rl-select-grid></div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-select>Back</button>'
-    + '      <div class="rl-unlock-modal" data-rl-unlock-modal hidden>'
-    + '        <div class="rl-unlock-panel">'
-    + '          <img data-rl-unlock-img alt="" hidden>'
-    + '          <h3 data-rl-unlock-name></h3>'
-    + '          <div data-rl-unlock-actions>'
-    + '            <button class="rl-btn" data-rl-unlock-purchase>Purchase — $0.00</button>'
-    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-enter-code>Enter Code</button>'
-    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-cancel>Cancel</button>'
-    + '          </div>'
-    + '          <div data-rl-unlock-code-entry hidden>'
-    + '            <input type="text" class="rl-code-input" data-rl-unlock-code-input placeholder="ENTER CODE" maxlength="24">'
-    + '            <button class="rl-btn" data-rl-unlock-code-submit>Submit</button>'
-    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-code-back>Back</button>'
-    + '            <p class="rl-error" data-rl-unlock-code-error></p>'
-    + '          </div>'
-    + '          <div data-rl-unlock-confirm hidden>'
-    + '            <p data-rl-unlock-confirm-text></p>'
-    + '            <button class="rl-btn" data-rl-unlock-confirm-yes>Confirm</button>'
-    + '            <button class="rl-btn rl-btn-ghost" data-rl-unlock-confirm-no>Back</button>'
-    + '          </div>'
+    + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
+    + '        <div class="rl-shop-confirm-panel">'
+    + '          <p data-rl-shop-confirm-text></p>'
+    + '          <button class="rl-btn" data-rl-shop-confirm-yes>Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-confirm-no>Cancel</button>'
     + '        </div>'
     + '      </div>'
     + '    </div>'
@@ -400,89 +349,22 @@
     if (shopEnabled) {
       mount.classList.add('rl-native');
       var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
-      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Blizzard';
-
-      // Boot splash: big logo, fades out into the regular title-only main
-      // screen after ~1.2s. Built dynamically rather than baked into
-      // TEMPLATE since it's purely a native, one-time boot moment.
-      var splash = document.createElement('div');
-      splash.className = 'rl-boot-splash';
-      var splashImg = document.createElement('img');
-      splashImg.className = 'rl-boot-splash-img';
-      splashImg.alt = '';
-      splashImg.src = BASE + '/logo.png';
-      splash.appendChild(splashImg);
-      mount.appendChild(splash);
-      setTimeout(function () {
-        splash.classList.add('rl-boot-splash-fade');
-        setTimeout(function () { splash.remove(); }, 500);
-      }, 1200);
+      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Mode';
+      var logoEl = mount.querySelector('[data-rl-logo]');
+      if (logoEl) logoEl.src = BASE + '/logo.png';
     }
+    var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
-    var RANDOM_CODE = '__RANDOM__';
-
-    // ---------- device identity + entitlements (native app only) ----------
-    // A random ID generated once and stored locally stands in for a real
-    // account until Play Games Services (or similar) is wired in later.
-    // Ownership itself now lives in D1 (entitlements table), not localStorage
-    // — this ID is just the key it's stored under.
-    var DEVICE_KEY = 'rl_device_id';
-    function getDeviceId() {
-      try {
-        var id = localStorage.getItem(DEVICE_KEY);
-        if (!id) {
-          id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-          localStorage.setItem(DEVICE_KEY, id);
-        }
-        return id;
-      } catch (e) { return 'dev_nostorage'; }
+    function getFlock() {
+      try { var v = JSON.parse(localStorage.getItem(FLOCK_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+      catch (e) { return []; }
     }
-    var DEVICE_ID = shopEnabled ? getDeviceId() : null;
-    var ownedRebels = []; // codes this device owns, synced from /api/entitlements
-
-    function isOwned(code) {
-      return code === OG_CODE || ownedRebels.indexOf(code) !== -1;
-    }
-    function loadEntitlements() {
-      if (!DEVICE_ID) return Promise.resolve();
-      return fetch(BASE + '/api/entitlements?device=' + encodeURIComponent(DEVICE_ID))
-        .then(function (r) { return r.json(); })
-        .then(function (arr) {
-          ownedRebels = (Array.isArray(arr) ? arr : [])
-            .filter(function (e) { return e.itemType === 'rebel'; })
-            .map(function (e) { return e.itemCode; });
-        })
-        .catch(function () { ownedRebels = []; });
-    }
-    // Placeholder $0 purchase — mimics a real transaction via the existing
-    // confirm-dialog UI, but doesn't charge anything yet. Swaps for real
-    // Play Billing later without anything else needing to change.
-    function purchaseRebel(code) {
-      return fetch(BASE + '/api/entitlements/grant', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device: DEVICE_ID, itemType: 'rebel', itemCode: code })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res && res.ok && ownedRebels.indexOf(code) === -1) ownedRebels.push(code);
-          return res;
-        });
-    }
-    // Coupon redemption — one code can grant several items at once (bundles).
-    function redeemCouponCode(code) {
-      return fetch(BASE + '/api/entitlements/redeem', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device: DEVICE_ID, code: code })
-      })
-        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
-        .then(function (res) {
-          if (res.data && res.data.ok && Array.isArray(res.data.granted)) {
-            res.data.granted.forEach(function (g) {
-              if (g.itemType === 'rebel' && ownedRebels.indexOf(g.itemCode) === -1) ownedRebels.push(g.itemCode);
-            });
-          }
-          return res;
-        });
+    function addToFlock(code) {
+      var flock = getFlock();
+      if (flock.indexOf(code) === -1) {
+        flock.push(code);
+        try { localStorage.setItem(FLOCK_KEY, JSON.stringify(flock)); } catch (e) {}
+      }
     }
 
     var toastTimer = null;
@@ -497,9 +379,7 @@
 
     var blizzardTheme = new Audio(SOUND_BASE + '/sounds/blizzard-theme.mp3');
     blizzardTheme.loop = true;
-    var musicGain = 1; // 0-1 master multiplier, controlled by the Advanced Settings slider (native only)
-    function applyMusicVolume() { blizzardTheme.volume = 0.55 * musicGain; }
-    applyMusicVolume();
+    blizzardTheme.volume = 0.55;
     blizzardTheme.preload = 'auto';
     function stopBlizzardTheme() { try { blizzardTheme.pause(); blizzardTheme.currentTime = 0; } catch (e) {} }
 
@@ -511,49 +391,35 @@
       screens.pause.hidden = true;
       screens.gameover.hidden = true;
       screens.leaderboard.hidden = true;
-      if (screens.select) screens.select.hidden = true;
+      if (screens.shop) screens.shop.hidden = true;
       if (screens.info) screens.info.hidden = true;
-      if (screens.settings) screens.settings.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
       else if (name === 'gameover') { screens.start.hidden = true; screens.game.hidden = false; screens.gameover.hidden = false; }
       else if (name === 'leaderboard-from-start') { screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'select-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.select) screens.select.hidden = false; }
-      else if (name === 'select-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'shop-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.shop) screens.shop.hidden = false; }
+      else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
       else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'settings-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
-      else if (name === 'settings-close') { screens.start.hidden = false; screens.game.hidden = true; }
     }
 
     // ---------- character roster (live from the API) ----------
     var charGrid = mount.querySelector('[data-rl-char-grid]');
+    var shopGrid = mount.querySelector('[data-rl-shop-grid]');
     var startError = mount.querySelector('[data-rl-start-error]');
     var roster = [];
     var selectedChar = null;
     var charImgs = {};
     var charAccent = {};
-    var charBgPair = {};
-    var charLaserOrigin = {};
     var RANDOM_CODE = '__RANDOM__';
 
     function preloadChar(ch) {
       var preload = new Image();
       preload.src = BASE + ch.src;
       charImgs[ch.code] = preload;
-      // Color roles (per Casey's spec): laser beam, HUD glow, and the
-      // selected-tile highlight all use the bird's true accent color.
-      // Background tint uses primary+secondary instead — see charBgPair.
-      charAccent[ch.code] = ch.trueAccentColor || ch.primaryColor || ch.accentColor || null;
-      charBgPair[ch.code] = {
-        primary: ch.primaryColor || ch.accentColor || null,
-        secondary: ch.secondaryColor || null
-      };
-      charLaserOrigin[ch.code] = (ch.laserOriginX != null && ch.laserOriginY != null)
-        ? { x: ch.laserOriginX, y: ch.laserOriginY }
-        : null;
+      charAccent[ch.code] = ch.accentColor || null;
     }
 
     function rosterByCode(code) {
@@ -561,45 +427,20 @@
       return null;
     }
 
-    var activeRebelImg = mount.querySelector('[data-rl-active-rebel-img]');
-    var activeRebelLabel = mount.querySelector('[data-rl-active-rebel-label]');
-    var activeRebelBox = mount.querySelector('[data-rl-active-rebel]');
-    function updateActiveRebel(code) {
-      if (!activeRebelImg || !activeRebelLabel) return;
-      if (!code || code === RANDOM_CODE) {
-        activeRebelImg.removeAttribute('src');
-        activeRebelLabel.textContent = code === RANDOM_CODE ? 'Random' : '';
-        if (activeRebelBox) activeRebelBox.style.removeProperty('--tile-accent');
-        return;
-      }
-      var ch = rosterByCode(code);
-      if (!ch) return;
-      activeRebelImg.src = BASE + ch.src;
-      activeRebelImg.alt = ch.label;
-      activeRebelLabel.textContent = ch.label;
-      if (activeRebelBox && charAccent[code]) activeRebelBox.style.setProperty('--tile-accent', charAccent[code]);
-    }
-
     function selectCard(card) {
       charGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
-      if (shopEnabled) {
-        var code = card.getAttribute('data-rl-char');
-        updateMenuBg(code);
-        updateActiveRebel(code);
-      }
+      if (shopEnabled) updateMenuBg(card.getAttribute('data-rl-char'));
     }
 
     function updateMenuBg(code) {
-      var pair = code ? charBgPair[code] : null;
-      if (!pair || (!pair.primary && !pair.secondary)) {
+      var accent = code ? charAccent[code] : null;
+      if (!accent) {
         mount.style.removeProperty('--rl-bg-top');
-        mount.style.removeProperty('--rl-bg-mid');
         mount.style.removeProperty('--rl-bg-bottom');
         return;
       }
-      var colors = computeBgColors(pair.primary, pair.secondary);
+      var colors = computeBgColors(accent);
       mount.style.setProperty('--rl-bg-top', colors.top);
-      mount.style.setProperty('--rl-bg-mid', colors.mid);
       mount.style.setProperty('--rl-bg-bottom', colors.bottom);
     }
 
@@ -634,39 +475,20 @@
         return;
       }
 
-      // Native: no inline grid — just settle on a default selection.
-      // The actual picking UI lives in the full-screen Select Rebel screen.
+      // ---- native flock/shop layout ----
+      charGrid.innerHTML = '';
       var og = rosterByCode(OG_CODE) || roster[0];
-      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || rosterByCode(selectedChar)))
+      var flock = getFlock();
+      // Keep whatever was already selected (e.g. a bird just bought in the
+      // shop) across a re-render; only fall back to OG on the very first render.
+      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || selectedChar === og.code || flock.indexOf(selectedChar) !== -1))
         ? selectedChar
         : og.code;
-      selectedChar = wantSelected;
-      updateMenuBg(wantSelected);
-      updateActiveRebel(wantSelected);
-    }
-
-    // Shared emblem box (same footprint as a bird portrait) so Random's tile
-    // holds its size consistently with real bird tiles.
-    function buildEmblem(symbol) {
-      var box = document.createElement('div');
-      box.className = 'rl-char-emblem';
-      var circle = document.createElement('div');
-      circle.className = 'rl-char-emblem-circle';
-      circle.textContent = symbol;
-      box.appendChild(circle);
-      return box;
-    }
-
-    var selectGrid = mount.querySelector('[data-rl-select-grid]');
-    function renderSelectGrid() {
-      if (!selectGrid || !roster.length) return;
-      selectGrid.innerHTML = '';
-      var og = rosterByCode(OG_CODE) || roster[0];
 
       function addTile(opts) {
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'rl-char-card' + (opts.code === selectedChar ? ' rl-selected' : '') + (opts.locked ? ' rl-locked' : '');
+        card.className = 'rl-char-card' + (opts.code === wantSelected ? ' rl-selected' : '');
         if (opts.code) card.setAttribute('data-rl-char', opts.code);
         if (opts.code && charAccent[opts.code]) card.style.setProperty('--tile-accent', charAccent[opts.code]);
         var img = document.createElement('img');
@@ -675,218 +497,179 @@
         var span = document.createElement('span');
         span.textContent = opts.label;
         card.appendChild(img); card.appendChild(span);
-        if (opts.locked) {
-          var lock = document.createElement('div');
-          lock.className = 'rl-lock-badge';
-          lock.textContent = '\uD83D\uDD12'; // 🔒
-          card.appendChild(lock);
-        }
         card.addEventListener('click', opts.onClick);
-        selectGrid.appendChild(card);
+        charGrid.appendChild(card);
         return card;
       }
 
-      // OG — always owned, always first
+      // Shared emblem box (same footprint as a bird portrait) so Random/Shop
+      // tiles hold their size even when they land alone on the last row.
+      function buildEmblem(symbol) {
+        var box = document.createElement('div');
+        box.className = 'rl-char-emblem';
+        var circle = document.createElement('div');
+        circle.className = 'rl-char-emblem-circle';
+        circle.textContent = symbol;
+        box.appendChild(circle);
+        return box;
+      }
+
+      // OG — free default, always first
       var ogCard = addTile({
         code: og.code, label: og.label, imgSrc: BASE + og.src,
-        onClick: function () { selectedChar = og.code; updateMenuBg(og.code); updateActiveRebel(og.code); showScreen('select-close'); }
+        onClick: function () { selectedChar = og.code; selectCard(ogCard); }
       });
 
-      // Random — always available, resolves from the whole roster at round start
+      // Owned flock birds, in the order they were added
+      flock.forEach(function (code) {
+        if (code === og.code) return;
+        var ch = rosterByCode(code);
+        if (!ch) return;
+        var card;
+        card = addTile({
+          code: ch.code, label: ch.label, imgSrc: BASE + ch.src,
+          onClick: function () { selectedChar = ch.code; selectCard(card); }
+        });
+      });
+
+      // Random — picks a surprise from the WHOLE roster, not just your flock, revealed only once the round starts
       var randomCard = addTile({
         code: RANDOM_CODE, label: 'Random', imgSrc: '',
-        onClick: function () { selectedChar = RANDOM_CODE; updateMenuBg(null); updateActiveRebel(RANDOM_CODE); showScreen('select-close'); }
+        onClick: function () { selectedChar = RANDOM_CODE; selectCard(randomCard); }
       });
       randomCard.classList.add('rl-char-random');
       randomCard.querySelector('img').remove();
       randomCard.insertBefore(buildEmblem('?'), randomCard.firstChild);
 
-      // Every other visible (or owned-but-hidden) rebel — locked or not
-      roster.forEach(function (ch) {
-        if (ch.code === og.code) return;
-        var owned = isOwned(ch.code);
-        addTile({
-          code: ch.code, label: ch.label, imgSrc: BASE + ch.src, locked: !owned,
-          onClick: owned
-            ? function () { selectedChar = ch.code; updateMenuBg(ch.code); updateActiveRebel(ch.code); showScreen('select-close'); }
-            : function () { openUnlockModal(ch); }
-        });
+      selectedChar = wantSelected;
+      updateMenuBg(wantSelected);
+
+      // Shop tile — always last
+      var shopTile = document.createElement('button');
+      shopTile.type = 'button';
+      shopTile.className = 'rl-char-card rl-char-shop-tile';
+      shopTile.appendChild(buildEmblem('+'));
+      var shopLabel = document.createElement('span');
+      shopLabel.textContent = 'Rebel Shop';
+      shopTile.appendChild(shopLabel);
+      shopTile.addEventListener('click', function () {
+        renderShopGrid();
+        showScreen('shop-from-start');
       });
+      charGrid.appendChild(shopTile);
     }
 
-    // ---- Unlock action sheet: Purchase ($0 placeholder) or Enter Code (supports bundle codes) ----
-    var unlockModalEl = mount.querySelector('[data-rl-unlock-modal]');
-    var unlockImg = mount.querySelector('[data-rl-unlock-img]');
-    var unlockName = mount.querySelector('[data-rl-unlock-name]');
-    var unlockActions = mount.querySelector('[data-rl-unlock-actions]');
-    var unlockCodeEntry = mount.querySelector('[data-rl-unlock-code-entry]');
-    var unlockCodeInput = mount.querySelector('[data-rl-unlock-code-input]');
-    var unlockCodeError = mount.querySelector('[data-rl-unlock-code-error]');
-    var unlockConfirmBox = mount.querySelector('[data-rl-unlock-confirm]');
-    var unlockConfirmText = mount.querySelector('[data-rl-unlock-confirm-text]');
-    var pendingUnlockItem = null; // the specific locked rebel tapped, or null if opened via the general "Enter Code" button
-
-    function showUnlockStage(stage) {
-      if (unlockActions) unlockActions.hidden = stage !== 'actions';
-      if (unlockCodeEntry) unlockCodeEntry.hidden = stage !== 'code';
-      if (unlockConfirmBox) unlockConfirmBox.hidden = stage !== 'confirm';
-    }
-    function openUnlockModal(ch) {
-      if (!unlockModalEl) return;
-      pendingUnlockItem = ch || null;
-      if (ch) {
-        if (unlockImg) { unlockImg.src = BASE + ch.src; unlockImg.alt = ch.label; unlockImg.hidden = false; }
-        if (unlockName) unlockName.textContent = ch.label;
-        showUnlockStage('actions');
-      } else {
-        // Opened from the general "Enter Code" button — no specific item, so
-        // this is for bundle/hidden codes rather than one visible tile.
-        if (unlockImg) unlockImg.hidden = true;
-        if (unlockName) unlockName.textContent = 'Redeem a Code';
-        showUnlockStage('code');
+    function renderShopGrid() {
+      if (!shopGrid) return;
+      var flock = getFlock();
+      var available = roster.filter(function (ch) { return ch.code !== OG_CODE && flock.indexOf(ch.code) === -1; });
+      if (!available.length) {
+        shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
+        return;
       }
-      if (unlockCodeInput) unlockCodeInput.value = '';
-      if (unlockCodeError) unlockCodeError.textContent = '';
-      unlockModalEl.hidden = false;
-    }
-    function closeUnlockModal() {
-      pendingUnlockItem = null;
-      if (unlockModalEl) unlockModalEl.hidden = true;
+      shopGrid.innerHTML = '';
+      available.forEach(function (ch) {
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'rl-char-card';
+        card.setAttribute('data-rl-char', ch.code);
+        if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
+        var img = document.createElement('img');
+        img.alt = ch.label;
+        img.src = BASE + ch.src;
+        var span = document.createElement('span');
+        span.textContent = ch.label;
+        var price = document.createElement('span');
+        price.className = 'rl-shop-price';
+        price.textContent = '$0.00';
+        card.appendChild(img); card.appendChild(span); card.appendChild(price);
+        card.addEventListener('click', function () {
+          openShopDetail(ch);
+        });
+        shopGrid.appendChild(card);
+      });
     }
 
-    var unlockPurchaseBtn = mount.querySelector('[data-rl-unlock-purchase]');
-    var unlockEnterCodeBtn = mount.querySelector('[data-rl-unlock-enter-code]');
-    var unlockCancelBtn = mount.querySelector('[data-rl-unlock-cancel]');
-    var unlockCodeSubmitBtn = mount.querySelector('[data-rl-unlock-code-submit]');
-    var unlockCodeBackBtn = mount.querySelector('[data-rl-unlock-code-back]');
-    var unlockConfirmYesBtn = mount.querySelector('[data-rl-unlock-confirm-yes]');
-    var unlockConfirmNoBtn = mount.querySelector('[data-rl-unlock-confirm-no]');
+    var shopDetailEl = mount.querySelector('[data-rl-shop-detail]');
+    var shopDetailImg = mount.querySelector('[data-rl-shop-detail-img]');
+    var shopDetailName = mount.querySelector('[data-rl-shop-detail-name]');
+    var shopDetailBuy = mount.querySelector('[data-rl-shop-detail-buy]');
+    var shopDetailBack = mount.querySelector('[data-rl-shop-detail-back]');
+    var shopConfirmEl = mount.querySelector('[data-rl-shop-confirm]');
+    var shopConfirmText = mount.querySelector('[data-rl-shop-confirm-text]');
+    var shopConfirmYes = mount.querySelector('[data-rl-shop-confirm-yes]');
+    var shopConfirmNo = mount.querySelector('[data-rl-shop-confirm-no]');
+    var pendingPurchase = null;
 
-    if (unlockPurchaseBtn) {
-      unlockPurchaseBtn.addEventListener('click', function () {
-        if (!pendingUnlockItem) return;
-        if (unlockConfirmText) unlockConfirmText.textContent = 'Purchase ' + pendingUnlockItem.label + ' for $0.00 and add it to your flock?';
-        showUnlockStage('confirm');
+    function openShopDetail(ch) {
+      if (!shopDetailEl) return;
+      pendingPurchase = ch;
+      shopDetailImg.src = BASE + ch.src;
+      shopDetailImg.alt = ch.label;
+      shopDetailName.textContent = ch.label;
+      shopDetailEl.hidden = false;
+    }
+    function closeShopDetail() {
+      if (shopDetailEl) shopDetailEl.hidden = true;
+    }
+    if (shopDetailBack) shopDetailBack.addEventListener('click', function () { pendingPurchase = null; closeShopDetail(); });
+    if (shopDetailBuy) {
+      shopDetailBuy.addEventListener('click', function () {
+        if (!pendingPurchase) return;
+        openShopConfirm(pendingPurchase);
       });
     }
-    if (unlockEnterCodeBtn) unlockEnterCodeBtn.addEventListener('click', function () { showUnlockStage('code'); });
-    if (unlockCancelBtn) unlockCancelBtn.addEventListener('click', closeUnlockModal);
-    if (unlockCodeBackBtn) {
-      unlockCodeBackBtn.addEventListener('click', function () {
-        if (pendingUnlockItem) showUnlockStage('actions'); else closeUnlockModal();
+
+    function openShopConfirm(ch) {
+      if (!shopConfirmEl) return;
+      pendingPurchase = ch;
+      shopConfirmText.textContent = 'Purchase ' + ch.label + ' for $0.00 and add it to your flock?';
+      closeShopDetail();
+      shopConfirmEl.hidden = false;
+    }
+    function closeShopConfirm() {
+      if (shopConfirmEl) shopConfirmEl.hidden = true;
+    }
+    if (shopConfirmYes) {
+      shopConfirmYes.addEventListener('click', function () {
+        if (!pendingPurchase) return;
+        var ch = pendingPurchase;
+        addToFlock(ch.code);
+        toast(ch.label + ' added to your flock!');
+        selectedChar = ch.code;
+        pendingPurchase = null;
+        closeShopConfirm();
+        renderCharGrid();
+        showScreen('shop-close');
       });
     }
-    if (unlockConfirmNoBtn) unlockConfirmNoBtn.addEventListener('click', function () { showUnlockStage('actions'); });
-    if (unlockConfirmYesBtn) {
-      unlockConfirmYesBtn.addEventListener('click', function () {
-        if (!pendingUnlockItem) return;
-        var ch = pendingUnlockItem;
-        purchaseRebel(ch.code).then(function (res) {
-          if (res && res.ok) {
-            toast(ch.label + ' added to your flock!');
-            selectedChar = ch.code;
-            updateMenuBg(ch.code); updateActiveRebel(ch.code);
-            closeUnlockModal();
-            renderSelectGrid();
-            showScreen('select-close');
-          } else {
-            toast('Something went wrong — try again.');
-          }
-        });
-      });
-    }
-    if (unlockCodeSubmitBtn) {
-      unlockCodeSubmitBtn.addEventListener('click', function () {
-        var code = unlockCodeInput ? unlockCodeInput.value.trim() : '';
-        if (!code) { if (unlockCodeError) unlockCodeError.textContent = 'Enter a code first.'; return; }
-        redeemCouponCode(code).then(function (res) {
-          if (res.data && res.data.ok) {
-            var count = (res.data.granted || []).length;
-            toast(count > 1 ? count + ' rebels unlocked!' : 'Rebel unlocked!');
-            closeUnlockModal();
-            // Re-fetch the roster too — a hidden rebel just granted via
-            // coupon won't be in the current roster array yet.
-            loadRoster().then(renderSelectGrid);
-          } else {
-            if (unlockCodeError) unlockCodeError.textContent = (res.data && res.data.error) || 'That code didn\'t work.';
-          }
-        });
+    if (shopConfirmNo) {
+      shopConfirmNo.addEventListener('click', function () {
+        // Cancel drops back to the detail card rather than closing everything,
+        // so a change of mind doesn't lose your place in the shop.
+        closeShopConfirm();
+        if (pendingPurchase) openShopDetail(pendingPurchase);
       });
     }
 
     if (shopEnabled) {
-      var closeSelectBtn = mount.querySelector('[data-rl-close-select]');
-      var openSelectBtn = mount.querySelector('[data-rl-open-select]');
-      if (openSelectBtn) openSelectBtn.addEventListener('click', function () { renderSelectGrid(); showScreen('select-from-start'); });
-      if (closeSelectBtn) closeSelectBtn.addEventListener('click', function () { closeUnlockModal(); showScreen('select-close'); });
-      var selectEnterCodeBtn = mount.querySelector('[data-rl-select-enter-code]');
-      if (selectEnterCodeBtn) selectEnterCodeBtn.addEventListener('click', function () { openUnlockModal(null); });
-
+      var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
+      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); closeShopConfirm(); pendingPurchase = null; showScreen('shop-close'); });
       var infoBtn = mount.querySelector('[data-rl-info-btn]');
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
-
-      // ---- Advanced Settings: gear icon + SFX/Music volume sliders ----
-      var gearBtn = mount.querySelector('[data-rl-gear-btn]');
-      var closeSettingsBtn = mount.querySelector('[data-rl-close-settings]');
-      var sfxSlider = mount.querySelector('[data-rl-sfx-volume]');
-      var musicSlider = mount.querySelector('[data-rl-music-volume]');
-      var VOLUME_KEY = 'rl_volume_v1';
-      function loadVolumePrefs() {
-        try { return JSON.parse(localStorage.getItem(VOLUME_KEY) || '{}'); } catch (e) { return {}; }
-      }
-      function saveVolumePrefs(prefs) {
-        try { localStorage.setItem(VOLUME_KEY, JSON.stringify(prefs)); } catch (e) {}
-      }
-      var volumePrefs = loadVolumePrefs();
-      var initialSfx = volumePrefs.sfx != null ? volumePrefs.sfx : 100;
-      var initialMusic = volumePrefs.music != null ? volumePrefs.music : 100;
-      if (sfxSlider) sfxSlider.value = initialSfx;
-      if (musicSlider) musicSlider.value = initialMusic;
-      soundPlayer.setVolume(initialSfx / 100);
-      musicGain = initialMusic / 100;
-      applyMusicVolume();
-      if (gearBtn) gearBtn.addEventListener('click', function () { showScreen('settings-from-start'); });
-      if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', function () { showScreen('settings-close'); });
-      if (sfxSlider) {
-        sfxSlider.addEventListener('input', function () {
-          soundPlayer.setVolume(sfxSlider.value / 100);
-          var prefs = loadVolumePrefs(); prefs.sfx = Number(sfxSlider.value); saveVolumePrefs(prefs);
-        });
-      }
-      if (musicSlider) {
-        musicSlider.addEventListener('input', function () {
-          musicGain = musicSlider.value / 100;
-          applyMusicVolume();
-          var prefs = loadVolumePrefs(); prefs.music = Number(musicSlider.value); saveVolumePrefs(prefs);
-        });
-      }
-
-      // ---- Scene select: dropdown drives the existing rainbow checkbox, and
-      // visibly tints the menu so picking a scene actually feels different.
-      var modePicker = mount.querySelector('[data-rl-mode-picker]');
-      var rainbowToggleElRef = mount.querySelector('[data-rl-rainbow-toggle]');
-      function setMode(mode) {
-        if (rainbowToggleElRef) rainbowToggleElRef.checked = (mode === 'rainbow');
-        mount.classList.toggle('rl-scene-rainbow', mode === 'rainbow');
-      }
-      if (modePicker) {
-        modePicker.addEventListener('change', function () { setMode(modePicker.value); });
-      }
     }
 
-    function loadRoster() {
-      var url = BASE + '/api/characters' + (shopEnabled && DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : '');
-      return fetch(url)
-        .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
-        .then(function (data) { roster = Array.isArray(data) ? data : []; renderCharGrid(); })
-        .catch(function () {
-          charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
-        });
-    }
-
-    Promise.all([loadEntitlements(), loadRoster()]);
+    fetch(BASE + '/api/characters')
+      .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
+      .then(function (data) {
+        roster = Array.isArray(data) ? data : [];
+        renderCharGrid();
+      })
+      .catch(function () {
+        charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
+      });
 
     // ---------- difficulty tier selector ----------
     var selectedTier = DEFAULT_TIER;
@@ -908,7 +691,6 @@
     var lbTier = DEFAULT_TIER;
     var lbSet = 'normal';
     var lbSort = 'score';
-    var lbWithMods = false;
     var lastBoardArr = [];
     function boardKey(tier, set) { return set === 'blizzard' ? tier + '-blizzard' : tier; }
     function sortBoard(arr, key) {
@@ -919,15 +701,6 @@
       else copy.sort(function (a, b) { return b.score - a.score; });
       return copy;
     }
-    // Filters out runs made with anything that affects gameplay (future
-    // weapons/scenes will set row.modded server-side). No current content
-    // actually modifies gameplay yet, so this is a no-op today — every row
-    // is unmodded until that system exists — but the toggle is real and
-    // ready for when it does.
-    function applyModsFilter(arr, withMods) {
-      if (withMods) return arr;
-      return arr.filter(function (row) { return !row.modded; });
-    }
     function loadLeaderboard(tier, set, container, noteEl) {
       container.innerHTML = '<div class="rl-loading">Loading…</div>';
       if (noteEl) noteEl.textContent = SET_LABELS[set] || SET_LABELS.normal;
@@ -935,7 +708,7 @@
         .then(function (r) { return r.json(); })
         .then(function (arr) {
           lastBoardArr = Array.isArray(arr) ? arr : [];
-          renderBoard(container, sortBoard(applyModsFilter(lastBoardArr, lbWithMods), lbSort));
+          renderBoard(container, sortBoard(lastBoardArr, lbSort));
         })
         .catch(function () { container.innerHTML = '<div class="rl-loading">Couldn\'t load the leaderboard.</div>'; });
     }
@@ -948,11 +721,9 @@
       arr.forEach(function (row, i) {
         var mine = highlightTs && row.ts === highlightTs;
         var accPct = Math.round((row.accuracy || 0) * 100);
-        var tagAccent = charAccent[row.character] || null;
-        var tagStyle = tagAccent ? ' style="--tile-accent:' + tagAccent + '"' : '';
         html += '<div class="rl-board-row' + (mine ? ' rl-me' : '') + '">'
           + '<span class="rl-rank">' + (i + 1) + '</span>'
-          + '<span class="rl-char-tag"' + tagStyle + '>' + (row.character || '—') + '</span>'
+          + '<span class="rl-char-tag">' + (row.character || '—') + '</span>'
           + '<span class="rl-init">' + row.initials + '</span>'
           + '<span class="rl-acc-bar" title="' + accPct + '% accuracy"><span class="rl-acc-fill" style="width:' + accPct + '%"></span></span>'
           + '<span class="rl-pts">' + row.score + '</span>'
@@ -978,15 +749,8 @@
     });
     mount.querySelector('[data-rl-lb-sort]').addEventListener('change', function () {
       lbSort = this.value;
-      renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(applyModsFilter(lastBoardArr, lbWithMods), lbSort));
+      renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(lastBoardArr, lbSort));
     });
-    var lbWithModsEl = mount.querySelector('[data-rl-lb-with-mods]');
-    if (lbWithModsEl) {
-      lbWithModsEl.addEventListener('change', function () {
-        lbWithMods = lbWithModsEl.checked;
-        renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(applyModsFilter(lastBoardArr, lbWithMods), lbSort));
-      });
-    }
 
     // ---------- game elements ----------
     var stageOuter = mount.querySelector('[data-rl-stage-outer]');
@@ -1096,12 +860,11 @@
         powerupUntil: 0,
         powerupWasActive: false,
         laserColors: computeLaserColors(accentColor),
-        bgColors: computeBgColors((charBgPair[selectedChar] || {}).primary, (charBgPair[selectedChar] || {}).secondary),
+        bgColors: computeBgColors(accentColor),
         wind: { bands: rollWindBands(windMaxPxPerSec), maxPxPerSec: windMaxPxPerSec, nextRollAt: 0, streaks: [] },
         cfg: {
           character: selectedChar,
           accentColor: accentColor,
-          laserOrigin: charLaserOrigin[selectedChar] || DEFAULT_LASER_ORIGIN,
           tier: selectedTier,
           kidMode: !!kidModeEl.checked,
           blizzard: blizzard
@@ -1151,26 +914,22 @@
       }
     }
 
-    // ---------- eye/laser origin position ----------
+    // ---------- eye position (one standard spot for every character) ----------
     function getEyePos() {
       var loonW = clamp(W * 0.34, 90, 170);
       var loonH = loonW * CHAR_ASPECT;
       var left = S.loonX - loonW / 2;
       var top = H - loonH;
-      var origin = (S && S.cfg && S.cfg.laserOrigin) || DEFAULT_LASER_ORIGIN;
-      var xr = origin.x / ART_CANVAS_W;
-      var yr = origin.y / ART_CANVAS_H;
       return {
-        x: left + xr * loonW,
-        y: top + yr * loonH,
+        x: left + STANDARD_EYE.xr * loonW,
+        y: top + STANDARD_EYE.yr * loonH,
         loonLeft: left, loonTop: top, loonW: loonW, loonH: loonH
       };
     }
 
     // ---------- spawning ----------
     function spawnCube(size) {
-      var edgePad = W * 0.05; // keeps cubes off the very edge, where they're hard to reach/hit
-      var margin = size / 2 + 4 + edgePad;
+      var margin = size / 2 + 4;
       var x = rand(margin, W - margin);
       var speed = currentDifficulty(S.elapsed).speed;
       S.cubes.push({ x: x, y: -size, size: size, speed: speed * rand(0.85, 1.18), rot: rand(-0.12, 0.12) });
@@ -1546,10 +1305,8 @@
         g.addColorStop(0, 'hsl(' + hue1 + ', 42%, 13%)');
         g.addColorStop(1, 'hsl(' + hue2 + ', 42%, 19%)');
       } else {
-        var colors = S.bgColors || { top: '#0a1420', mid: '#11202f', bottom: '#16283c' };
-        g.addColorStop(0, colors.top);
-        if (colors.mid) g.addColorStop(0.5, colors.mid);
-        g.addColorStop(1, colors.bottom);
+        var colors = S.bgColors || { top: '#0a1420', bottom: '#16283c' };
+        g.addColorStop(0, colors.top); g.addColorStop(1, colors.bottom);
       }
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
@@ -1912,7 +1669,7 @@
         for (var i = S.cubes.length - 1; i >= 0; i--) {
           var c = S.cubes[i];
           c.y += c.speed * dt;
-          if (S.cfg.blizzard) { var edgePad = W * 0.05; c.x = clamp(c.x + windAt(c.y) * dt, c.size / 2 + edgePad, W - c.size / 2 - edgePad); }
+          if (S.cfg.blizzard) c.x = clamp(c.x + windAt(c.y) * dt, c.size / 2, W - c.size / 2);
           if (c.y - c.size / 2 > floorY) {
             S.cubes.splice(i, 1);
             spawnShatter(clamp(c.x, c.size, W - c.size), floorY, c.size);
