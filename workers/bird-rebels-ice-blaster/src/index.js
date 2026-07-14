@@ -71,10 +71,26 @@ function isBadInitials(normalized) {
 // ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
-async function getCharacters(env) {
-  const { results } = await env.CHARACTERS_DB.prepare(
-    'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y FROM characters WHERE active = 1 ORDER BY sort_order ASC'
-  ).all();
+async function getCharacters(url, env) {
+  const device = url.searchParams.get('device');
+  let ownedCodes = [];
+  if (device) {
+    const { results } = await env.CHARACTERS_DB.prepare(
+      "SELECT item_code FROM entitlements WHERE device_id = ? AND item_type = 'rebel'"
+    ).bind(device).all();
+    ownedCodes = results.map((r) => r.item_code);
+  }
+  // Normally only visible=1 rebels show up. A hidden/special rebel (visible=0,
+  // only obtainable via its own coupon) still needs to appear once a device
+  // actually owns it — otherwise there'd be no way to ever select it.
+  const placeholders = ownedCodes.map(() => '?').join(',');
+  const sql = ownedCodes.length
+    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
+    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
+  const stmt = ownedCodes.length
+    ? env.CHARACTERS_DB.prepare(sql).bind(...ownedCodes)
+    : env.CHARACTERS_DB.prepare(sql);
+  const { results } = await stmt.all();
   const chars = results.map((r) => ({
     code: r.code,
     label: r.label,
@@ -89,6 +105,7 @@ async function getCharacters(env) {
     trueAccentColor: r.accent_color || null,
     laserOriginX: r.laser_origin_x != null ? r.laser_origin_x : null,
     laserOriginY: r.laser_origin_y != null ? r.laser_origin_y : null,
+    visible: !!r.visible,
   }));
   return json(chars);
 }
@@ -160,8 +177,76 @@ async function postLeaderboard(request, env) {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch handler
+// Entitlements — what a device owns, and how it got it (purchase or coupon).
+// "device" is a random ID the app generates and stores locally the first
+// time it runs — a lightweight stand-in for a real account until Play
+// Games Services (or similar) gets wired in later.
 // ---------------------------------------------------------------------------
+async function getEntitlements(url, env) {
+  const device = url.searchParams.get('device');
+  if (!device) return json({ error: 'missing device' }, 400);
+  const { results } = await env.CHARACTERS_DB.prepare(
+    'SELECT item_type, item_code FROM entitlements WHERE device_id = ?'
+  ).bind(device).all();
+  return json(results.map((r) => ({ itemType: r.item_type, itemCode: r.item_code })));
+}
+
+// Placeholder purchase — mimics a real IAP flow (there's a confirm step in
+// the UI) but doesn't actually charge anything yet. Swap this for real Play
+// Billing server-side receipt validation later; the entitlements table and
+// everything reading from it stays the same either way.
+async function grantEntitlement(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
+  const device = String((body && body.device) || '');
+  const itemType = String((body && body.itemType) || '');
+  const itemCode = String((body && body.itemCode) || '');
+  if (!device || !itemType || !itemCode) return json({ error: 'missing device, itemType, or itemCode' }, 400);
+
+  await env.CHARACTERS_DB.prepare(
+    'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, created_at) VALUES (?, ?, ?, ?, ?)'
+  ).bind(device, itemType, itemCode, 'purchase', Date.now()).run();
+
+  return json({ ok: true });
+}
+
+// Coupon redemption. A code can grant more than one item (bundle codes) —
+// coupon_items holds one row per (coupon, item) pair. All granted items
+// share the same coupon_code in entitlements, so it's traceable later.
+async function redeemCoupon(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
+  const device = String((body && body.device) || '');
+  const code = String((body && body.code) || '').trim().toUpperCase();
+  if (!device || !code) return json({ error: 'missing device or code' }, 400);
+
+  const coupon = await env.CHARACTERS_DB.prepare(
+    'SELECT code, max_redemptions, redemptions_used, expires_at, active FROM coupons WHERE code = ?'
+  ).bind(code).first();
+  if (!coupon) return json({ error: 'That code isn\'t valid.' }, 404);
+  if (!coupon.active) return json({ error: 'That code is no longer active.' }, 410);
+  if (coupon.expires_at && Date.now() > coupon.expires_at) return json({ error: 'That code has expired.' }, 410);
+  if (coupon.redemptions_used >= coupon.max_redemptions) return json({ error: 'That code has already been fully redeemed.' }, 410);
+
+  const { results: items } = await env.CHARACTERS_DB.prepare(
+    'SELECT item_type, item_code FROM coupon_items WHERE coupon_code = ?'
+  ).bind(code).all();
+  if (!items.length) return json({ error: 'That code has nothing attached to it.' }, 500);
+
+  const now = Date.now();
+  for (const item of items) {
+    await env.CHARACTERS_DB.prepare(
+      'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, coupon_code, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(device, item.item_type, item.item_code, 'coupon', code, now).run();
+  }
+  await env.CHARACTERS_DB.prepare(
+    'UPDATE coupons SET redemptions_used = redemptions_used + 1 WHERE code = ?'
+  ).bind(code).run();
+
+  return json({ ok: true, granted: items.map((i) => ({ itemType: i.item_type, itemCode: i.item_code })) });
+}
+
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -172,7 +257,7 @@ export default {
     }
 
     if (path === '/api/characters' && request.method === 'GET') {
-      return getCharacters(env);
+      return getCharacters(url, env);
     }
     if (path.startsWith('/characters/') && request.method === 'GET') {
       return getCharacterImage(path, env);
@@ -182,6 +267,15 @@ export default {
     }
     if (path === '/api/leaderboard' && request.method === 'POST') {
       return postLeaderboard(request, env);
+    }
+    if (path === '/api/entitlements' && request.method === 'GET') {
+      return getEntitlements(url, env);
+    }
+    if (path === '/api/entitlements/grant' && request.method === 'POST') {
+      return grantEntitlement(request, env);
+    }
+    if (path === '/api/entitlements/redeem' && request.method === 'POST') {
+      return redeemCoupon(request, env);
     }
 
     // Everything else (loader.js, engine.js, styles.css, sounds/*, and
