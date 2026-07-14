@@ -894,7 +894,7 @@
       var loonW = clamp(W * 0.34, 90, 170);
       var loonH = loonW * CHAR_ASPECT;
       var left = S.loonX - loonW / 2;
-      var top = H - loonH * 0.94;
+      var top = H - loonH;
       return {
         x: left + STANDARD_EYE.xr * loonW,
         y: top + STANDARD_EYE.yr * loonH,
