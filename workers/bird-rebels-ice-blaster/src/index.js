@@ -185,6 +185,16 @@ export default {
     const assetResponse = await env.ASSETS.fetch(request);
     const response = new Response(assetResponse.body, assetResponse);
     response.headers.set('Access-Control-Allow-Origin', '*');
+    // loader.js/engine.js/styles.css are the files that change on every
+    // deploy but are requested from a fixed, unversioned URL — without this,
+    // browsers and the Android WebView can hang onto a stale cached copy
+    // for a while after a push, which has caused "why isn't my fix showing
+    // up" confusion more than once. Force revalidation on every load for
+    // just these three; everything else (sounds, logo, character art via
+    // R2) keeps its normal caching since those change far less often.
+    if (path === '/loader.js' || path === '/engine.js' || path === '/styles.css') {
+      response.headers.set('Cache-Control', 'no-cache, must-revalidate');
+    }
     return response;
   },
 };
