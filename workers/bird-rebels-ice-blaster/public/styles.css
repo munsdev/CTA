@@ -51,6 +51,9 @@
 .rl-btn.rl-btn-ghost{
   background:transparent; color:var(--rl-ink); border:1px solid var(--rl-panel-line);
 }
+.rl-btn.rl-btn-ghost.rl-btn-confirm{
+  background:rgba(255,207,77,.12); color:var(--rl-gold); border-color:var(--rl-gold);
+}
 .rl-btn:disabled{ opacity:.55; cursor:default; }
 .rl-btn + .rl-btn{ margin-top:10px; }
 .rl-btn-row{ display:flex; gap:10px; }
