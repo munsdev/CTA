@@ -201,7 +201,6 @@
     + '      </div>'
     + '      <button class="rl-btn" data-rl-start>Start Game</button>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard>Leaderboard</button>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-claim-code>Claim a Code</button>'
     + '      <p class="rl-error" data-rl-start-error></p>'
     + '    </div>'
     + '  </div>'
@@ -334,6 +333,7 @@
     + '      <div data-rl-claim-picker hidden>'
     + '        <p>Pick one:</p>'
     + '        <div class="rl-char-grid" data-rl-claim-picker-grid></div>'
+    + '        <button class="rl-btn" data-rl-claim-picker-confirm disabled>Confirm</button>'
     + '        <button class="rl-btn rl-btn-ghost" data-rl-claim-picker-cancel>Cancel</button>'
     + '      </div>'
     + '    </div>'
@@ -725,8 +725,10 @@
     var claimError = mount.querySelector('[data-rl-claim-error]');
     var claimSubmitBtn = mount.querySelector('[data-rl-claim-submit]');
     var claimCancelBtn = mount.querySelector('[data-rl-claim-cancel]');
+    var claimPickerConfirmBtn = mount.querySelector('[data-rl-claim-picker-confirm]');
     var claimPickerCancelBtn = mount.querySelector('[data-rl-claim-picker-cancel]');
     var pendingClaimCode = null;
+    var pendingPickItemCode = null;
 
     function openClaimModal() {
       if (!claimModal) return;
@@ -738,6 +740,7 @@
     }
     function closeClaimModal() {
       pendingClaimCode = null;
+      pendingPickItemCode = null;
       if (claimModal) claimModal.hidden = true;
     }
     function grantedToast(granted) {
@@ -783,6 +786,8 @@
             }
             if (data.pick) {
               pendingClaimCode = code;
+              pendingPickItemCode = null;
+              if (claimPickerConfirmBtn) claimPickerConfirmBtn.disabled = true;
               if (!data.options || !data.options.length) {
                 if (claimError) claimError.textContent = 'Nothing left to choose from for this code.';
                 return;
@@ -793,27 +798,19 @@
                 var card = document.createElement('button');
                 card.type = 'button';
                 card.className = 'rl-char-card';
+                if (charAccent[opt.itemCode]) card.style.setProperty('--tile-accent', charAccent[opt.itemCode]);
                 var img = document.createElement('img');
                 img.alt = opt.label;
                 if (ch) img.src = BASE + ch.src;
                 var span = document.createElement('span');
                 span.textContent = opt.label;
                 card.appendChild(img); card.appendChild(span);
+                // Tapping only selects/highlights it — nothing is granted
+                // until Confirm is tapped, so a wrong tap doesn't lock anything in.
                 card.addEventListener('click', function () {
-                  fetch(BASE + '/api/entitlements/redeem-choice', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ device: DEVICE_ID, code: pendingClaimCode, itemCode: opt.itemCode })
-                  })
-                    .then(function (r) { return r.json(); })
-                    .then(function (res) {
-                      if (res && res.ok) {
-                        grantedToast(res.granted);
-                        applyGranted(res.granted);
-                        closeClaimModal();
-                      } else {
-                        if (claimError) claimError.textContent = (res && res.error) || 'That didn\'t work — try again.';
-                      }
-                    });
+                  claimPickerGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
+                  pendingPickItemCode = opt.itemCode;
+                  if (claimPickerConfirmBtn) claimPickerConfirmBtn.disabled = false;
                 });
                 claimPickerGrid.appendChild(card);
               });
@@ -823,6 +820,26 @@
               grantedToast(data.granted);
               applyGranted(data.granted);
               closeClaimModal();
+            }
+          })
+          .catch(function () { if (claimError) claimError.textContent = 'Couldn\'t reach the server — try again.'; });
+      });
+    }
+    if (claimPickerConfirmBtn) {
+      claimPickerConfirmBtn.addEventListener('click', function () {
+        if (!pendingPickItemCode || !pendingClaimCode) return;
+        fetch(BASE + '/api/entitlements/redeem-choice', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device: DEVICE_ID, code: pendingClaimCode, itemCode: pendingPickItemCode })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (res) {
+            if (res && res.ok) {
+              grantedToast(res.granted);
+              applyGranted(res.granted);
+              closeClaimModal();
+            } else {
+              if (claimError) claimError.textContent = (res && res.error) || 'That didn\'t work — try again.';
             }
           })
           .catch(function () { if (claimError) claimError.textContent = 'Couldn\'t reach the server — try again.'; });
