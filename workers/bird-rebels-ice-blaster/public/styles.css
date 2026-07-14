@@ -166,12 +166,13 @@
 /* Gameplay control hint removed on native — the app doesn't need the desktop-style reminder */
 .rl-native .rl-pause-hint{ display:none; }
 
-/* Per-bird accent color as the selected-tile highlight, native only */
-.rl-native [data-rl-screen="start"] .rl-char-card.rl-selected{
+/* Per-bird accent color as the selected-tile highlight, native only —
+   applies anywhere a .rl-char-card can be selected, including the code picker */
+.rl-native .rl-char-card.rl-selected{
   border-color:var(--tile-accent, var(--rl-ice));
   background:color-mix(in srgb, var(--tile-accent, var(--rl-ice)) 12%, transparent);
 }
-.rl-native [data-rl-screen="start"] .rl-char-card.rl-selected span{ color:var(--tile-accent, var(--rl-ice)); }
+.rl-native .rl-char-card.rl-selected span{ color:var(--tile-accent, var(--rl-ice)); }
 
 /* Give Casual Mode the same pill-toggle treatment as Rainbow Blizzard, native only */
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]{
