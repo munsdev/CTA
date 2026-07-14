@@ -93,20 +93,24 @@
       window.addEventListener(evt, unlock, { once: true, passive: true });
     });
 
+    var sfxGain = 1; // 0-1 master multiplier, controlled by the Advanced Settings slider (native only)
+
     function play(key) {
       var buf = buffers[key];
       if (!buf) { console.warn('[rl sound] "' + key + '" not ready yet (ctx.state=' + ctx.state + ')'); return; }
+      if (sfxGain <= 0) return;
       try {
         unlock();
         var src = ctx.createBufferSource();
         src.buffer = buf;
         var gain = ctx.createGain();
-        gain.gain.value = SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6;
+        gain.gain.value = (SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6) * sfxGain;
         src.connect(gain).connect(ctx.destination);
         src.start(0);
       } catch (e) { console.error('[rl sound] play() threw for "' + key + '":', e); }
     }
-    return { play: play, unlock: unlock };
+    function setVolume(v) { sfxGain = Math.max(0, Math.min(1, v)); }
+    return { play: play, unlock: unlock, setVolume: setVolume };
   }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -157,9 +161,16 @@
     var bl = Math.round(a.b + (b.b - a.b) * amount);
     return 'rgb(' + r + ',' + g + ',' + bl + ')';
   }
-  function computeBgColors(accentHex) {
-    if (!accentHex || !hexToRgb(accentHex)) return { top: '#0a1420', bottom: '#16283c' };
-    return { top: mixColor('#0a1420', accentHex, 0.22), bottom: mixColor('#16283c', accentHex, 0.22) };
+  function computeBgColors(primaryHex, secondaryHex) {
+    var top = hexToRgb(primaryHex) ? mixColor('#0a1420', primaryHex, 0.22) : '#0a1420';
+    var bottom = hexToRgb(secondaryHex) ? mixColor('#16283c', secondaryHex, 0.22) : '#16283c';
+    // Mid stop blends a touch of both, so the gradient reads as one
+    // continuous tone shifting from primary toward secondary rather than
+    // two unrelated tints stacked on top of each other.
+    var mid = (hexToRgb(primaryHex) && hexToRgb(secondaryHex))
+      ? mixColor(mixColor('#11202f', primaryHex, 0.18), secondaryHex, 0.18)
+      : '#11202f';
+    return { top: top, mid: mid, bottom: bottom };
   }
   // Picks black or white for the life-marker background chip, whichever
   // contrasts better against the given accent color (simple perceived-
@@ -177,9 +188,13 @@
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-screen-inner">'
     + '      <button class="rl-info-btn" data-rl-info-btn type="button" aria-label="How to play">?</button>'
-    + '      <img class="rl-logo" data-rl-logo alt="Bird Rebels: Ice Blaster">'
+    + '      <button class="rl-gear-btn" data-rl-gear-btn type="button" aria-label="Advanced settings">&#9881;</button>'
     + '      <h1 class="rl-h1">Bird Rebels: Ice Blaster</h1>'
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
+    + '      <div class="rl-active-rebel" data-rl-active-rebel>'
+    + '        <img data-rl-active-rebel-img alt="">'
+    + '        <span data-rl-active-rebel-label></span>'
+    + '      </div>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
     + '      <div class="rl-field-label" style="margin-bottom:8px;">Difficulty</div>'
@@ -189,6 +204,10 @@
     + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
     + '      </div>'
     + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <div class="rl-mode-select" data-rl-mode-select>'
+    + '        <button type="button" class="rl-mode-btn rl-selected" data-rl-mode-btn="standard">Standard</button>'
+    + '        <button type="button" class="rl-mode-btn" data-rl-mode-btn="rainbow">Rainbow Mode</button>'
+    + '      </div>'
     + '      <div class="rl-toggle-row">'
     + '        <div class="rl-check-row">'
     + '          <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
@@ -196,7 +215,7 @@
     + '            <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
     + '          </label>'
     + '        </div>'
-    + '        <div class="rl-check-row">'
+    + '        <div class="rl-check-row" data-rl-rainbow-row>'
     + '          <input type="checkbox" id="rl-rainbow-toggle" data-rl-rainbow-toggle>'
     + '          <label for="rl-rainbow-toggle"><span data-rl-rainbow-label>Rainbow Blizzard Mode</span>'
     + '            <small>Swaps your laser for rockets, adds a separate leaderboard</small>'
@@ -298,6 +317,21 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-overlay" data-rl-screen="settings" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Advanced Settings</h2>'
+    + '      <div class="rl-slider-row">'
+    + '        <label for="rl-sfx-volume">Sound Effects</label>'
+    + '        <input type="range" id="rl-sfx-volume" data-rl-sfx-volume min="0" max="100" value="100">'
+    + '      </div>'
+    + '      <div class="rl-slider-row">'
+    + '        <label for="rl-music-volume">Music</label>'
+    + '        <input type="range" id="rl-music-volume" data-rl-music-volume min="0" max="100" value="100">'
+    + '      </div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-settings>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-overlay" data-rl-screen="shop" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2>Rebel Shop</h2>'
@@ -354,8 +388,22 @@
       mount.classList.add('rl-native');
       var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
       if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Mode';
-      var logoEl = mount.querySelector('[data-rl-logo]');
-      if (logoEl) logoEl.src = BASE + '/logo.png';
+
+      // Boot splash: big logo, fades out into the regular title-only main
+      // screen after ~1.2s. Built dynamically rather than baked into
+      // TEMPLATE since it's purely a native, one-time boot moment.
+      var splash = document.createElement('div');
+      splash.className = 'rl-boot-splash';
+      var splashImg = document.createElement('img');
+      splashImg.className = 'rl-boot-splash-img';
+      splashImg.alt = '';
+      splashImg.src = BASE + '/logo.png';
+      splash.appendChild(splashImg);
+      mount.appendChild(splash);
+      setTimeout(function () {
+        splash.classList.add('rl-boot-splash-fade');
+        setTimeout(function () { splash.remove(); }, 500);
+      }, 1200);
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
@@ -383,7 +431,9 @@
 
     var blizzardTheme = new Audio(SOUND_BASE + '/sounds/blizzard-theme.mp3');
     blizzardTheme.loop = true;
-    blizzardTheme.volume = 0.55;
+    var musicGain = 1; // 0-1 master multiplier, controlled by the Advanced Settings slider (native only)
+    function applyMusicVolume() { blizzardTheme.volume = 0.55 * musicGain; }
+    applyMusicVolume();
     blizzardTheme.preload = 'auto';
     function stopBlizzardTheme() { try { blizzardTheme.pause(); blizzardTheme.currentTime = 0; } catch (e) {} }
 
@@ -397,6 +447,7 @@
       screens.leaderboard.hidden = true;
       if (screens.shop) screens.shop.hidden = true;
       if (screens.info) screens.info.hidden = true;
+      if (screens.settings) screens.settings.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
@@ -407,6 +458,8 @@
       else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
       else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'settings-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
+      else if (name === 'settings-close') { screens.start.hidden = false; screens.game.hidden = true; }
     }
 
     // ---------- character roster (live from the API) ----------
@@ -417,6 +470,7 @@
     var selectedChar = null;
     var charImgs = {};
     var charAccent = {};
+    var charBgPair = {};
     var charLaserOrigin = {};
     var RANDOM_CODE = '__RANDOM__';
 
@@ -424,7 +478,14 @@
       var preload = new Image();
       preload.src = BASE + ch.src;
       charImgs[ch.code] = preload;
-      charAccent[ch.code] = ch.accentColor || null;
+      // Color roles (per Casey's spec): laser beam, HUD glow, and the
+      // selected-tile highlight all use the bird's true accent color.
+      // Background tint uses primary+secondary instead — see charBgPair.
+      charAccent[ch.code] = ch.trueAccentColor || ch.primaryColor || ch.accentColor || null;
+      charBgPair[ch.code] = {
+        primary: ch.primaryColor || ch.accentColor || null,
+        secondary: ch.secondaryColor || null
+      };
       charLaserOrigin[ch.code] = (ch.laserOriginX != null && ch.laserOriginY != null)
         ? { x: ch.laserOriginX, y: ch.laserOriginY }
         : null;
@@ -435,20 +496,45 @@
       return null;
     }
 
+    var activeRebelImg = mount.querySelector('[data-rl-active-rebel-img]');
+    var activeRebelLabel = mount.querySelector('[data-rl-active-rebel-label]');
+    var activeRebelBox = mount.querySelector('[data-rl-active-rebel]');
+    function updateActiveRebel(code) {
+      if (!activeRebelImg || !activeRebelLabel) return;
+      if (!code || code === RANDOM_CODE) {
+        activeRebelImg.removeAttribute('src');
+        activeRebelLabel.textContent = code === RANDOM_CODE ? 'Random' : '';
+        if (activeRebelBox) activeRebelBox.style.removeProperty('--tile-accent');
+        return;
+      }
+      var ch = rosterByCode(code);
+      if (!ch) return;
+      activeRebelImg.src = BASE + ch.src;
+      activeRebelImg.alt = ch.label;
+      activeRebelLabel.textContent = ch.label;
+      if (activeRebelBox && charAccent[code]) activeRebelBox.style.setProperty('--tile-accent', charAccent[code]);
+    }
+
     function selectCard(card) {
       charGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
-      if (shopEnabled) updateMenuBg(card.getAttribute('data-rl-char'));
+      if (shopEnabled) {
+        var code = card.getAttribute('data-rl-char');
+        updateMenuBg(code);
+        updateActiveRebel(code);
+      }
     }
 
     function updateMenuBg(code) {
-      var accent = code ? charAccent[code] : null;
-      if (!accent) {
+      var pair = code ? charBgPair[code] : null;
+      if (!pair || (!pair.primary && !pair.secondary)) {
         mount.style.removeProperty('--rl-bg-top');
+        mount.style.removeProperty('--rl-bg-mid');
         mount.style.removeProperty('--rl-bg-bottom');
         return;
       }
-      var colors = computeBgColors(accent);
+      var colors = computeBgColors(pair.primary, pair.secondary);
       mount.style.setProperty('--rl-bg-top', colors.top);
+      mount.style.setProperty('--rl-bg-mid', colors.mid);
       mount.style.setProperty('--rl-bg-bottom', colors.bottom);
     }
 
@@ -551,6 +637,7 @@
 
       selectedChar = wantSelected;
       updateMenuBg(wantSelected);
+      updateActiveRebel(wantSelected);
 
       // Shop tile — always last
       var shopTile = document.createElement('button');
@@ -581,7 +668,7 @@
         card.type = 'button';
         card.className = 'rl-char-card';
         card.setAttribute('data-rl-char', ch.code);
-        if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
+        if (charAccent[ch.code]) card.style.setProperty('--tile-accent', charAccent[ch.code]);
         var img = document.createElement('img');
         img.alt = ch.label;
         img.src = BASE + ch.src;
@@ -667,6 +754,53 @@
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
+
+      // ---- Advanced Settings: gear icon + SFX/Music volume sliders ----
+      var gearBtn = mount.querySelector('[data-rl-gear-btn]');
+      var closeSettingsBtn = mount.querySelector('[data-rl-close-settings]');
+      var sfxSlider = mount.querySelector('[data-rl-sfx-volume]');
+      var musicSlider = mount.querySelector('[data-rl-music-volume]');
+      var VOLUME_KEY = 'rl_volume_v1';
+      function loadVolumePrefs() {
+        try { return JSON.parse(localStorage.getItem(VOLUME_KEY) || '{}'); } catch (e) { return {}; }
+      }
+      function saveVolumePrefs(prefs) {
+        try { localStorage.setItem(VOLUME_KEY, JSON.stringify(prefs)); } catch (e) {}
+      }
+      var volumePrefs = loadVolumePrefs();
+      var initialSfx = volumePrefs.sfx != null ? volumePrefs.sfx : 100;
+      var initialMusic = volumePrefs.music != null ? volumePrefs.music : 100;
+      if (sfxSlider) sfxSlider.value = initialSfx;
+      if (musicSlider) musicSlider.value = initialMusic;
+      soundPlayer.setVolume(initialSfx / 100);
+      musicGain = initialMusic / 100;
+      applyMusicVolume();
+      if (gearBtn) gearBtn.addEventListener('click', function () { showScreen('settings-from-start'); });
+      if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', function () { showScreen('settings-close'); });
+      if (sfxSlider) {
+        sfxSlider.addEventListener('input', function () {
+          soundPlayer.setVolume(sfxSlider.value / 100);
+          var prefs = loadVolumePrefs(); prefs.sfx = Number(sfxSlider.value); saveVolumePrefs(prefs);
+        });
+      }
+      if (musicSlider) {
+        musicSlider.addEventListener('input', function () {
+          musicGain = musicSlider.value / 100;
+          applyMusicVolume();
+          var prefs = loadVolumePrefs(); prefs.music = Number(musicSlider.value); saveVolumePrefs(prefs);
+        });
+      }
+
+      // ---- Mode select: Standard / Rainbow segmented control drives the existing checkbox ----
+      var modeButtons = mount.querySelectorAll('[data-rl-mode-btn]');
+      var rainbowToggleElRef = mount.querySelector('[data-rl-rainbow-toggle]');
+      function setMode(mode) {
+        if (rainbowToggleElRef) rainbowToggleElRef.checked = (mode === 'rainbow');
+        modeButtons.forEach(function (b) { b.classList.toggle('rl-selected', b.getAttribute('data-rl-mode-btn') === mode); });
+      }
+      modeButtons.forEach(function (b) {
+        b.addEventListener('click', function () { setMode(b.getAttribute('data-rl-mode-btn')); });
+      });
     }
 
     fetch(BASE + '/api/characters')
@@ -868,7 +1002,7 @@
         powerupUntil: 0,
         powerupWasActive: false,
         laserColors: computeLaserColors(accentColor),
-        bgColors: computeBgColors(accentColor),
+        bgColors: computeBgColors((charBgPair[selectedChar] || {}).primary, (charBgPair[selectedChar] || {}).secondary),
         wind: { bands: rollWindBands(windMaxPxPerSec), maxPxPerSec: windMaxPxPerSec, nextRollAt: 0, streaks: [] },
         cfg: {
           character: selectedChar,
@@ -1317,8 +1451,10 @@
         g.addColorStop(0, 'hsl(' + hue1 + ', 42%, 13%)');
         g.addColorStop(1, 'hsl(' + hue2 + ', 42%, 19%)');
       } else {
-        var colors = S.bgColors || { top: '#0a1420', bottom: '#16283c' };
-        g.addColorStop(0, colors.top); g.addColorStop(1, colors.bottom);
+        var colors = S.bgColors || { top: '#0a1420', mid: '#11202f', bottom: '#16283c' };
+        g.addColorStop(0, colors.top);
+        if (colors.mid) g.addColorStop(0.5, colors.mid);
+        g.addColorStop(1, colors.bottom);
       }
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
