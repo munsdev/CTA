@@ -263,6 +263,15 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-overlay" data-rl-screen="shop" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Rebel Shop</h2>'
+    + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
+    + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-toast" data-rl-toast></div>'
     + '</div>';
 
@@ -274,6 +283,26 @@
     mount.classList.add('rl-root');
     mount.appendChild(el(TEMPLATE));
     var playSound = makeSoundPlayer(BASE);
+
+    // ---------- bird flock (native app only — off by default, on via data-rl-shop="1") ----------
+    // No payment wired yet: tapping a bird in the shop just adds it, as a
+    // stand-in for the real Play Billing flow that'll replace this call later.
+    // Only the Capacitor wrapper sets data-rl-shop; the Webflow embed never
+    // does, so this whole feature is inert on the live web game.
+    var shopEnabled = mount.getAttribute('data-rl-shop') === '1';
+    var FLOCK_KEY = 'rl_flock_v1';
+    var OG_CODE = 'OG';
+    function getFlock() {
+      try { var v = JSON.parse(localStorage.getItem(FLOCK_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+      catch (e) { return []; }
+    }
+    function addToFlock(code) {
+      var flock = getFlock();
+      if (flock.indexOf(code) === -1) {
+        flock.push(code);
+        try { localStorage.setItem(FLOCK_KEY, JSON.stringify(flock)); } catch (e) {}
+      }
+    }
 
     var toastTimer = null;
     var toastElRef = mount.querySelector('[data-rl-toast]');
@@ -299,32 +328,157 @@
       screens.pause.hidden = true;
       screens.gameover.hidden = true;
       screens.leaderboard.hidden = true;
+      if (screens.shop) screens.shop.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
       else if (name === 'gameover') { screens.start.hidden = true; screens.game.hidden = false; screens.gameover.hidden = false; }
       else if (name === 'leaderboard-from-start') { screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'shop-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.shop) screens.shop.hidden = false; }
+      else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
     }
 
     // ---------- character roster (live from the API) ----------
     var charGrid = mount.querySelector('[data-rl-char-grid]');
+    var shopGrid = mount.querySelector('[data-rl-shop-grid]');
     var startError = mount.querySelector('[data-rl-start-error]');
     var roster = [];
     var selectedChar = null;
     var charImgs = {};
     var charAccent = {};
+    var RANDOM_CODE = '__RANDOM__';
+
+    function preloadChar(ch) {
+      var preload = new Image();
+      preload.src = BASE + ch.src;
+      charImgs[ch.code] = preload;
+      charAccent[ch.code] = ch.accentColor || null;
+    }
+
+    function rosterByCode(code) {
+      for (var i = 0; i < roster.length; i++) if (roster[i].code === code) return roster[i];
+      return null;
+    }
+
+    function selectCard(card) {
+      charGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
+    }
 
     function renderCharGrid() {
       if (!roster.length) {
         charGrid.innerHTML = '<div class="rl-loading">No characters available yet.</div>';
         return;
       }
+      roster.forEach(preloadChar);
+
+      if (!shopEnabled) {
+        // ---- unchanged web/original behavior ----
+        charGrid.innerHTML = '';
+        roster.forEach(function (ch, i) {
+          var card = document.createElement('button');
+          card.type = 'button';
+          card.className = 'rl-char-card' + (i === 0 ? ' rl-selected' : '');
+          card.setAttribute('data-rl-char', ch.code);
+          var img = document.createElement('img');
+          img.alt = ch.label;
+          img.src = BASE + ch.src;
+          var span = document.createElement('span');
+          span.textContent = ch.label;
+          card.appendChild(img); card.appendChild(span);
+          card.addEventListener('click', function () {
+            selectedChar = ch.code;
+            selectCard(card);
+          });
+          charGrid.appendChild(card);
+        });
+        selectedChar = roster[0].code;
+        return;
+      }
+
+      // ---- native flock/shop layout ----
       charGrid.innerHTML = '';
-      roster.forEach(function (ch, i) {
+      var og = rosterByCode(OG_CODE) || roster[0];
+      var flock = getFlock();
+      // Keep whatever was already selected (e.g. a bird just bought in the
+      // shop) across a re-render; only fall back to OG on the very first render.
+      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || selectedChar === og.code || flock.indexOf(selectedChar) !== -1))
+        ? selectedChar
+        : og.code;
+
+      function addTile(opts) {
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'rl-char-card' + (i === 0 ? ' rl-selected' : '');
+        card.className = 'rl-char-card' + (opts.owned ? ' rl-owned' : '') + (opts.code === wantSelected ? ' rl-selected' : '');
+        if (opts.code) card.setAttribute('data-rl-char', opts.code);
+        var img = document.createElement('img');
+        img.alt = opts.label;
+        img.src = opts.imgSrc;
+        var span = document.createElement('span');
+        span.textContent = opts.label;
+        card.appendChild(img); card.appendChild(span);
+        card.addEventListener('click', opts.onClick);
+        charGrid.appendChild(card);
+        return card;
+      }
+
+      // OG — free default, always first
+      var ogCard = addTile({
+        code: og.code, label: og.label, imgSrc: BASE + og.src,
+        onClick: function () { selectedChar = og.code; selectCard(ogCard); }
+      });
+
+      // Random — resolves to a surprise pick from OG + your flock, but not until the round starts
+      var randomCard = addTile({
+        code: RANDOM_CODE, label: 'Random', imgSrc: '', owned: false,
+        onClick: function () { selectedChar = RANDOM_CODE; selectCard(randomCard); }
+      });
+      randomCard.classList.add('rl-char-random');
+      randomCard.querySelector('img').remove();
+      var mystery = document.createElement('div');
+      mystery.className = 'rl-char-mystery';
+      mystery.textContent = '?';
+      randomCard.insertBefore(mystery, randomCard.firstChild);
+
+      // Owned flock birds, framed to show they're yours
+      flock.forEach(function (code) {
+        if (code === og.code) return;
+        var ch = rosterByCode(code);
+        if (!ch) return;
+        var card;
+        card = addTile({
+          code: ch.code, label: ch.label, imgSrc: BASE + ch.src, owned: true,
+          onClick: function () { selectedChar = ch.code; selectCard(card); }
+        });
+      });
+
+      selectedChar = wantSelected;
+
+      // Shop tile — always last
+      var shopTile = document.createElement('button');
+      shopTile.type = 'button';
+      shopTile.className = 'rl-char-card rl-char-shop-tile';
+      shopTile.innerHTML = '<span class="rl-char-shop-plus">+</span><span>Rebel Shop</span>';
+      shopTile.addEventListener('click', function () {
+        renderShopGrid();
+        showScreen('shop-from-start');
+      });
+      charGrid.appendChild(shopTile);
+    }
+
+    function renderShopGrid() {
+      if (!shopGrid) return;
+      var flock = getFlock();
+      var available = roster.filter(function (ch) { return ch.code !== OG_CODE && flock.indexOf(ch.code) === -1; });
+      if (!available.length) {
+        shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
+        return;
+      }
+      shopGrid.innerHTML = '';
+      available.forEach(function (ch) {
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'rl-char-card';
         card.setAttribute('data-rl-char', ch.code);
         var img = document.createElement('img');
         img.alt = ch.label;
@@ -333,17 +487,19 @@
         span.textContent = ch.label;
         card.appendChild(img); card.appendChild(span);
         card.addEventListener('click', function () {
+          addToFlock(ch.code);
+          toast(ch.label + ' added to your flock!');
           selectedChar = ch.code;
-          charGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
+          renderCharGrid();
+          showScreen('shop-close');
         });
-        charGrid.appendChild(card);
-
-        var preload = new Image();
-        preload.src = BASE + ch.src;
-        charImgs[ch.code] = preload;
-        charAccent[ch.code] = ch.accentColor || null;
+        shopGrid.appendChild(card);
       });
-      if (roster.length) selectedChar = roster[0].code;
+    }
+
+    if (shopEnabled) {
+      var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
+      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { showScreen('shop-close'); });
     }
 
     fetch(BASE + '/api/characters')
@@ -1495,9 +1651,15 @@
     mount.querySelector('[data-rl-start]').addEventListener('click', function () {
       startError.textContent = '';
       if (!selectedChar) { startError.textContent = 'Pick a rebel first.'; return; }
+      var wasRandom = selectedChar === RANDOM_CODE;
+      if (wasRandom) {
+        var pool = [OG_CODE].concat(getFlock().filter(function (c) { return c !== OG_CODE; }));
+        selectedChar = pool[Math.floor(Math.random() * pool.length)];
+      }
       showScreen('game');
       layoutStage();
       S = freshState();
+      if (wasRandom) selectedChar = RANDOM_CODE;
       setLives(START_LIVES);
       livesWrap.hidden = S.cfg.kidMode;
       finishBtn.hidden = !S.cfg.kidMode;
