@@ -16,7 +16,7 @@
   var MIN_CUBE_SIZE = 24;
   // Rainbow Blizzard Mode only: max cumulative horizontal drift a cube can
   // pick up over a full top-to-bottom fall, as a fraction of stage width.
-  var WIND_MAX_RATIO = { easy: 0.05, medium: 0.10, hard: 0.30 };
+  var WIND_MAX_RATIO = { easy: 0.10, medium: 0.20, hard: 0.60 }; // doubled for Rainbow Blizzard Mode
   var DEFAULT_TIER = 'medium';
   var MAX_LIVES = 5;
   var START_LIVES = 3;
@@ -74,7 +74,7 @@
       window.addEventListener(evt, unlock, { once: true, passive: true });
     });
 
-    return function play(key) {
+    function play(key) {
       var buf = buffers[key];
       if (!buf) return; // not decoded yet (e.g. still loading on a slow connection) — skip rather than lag
       try {
@@ -86,7 +86,8 @@
         src.connect(gain).connect(ctx.destination);
         src.start(0);
       } catch (e) {}
-    };
+    }
+    return { play: play, unlock: unlock };
   }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -313,7 +314,8 @@
     var BASE = mount.getAttribute('data-rl-base') || '';
     mount.classList.add('rl-root');
     mount.appendChild(el(TEMPLATE));
-    var playSound = makeSoundPlayer(BASE);
+    var soundPlayer = makeSoundPlayer(BASE);
+    var playSound = soundPlayer.play;
 
     // ---------- bird flock (native app only — off by default, on via data-rl-shop="1") ----------
     // No payment wired yet: tapping a bird in the shop just adds it, as a
@@ -1783,6 +1785,7 @@
     // ---------- start ----------
     var loopStarted = false;
     mount.querySelector('[data-rl-start]').addEventListener('click', function () {
+      soundPlayer.unlock();
       startError.textContent = '';
       if (!selectedChar) { startError.textContent = 'Pick a rebel first.'; return; }
       var wasRandom = selectedChar === RANDOM_CODE;
