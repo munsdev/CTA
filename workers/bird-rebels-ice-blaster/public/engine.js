@@ -59,24 +59,39 @@
     // old approach re-created and re-decoded an <audio> element on every
     // single trigger, which mobile browsers are slow to spin up each time.
     Object.keys(SOUND_FILES).forEach(function (key) {
-      fetch(base + '/' + SOUND_FILES[key])
-        .then(function (r) { return r.arrayBuffer(); })
+      var url = base + '/' + SOUND_FILES[key];
+      fetch(url)
+        .then(function (r) {
+          if (!r.ok) throw new Error('fetch ' + r.status + ' for ' + url);
+          return r.arrayBuffer();
+        })
         .then(function (data) { return ctx.decodeAudioData(data); })
         .then(function (buf) { buffers[key] = buf; })
-        .catch(function () {}); // if one sound fails to load, the rest still work
+        .catch(function (err) {
+          // Was silently swallowed before — now visible in chrome://inspect
+          // so a real load/decode failure isn't indistinguishable from "still loading".
+          console.error('[rl sound] failed to load "' + key + '":', err && err.message ? err.message : err);
+        });
     });
 
     // Mobile browsers keep the AudioContext suspended until a genuine user
     // gesture. Unlock on the first touch/click/key anywhere on the page so
     // it's ready well before the first shot is fired.
-    function unlock() { if (ctx.state === 'suspended') ctx.resume(); }
+    function unlock() {
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(
+          function () { console.log('[rl sound] AudioContext resumed, state:', ctx.state); },
+          function (err) { console.error('[rl sound] AudioContext resume failed:', err); }
+        );
+      }
+    }
     ['touchstart', 'mousedown', 'keydown'].forEach(function (evt) {
       window.addEventListener(evt, unlock, { once: true, passive: true });
     });
 
     function play(key) {
       var buf = buffers[key];
-      if (!buf) return; // not decoded yet (e.g. still loading on a slow connection) — skip rather than lag
+      if (!buf) { console.warn('[rl sound] "' + key + '" not ready yet (ctx.state=' + ctx.state + ')'); return; }
       try {
         unlock();
         var src = ctx.createBufferSource();
@@ -85,7 +100,7 @@
         gain.gain.value = SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6;
         src.connect(gain).connect(ctx.destination);
         src.start(0);
-      } catch (e) {}
+      } catch (e) { console.error('[rl sound] play() threw for "' + key + '":', e); }
     }
     return { play: play, unlock: unlock };
   }
