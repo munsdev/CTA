@@ -157,6 +157,7 @@
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-screen-inner">'
     + '      <button class="rl-info-btn" data-rl-info-btn type="button" aria-label="How to play">?</button>'
+    + '      <img class="rl-logo" data-rl-logo alt="Bird Rebels: Ice Blaster">'
     + '      <h1 class="rl-h1">Bird Rebels: Ice Blaster</h1>'
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
@@ -324,6 +325,8 @@
       mount.classList.add('rl-native');
       var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
       if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Mode';
+      var logoEl = mount.querySelector('[data-rl-logo]');
+      if (logoEl) logoEl.src = BASE + '/logo.png';
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
@@ -474,6 +477,18 @@
         return card;
       }
 
+      // Shared emblem box (same footprint as a bird portrait) so Random/Shop
+      // tiles hold their size even when they land alone on the last row.
+      function buildEmblem(symbol) {
+        var box = document.createElement('div');
+        box.className = 'rl-char-emblem';
+        var circle = document.createElement('div');
+        circle.className = 'rl-char-emblem-circle';
+        circle.textContent = symbol;
+        box.appendChild(circle);
+        return box;
+      }
+
       // OG — free default, always first
       var ogCard = addTile({
         code: og.code, label: og.label, imgSrc: BASE + og.src,
@@ -499,10 +514,7 @@
       });
       randomCard.classList.add('rl-char-random');
       randomCard.querySelector('img').remove();
-      var mystery = document.createElement('div');
-      mystery.className = 'rl-char-mystery';
-      mystery.textContent = '?';
-      randomCard.insertBefore(mystery, randomCard.firstChild);
+      randomCard.insertBefore(buildEmblem('?'), randomCard.firstChild);
 
       selectedChar = wantSelected;
       updateMenuBg(wantSelected);
@@ -511,7 +523,10 @@
       var shopTile = document.createElement('button');
       shopTile.type = 'button';
       shopTile.className = 'rl-char-card rl-char-shop-tile';
-      shopTile.innerHTML = '<span class="rl-char-shop-plus">+</span><span>Rebel Shop</span>';
+      shopTile.appendChild(buildEmblem('+'));
+      var shopLabel = document.createElement('span');
+      shopLabel.textContent = 'Rebel Shop';
+      shopTile.appendChild(shopLabel);
       shopTile.addEventListener('click', function () {
         renderShopGrid();
         showScreen('shop-from-start');
