@@ -213,6 +213,31 @@ async function grantEntitlement(request, env) {
 // Coupon redemption. A code can grant more than one item (bundle codes) —
 // coupon_items holds one row per (coupon, item) pair. All granted items
 // share the same coupon_code in entitlements, so it's traceable later.
+async function loadValidCoupon(code, env) {
+  const coupon = await env.CHARACTERS_DB.prepare(
+    'SELECT code, grant_type, item_type, max_redemptions, redemptions_used, expires_at, active FROM coupons WHERE code = ?'
+  ).bind(code).first();
+  if (!coupon) return { error: json({ error: 'That code isn\'t valid.' }, 404) };
+  if (!coupon.active) return { error: json({ error: 'That code is no longer active.' }, 410) };
+  if (coupon.expires_at && Date.now() > coupon.expires_at) return { error: json({ error: 'That code has expired.' }, 410) };
+  if (coupon.redemptions_used >= coupon.max_redemptions) return { error: json({ error: 'That code has already been fully redeemed.' }, 410) };
+  return { coupon };
+}
+
+// Rebels not already owned by this device — the eligible pool for an
+// 'any_one' rebel coupon when it doesn't specify its own restricted pool.
+async function unownedRebels(device, env) {
+  const { results: owned } = await env.CHARACTERS_DB.prepare(
+    "SELECT item_code FROM entitlements WHERE device_id = ? AND item_type = 'rebel'"
+  ).bind(device).all();
+  const ownedCodes = new Set(owned.map((r) => r.item_code));
+  ownedCodes.add('OG'); // always free, never offered as a "choice"
+  const { results: chars } = await env.CHARACTERS_DB.prepare(
+    'SELECT code, label FROM characters WHERE active = 1 AND visible = 1'
+  ).all();
+  return chars.filter((c) => !ownedCodes.has(c.code)).map((c) => ({ itemCode: c.code, label: c.label }));
+}
+
 async function redeemCoupon(request, env) {
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
@@ -220,14 +245,32 @@ async function redeemCoupon(request, env) {
   const code = String((body && body.code) || '').trim().toUpperCase();
   if (!device || !code) return json({ error: 'missing device or code' }, 400);
 
-  const coupon = await env.CHARACTERS_DB.prepare(
-    'SELECT code, max_redemptions, redemptions_used, expires_at, active FROM coupons WHERE code = ?'
-  ).bind(code).first();
-  if (!coupon) return json({ error: 'That code isn\'t valid.' }, 404);
-  if (!coupon.active) return json({ error: 'That code is no longer active.' }, 410);
-  if (coupon.expires_at && Date.now() > coupon.expires_at) return json({ error: 'That code has expired.' }, 410);
-  if (coupon.redemptions_used >= coupon.max_redemptions) return json({ error: 'That code has already been fully redeemed.' }, 410);
+  const { coupon, error } = await loadValidCoupon(code, env);
+  if (error) return error;
 
+  if (coupon.grant_type === 'any_one') {
+    // Don't grant or consume a redemption yet — the client still needs to
+    // show a picker and call /redeem-choice with what was picked.
+    const { results: pool } = await env.CHARACTERS_DB.prepare(
+      'SELECT item_code FROM coupon_items WHERE coupon_code = ?'
+    ).bind(code).all();
+    let options;
+    if (pool.length && coupon.item_type === 'rebel') {
+      const codes = pool.map((r) => r.item_code);
+      const placeholders = codes.map(() => '?').join(',');
+      const { results: chars } = await env.CHARACTERS_DB.prepare(
+        `SELECT code, label FROM characters WHERE code IN (${placeholders})`
+      ).bind(...codes).all();
+      options = chars.map((c) => ({ itemCode: c.code, label: c.label }));
+    } else if (coupon.item_type === 'rebel') {
+      options = await unownedRebels(device, env);
+    } else {
+      options = []; // scenes/weapons: no content exists yet to choose from
+    }
+    return json({ ok: true, pick: true, itemType: coupon.item_type, options });
+  }
+
+  // 'exact' — one specific item, or a fixed bundle if there are several rows.
   const { results: items } = await env.CHARACTERS_DB.prepare(
     'SELECT item_type, item_code FROM coupon_items WHERE coupon_code = ?'
   ).bind(code).all();
@@ -244,6 +287,41 @@ async function redeemCoupon(request, env) {
   ).bind(code).run();
 
   return json({ ok: true, granted: items.map((i) => ({ itemType: i.item_type, itemCode: i.item_code })) });
+}
+
+// Second step for 'any_one' coupons — grants whichever single item the
+// player picked from the options /redeem returned.
+async function redeemCouponChoice(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
+  const device = String((body && body.device) || '');
+  const code = String((body && body.code) || '').trim().toUpperCase();
+  const itemCode = String((body && body.itemCode) || '');
+  if (!device || !code || !itemCode) return json({ error: 'missing device, code, or itemCode' }, 400);
+
+  const { coupon, error } = await loadValidCoupon(code, env);
+  if (error) return error;
+  if (coupon.grant_type !== 'any_one') return json({ error: 'That code doesn\'t work that way.' }, 400);
+
+  // Re-validate the choice is actually eligible — don't just trust the client.
+  const { results: pool } = await env.CHARACTERS_DB.prepare(
+    'SELECT item_code FROM coupon_items WHERE coupon_code = ?'
+  ).bind(code).all();
+  if (pool.length) {
+    if (!pool.some((r) => r.item_code === itemCode)) return json({ error: 'That item isn\'t part of this code.' }, 400);
+  } else if (coupon.item_type === 'rebel') {
+    const options = await unownedRebels(device, env);
+    if (!options.some((o) => o.itemCode === itemCode)) return json({ error: 'That item isn\'t eligible.' }, 400);
+  }
+
+  await env.CHARACTERS_DB.prepare(
+    'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, coupon_code, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(device, coupon.item_type, itemCode, 'coupon', code, Date.now()).run();
+  await env.CHARACTERS_DB.prepare(
+    'UPDATE coupons SET redemptions_used = redemptions_used + 1 WHERE code = ?'
+  ).bind(code).run();
+
+  return json({ ok: true, granted: [{ itemType: coupon.item_type, itemCode: itemCode }] });
 }
 
 
@@ -276,6 +354,9 @@ export default {
     }
     if (path === '/api/entitlements/redeem' && request.method === 'POST') {
       return redeemCoupon(request, env);
+    }
+    if (path === '/api/entitlements/redeem-choice' && request.method === 'POST') {
+      return redeemCouponChoice(request, env);
     }
 
     // Everything else (loader.js, engine.js, styles.css, sounds/*, and
