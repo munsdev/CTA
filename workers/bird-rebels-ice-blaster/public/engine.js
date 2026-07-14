@@ -205,8 +205,11 @@
     + '      </div>'
     + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <div class="rl-mode-select" data-rl-mode-select>'
-    + '        <button type="button" class="rl-mode-btn rl-selected" data-rl-mode-btn="standard">Standard</button>'
-    + '        <button type="button" class="rl-mode-btn" data-rl-mode-btn="rainbow">Rainbow Mode</button>'
+    + '        <label for="rl-mode-picker" class="rl-field-label" style="margin-bottom:6px;">Scene</label>'
+    + '        <select id="rl-mode-picker" data-rl-mode-picker>'
+    + '          <option value="standard">Standard</option>'
+    + '          <option value="rainbow">Rainbow Blizzard</option>'
+    + '        </select>'
     + '      </div>'
     + '      <div class="rl-toggle-row">'
     + '        <div class="rl-check-row">'
@@ -300,6 +303,9 @@
     + '          <option value="initials">Name</option>'
     + '          <option value="ts">Date</option>'
     + '        </select>'
+    + '        <label class="rl-lb-mods-check" for="rl-lb-with-mods">'
+    + '          <input type="checkbox" id="rl-lb-with-mods" data-rl-lb-with-mods> With Mods'
+    + '        </label>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-leaderboard>Back</button>'
@@ -312,7 +318,7 @@
     + '      <p class="rl-info-block">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
-    + '      <p class="rl-info-block"><b>Rainbow Mode</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
+    + '      <p class="rl-info-block"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-info>Back</button>'
     + '    </div>'
     + '  </div>'
@@ -387,7 +393,7 @@
     if (shopEnabled) {
       mount.classList.add('rl-native');
       var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
-      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Mode';
+      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Blizzard';
 
       // Boot splash: big logo, fades out into the regular title-only main
       // screen after ~1.2s. Built dynamically rather than baked into
@@ -791,16 +797,17 @@
         });
       }
 
-      // ---- Mode select: Standard / Rainbow segmented control drives the existing checkbox ----
-      var modeButtons = mount.querySelectorAll('[data-rl-mode-btn]');
+      // ---- Scene select: dropdown drives the existing rainbow checkbox, and
+      // visibly tints the menu so picking a scene actually feels different.
+      var modePicker = mount.querySelector('[data-rl-mode-picker]');
       var rainbowToggleElRef = mount.querySelector('[data-rl-rainbow-toggle]');
       function setMode(mode) {
         if (rainbowToggleElRef) rainbowToggleElRef.checked = (mode === 'rainbow');
-        modeButtons.forEach(function (b) { b.classList.toggle('rl-selected', b.getAttribute('data-rl-mode-btn') === mode); });
+        mount.classList.toggle('rl-scene-rainbow', mode === 'rainbow');
       }
-      modeButtons.forEach(function (b) {
-        b.addEventListener('click', function () { setMode(b.getAttribute('data-rl-mode-btn')); });
-      });
+      if (modePicker) {
+        modePicker.addEventListener('change', function () { setMode(modePicker.value); });
+      }
     }
 
     fetch(BASE + '/api/characters')
@@ -833,6 +840,7 @@
     var lbTier = DEFAULT_TIER;
     var lbSet = 'normal';
     var lbSort = 'score';
+    var lbWithMods = false;
     var lastBoardArr = [];
     function boardKey(tier, set) { return set === 'blizzard' ? tier + '-blizzard' : tier; }
     function sortBoard(arr, key) {
@@ -843,6 +851,15 @@
       else copy.sort(function (a, b) { return b.score - a.score; });
       return copy;
     }
+    // Filters out runs made with anything that affects gameplay (future
+    // weapons/scenes will set row.modded server-side). No current content
+    // actually modifies gameplay yet, so this is a no-op today — every row
+    // is unmodded until that system exists — but the toggle is real and
+    // ready for when it does.
+    function applyModsFilter(arr, withMods) {
+      if (withMods) return arr;
+      return arr.filter(function (row) { return !row.modded; });
+    }
     function loadLeaderboard(tier, set, container, noteEl) {
       container.innerHTML = '<div class="rl-loading">Loading…</div>';
       if (noteEl) noteEl.textContent = SET_LABELS[set] || SET_LABELS.normal;
@@ -850,7 +867,7 @@
         .then(function (r) { return r.json(); })
         .then(function (arr) {
           lastBoardArr = Array.isArray(arr) ? arr : [];
-          renderBoard(container, sortBoard(lastBoardArr, lbSort));
+          renderBoard(container, sortBoard(applyModsFilter(lastBoardArr, lbWithMods), lbSort));
         })
         .catch(function () { container.innerHTML = '<div class="rl-loading">Couldn\'t load the leaderboard.</div>'; });
     }
@@ -863,9 +880,11 @@
       arr.forEach(function (row, i) {
         var mine = highlightTs && row.ts === highlightTs;
         var accPct = Math.round((row.accuracy || 0) * 100);
+        var tagAccent = charAccent[row.character] || null;
+        var tagStyle = tagAccent ? ' style="--tile-accent:' + tagAccent + '"' : '';
         html += '<div class="rl-board-row' + (mine ? ' rl-me' : '') + '">'
           + '<span class="rl-rank">' + (i + 1) + '</span>'
-          + '<span class="rl-char-tag">' + (row.character || '—') + '</span>'
+          + '<span class="rl-char-tag"' + tagStyle + '>' + (row.character || '—') + '</span>'
           + '<span class="rl-init">' + row.initials + '</span>'
           + '<span class="rl-acc-bar" title="' + accPct + '% accuracy"><span class="rl-acc-fill" style="width:' + accPct + '%"></span></span>'
           + '<span class="rl-pts">' + row.score + '</span>'
@@ -891,8 +910,15 @@
     });
     mount.querySelector('[data-rl-lb-sort]').addEventListener('change', function () {
       lbSort = this.value;
-      renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(lastBoardArr, lbSort));
+      renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(applyModsFilter(lastBoardArr, lbWithMods), lbSort));
     });
+    var lbWithModsEl = mount.querySelector('[data-rl-lb-with-mods]');
+    if (lbWithModsEl) {
+      lbWithModsEl.addEventListener('change', function () {
+        lbWithMods = lbWithModsEl.checked;
+        renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(applyModsFilter(lastBoardArr, lbWithMods), lbSort));
+      });
+    }
 
     // ---------- game elements ----------
     var stageOuter = mount.querySelector('[data-rl-stage-outer]');
@@ -1075,7 +1101,8 @@
 
     // ---------- spawning ----------
     function spawnCube(size) {
-      var margin = size / 2 + 4;
+      var edgePad = W * 0.05; // keeps cubes off the very edge, where they're hard to reach/hit
+      var margin = size / 2 + 4 + edgePad;
       var x = rand(margin, W - margin);
       var speed = currentDifficulty(S.elapsed).speed;
       S.cubes.push({ x: x, y: -size, size: size, speed: speed * rand(0.85, 1.18), rot: rand(-0.12, 0.12) });
@@ -1817,7 +1844,7 @@
         for (var i = S.cubes.length - 1; i >= 0; i--) {
           var c = S.cubes[i];
           c.y += c.speed * dt;
-          if (S.cfg.blizzard) c.x = clamp(c.x + windAt(c.y) * dt, c.size / 2, W - c.size / 2);
+          if (S.cfg.blizzard) { var edgePad = W * 0.05; c.x = clamp(c.x + windAt(c.y) * dt, c.size / 2 + edgePad, W - c.size / 2 - edgePad); }
           if (c.y - c.size / 2 > floorY) {
             S.cubes.splice(i, 1);
             spawnShatter(clamp(c.x, c.size, W - c.size), floorY, c.size);
