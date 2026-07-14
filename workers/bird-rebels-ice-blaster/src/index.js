@@ -73,13 +73,22 @@ function isBadInitials(normalized) {
 // ---------------------------------------------------------------------------
 async function getCharacters(env) {
   const { results } = await env.CHARACTERS_DB.prepare(
-    'SELECT code, label, filename, sort_order, accent_color FROM characters WHERE active = 1 ORDER BY sort_order ASC'
+    'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y FROM characters WHERE active = 1 ORDER BY sort_order ASC'
   ).all();
   const chars = results.map((r) => ({
     code: r.code,
     label: r.label,
     src: `/characters/${r.filename}`,
-    accentColor: r.accent_color || null,
+    // accentColor stays as the field name the game currently reads for all
+    // visual roles (laser/bg/glow/tile) — it's sourced from primary_color
+    // for now. secondaryColor/trueAccentColor are exposed too so the game
+    // can start using them for specific roles once that's designed.
+    accentColor: r.primary_color || null,
+    primaryColor: r.primary_color || null,
+    secondaryColor: r.secondary_color || null,
+    trueAccentColor: r.accent_color || null,
+    laserOriginX: r.laser_origin_x != null ? r.laser_origin_x : null,
+    laserOriginY: r.laser_origin_y != null ? r.laser_origin_y : null,
   }));
   return json(chars);
 }
