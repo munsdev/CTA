@@ -201,6 +201,7 @@
     + '      </div>'
     + '      <button class="rl-btn" data-rl-start>Start Game</button>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard>Leaderboard</button>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-claim-code>Claim a Code</button>'
     + '      <p class="rl-error" data-rl-start-error></p>'
     + '    </div>'
     + '  </div>'
@@ -319,6 +320,23 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-unlock-modal" data-rl-claim-modal hidden>'
+    + '    <div class="rl-unlock-panel">'
+    + '      <h3>Claim a Code</h3>'
+    + '      <div data-rl-claim-entry>'
+    + '        <input type="text" class="rl-code-input" data-rl-claim-input placeholder="ENTER CODE" maxlength="24">'
+    + '        <button class="rl-btn" data-rl-claim-submit>Submit</button>'
+    + '        <button class="rl-btn rl-btn-ghost" data-rl-claim-cancel>Cancel</button>'
+    + '        <p class="rl-error" data-rl-claim-error></p>'
+    + '      </div>'
+    + '      <div data-rl-claim-picker hidden>'
+    + '        <p>Pick one:</p>'
+    + '        <div class="rl-char-grid" data-rl-claim-picker-grid></div>'
+    + '        <button class="rl-btn rl-btn-ghost" data-rl-claim-picker-cancel>Cancel</button>'
+    + '      </div>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-toast" data-rl-toast></div>'
     + '</div>';
 
@@ -355,12 +373,41 @@
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
+    var DEVICE_KEY = 'rl_device_id';
+    function getDeviceId() {
+      try {
+        var id = localStorage.getItem(DEVICE_KEY);
+        if (!id) { id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(DEVICE_KEY, id); }
+        return id;
+      } catch (e) { return 'dev_nostorage'; }
+    }
+    var DEVICE_ID = shopEnabled ? getDeviceId() : null;
+    var couponRebels = []; // rebel codes granted via coupon redemption (D1), separate from the local shop flock
+    function loadCouponEntitlements() {
+      if (!DEVICE_ID) return Promise.resolve();
+      return fetch(BASE + '/api/entitlements?device=' + encodeURIComponent(DEVICE_ID))
+        .then(function (r) { return r.json(); })
+        .then(function (arr) {
+          couponRebels = (Array.isArray(arr) ? arr : [])
+            .filter(function (e) { return e.itemType === 'rebel'; })
+            .map(function (e) { return e.itemCode; });
+        })
+        .catch(function () { couponRebels = []; });
+    }
     function getFlock() {
-      try { var v = JSON.parse(localStorage.getItem(FLOCK_KEY) || '[]'); return Array.isArray(v) ? v : []; }
-      catch (e) { return []; }
+      var local;
+      try { var v = JSON.parse(localStorage.getItem(FLOCK_KEY) || '[]'); local = Array.isArray(v) ? v : []; }
+      catch (e) { local = []; }
+      // Union with coupon-granted rebels so a claimed code shows up in the
+      // same strip as shop-bought ones, without disturbing the shop's own storage.
+      var merged = local.slice();
+      couponRebels.forEach(function (code) { if (merged.indexOf(code) === -1) merged.push(code); });
+      return merged;
     }
     function addToFlock(code) {
-      var flock = getFlock();
+      var flock;
+      try { var v = JSON.parse(localStorage.getItem(FLOCK_KEY) || '[]'); flock = Array.isArray(v) ? v : []; }
+      catch (e) { flock = []; }
       if (flock.indexOf(code) === -1) {
         flock.push(code);
         try { localStorage.setItem(FLOCK_KEY, JSON.stringify(flock)); } catch (e) {}
@@ -659,12 +706,115 @@
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
+
+      // ---- Claim a Code ----
+      var claimBtn = mount.querySelector('[data-rl-claim-code]');
+      var claimModal = mount.querySelector('[data-rl-claim-modal]');
+      var claimEntry = mount.querySelector('[data-rl-claim-entry]');
+      var claimPicker = mount.querySelector('[data-rl-claim-picker]');
+      var claimPickerGrid = mount.querySelector('[data-rl-claim-picker-grid]');
+      var claimInput = mount.querySelector('[data-rl-claim-input]');
+      var claimError = mount.querySelector('[data-rl-claim-error]');
+      var claimSubmitBtn = mount.querySelector('[data-rl-claim-submit]');
+      var claimCancelBtn = mount.querySelector('[data-rl-claim-cancel]');
+      var claimPickerCancelBtn = mount.querySelector('[data-rl-claim-picker-cancel]');
+      var pendingClaimCode = null;
+
+      function openClaimModal() {
+        if (!claimModal) return;
+        if (claimInput) claimInput.value = '';
+        if (claimError) claimError.textContent = '';
+        if (claimEntry) claimEntry.hidden = false;
+        if (claimPicker) claimPicker.hidden = true;
+        claimModal.hidden = false;
+      }
+      function closeClaimModal() {
+        pendingClaimCode = null;
+        if (claimModal) claimModal.hidden = true;
+      }
+      function grantedToast(granted) {
+        var count = (granted || []).length;
+        toast(count > 1 ? count + ' items unlocked!' : (granted[0] ? granted[0].itemCode + ' unlocked!' : 'Unlocked!'));
+      }
+      function applyGranted(granted) {
+        (granted || []).forEach(function (g) {
+          if (g.itemType === 'rebel' && couponRebels.indexOf(g.itemCode) === -1) couponRebels.push(g.itemCode);
+        });
+        renderCharGrid();
+      }
+
+      if (claimBtn) claimBtn.addEventListener('click', openClaimModal);
+      if (claimCancelBtn) claimCancelBtn.addEventListener('click', closeClaimModal);
+      if (claimPickerCancelBtn) claimPickerCancelBtn.addEventListener('click', closeClaimModal);
+      if (claimSubmitBtn) {
+        claimSubmitBtn.addEventListener('click', function () {
+          var code = claimInput ? claimInput.value.trim() : '';
+          if (!code) { if (claimError) claimError.textContent = 'Enter a code first.'; return; }
+          fetch(BASE + '/api/entitlements/redeem', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ device: DEVICE_ID, code: code })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (!data || !data.ok) {
+                if (claimError) claimError.textContent = (data && data.error) || 'That code didn\'t work.';
+                return;
+              }
+              if (data.pick) {
+                pendingClaimCode = code;
+                if (!data.options || !data.options.length) {
+                  if (claimError) claimError.textContent = 'Nothing left to choose from for this code.';
+                  return;
+                }
+                claimPickerGrid.innerHTML = '';
+                data.options.forEach(function (opt) {
+                  var ch = rosterByCode(opt.itemCode);
+                  var card = document.createElement('button');
+                  card.type = 'button';
+                  card.className = 'rl-char-card';
+                  var img = document.createElement('img');
+                  img.alt = opt.label;
+                  if (ch) img.src = BASE + ch.src;
+                  var span = document.createElement('span');
+                  span.textContent = opt.label;
+                  card.appendChild(img); card.appendChild(span);
+                  card.addEventListener('click', function () {
+                    fetch(BASE + '/api/entitlements/redeem-choice', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ device: DEVICE_ID, code: pendingClaimCode, itemCode: opt.itemCode })
+                    })
+                      .then(function (r) { return r.json(); })
+                      .then(function (res) {
+                        if (res && res.ok) {
+                          grantedToast(res.granted);
+                          applyGranted(res.granted);
+                          closeClaimModal();
+                        } else {
+                          if (claimError) claimError.textContent = (res && res.error) || 'That didn\'t work — try again.';
+                        }
+                      });
+                  });
+                  claimPickerGrid.appendChild(card);
+                });
+                claimEntry.hidden = true;
+                claimPicker.hidden = false;
+              } else {
+                grantedToast(data.granted);
+                applyGranted(data.granted);
+                closeClaimModal();
+              }
+            })
+            .catch(function () { if (claimError) claimError.textContent = 'Couldn\'t reach the server — try again.'; });
+        });
+      }
     }
 
-    fetch(BASE + '/api/characters')
-      .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
-      .then(function (data) {
-        roster = Array.isArray(data) ? data : [];
+    Promise.all([
+      loadCouponEntitlements(),
+      fetch(BASE + '/api/characters').then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
+    ])
+      .then(function (results) {
+        roster = Array.isArray(results[1]) ? results[1] : [];
         renderCharGrid();
       })
       .catch(function () {
