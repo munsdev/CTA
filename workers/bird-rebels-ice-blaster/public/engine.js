@@ -327,9 +327,17 @@
     mount.dataset.booted = '1';
 
     var BASE = mount.getAttribute('data-rl-base') || '';
+    // Sounds normally load over the network from the same Worker as
+    // everything else (BASE). The native wrapper bundles the mp3s inside
+    // the app itself and points this at that local folder instead, via
+    // data-rl-sound-base — so sound effects work offline from first launch
+    // and don't depend on any network fetch. Web never sets this attribute,
+    // so it keeps loading sounds from BASE exactly as before.
+    var SOUND_BASE = mount.getAttribute('data-rl-sound-base');
+    if (SOUND_BASE == null) SOUND_BASE = BASE;
     mount.classList.add('rl-root');
     mount.appendChild(el(TEMPLATE));
-    var soundPlayer = makeSoundPlayer(BASE);
+    var soundPlayer = makeSoundPlayer(SOUND_BASE);
     var playSound = soundPlayer.play;
 
     // ---------- bird flock (native app only — off by default, on via data-rl-shop="1") ----------
@@ -369,7 +377,7 @@
       toastTimer = setTimeout(function () { toastElRef.classList.remove('rl-show'); }, ms || 1600);
     }
 
-    var blizzardTheme = new Audio(BASE + '/sounds/blizzard-theme.mp3');
+    var blizzardTheme = new Audio(SOUND_BASE + '/sounds/blizzard-theme.mp3');
     blizzardTheme.loop = true;
     blizzardTheme.volume = 0.55;
     blizzardTheme.preload = 'auto';
