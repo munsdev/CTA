@@ -186,8 +186,15 @@
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked{ background:var(--rl-ice); }
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked::before{ transform:translateX(18px); }
 
-/* Rebel Shop — near full-screen instead of a narrow modal, native only */
-.rl-native [data-rl-screen="shop"] .rl-screen-inner{ max-width:none; width:100%; }
+/* Rebel Shop — full-height instead of a narrow centered modal, native only */
+.rl-native [data-rl-screen="shop"]{ justify-content:flex-start; }
+.rl-native [data-rl-screen="shop"] .rl-screen-inner{
+  max-width:none; width:100%; display:flex; flex-direction:column; height:100%;
+}
+.rl-native [data-rl-screen="shop"] [data-rl-shop-grid]{
+  flex:1 1 auto; min-height:0; max-height:none;
+  align-content:start; align-items:start;
+}
 .rl-char-card .rl-shop-price{
   display:block; margin-top:2px; font-family:var(--rl-font-display); font-weight:800;
   font-size:10.5px; color:var(--rl-gold); letter-spacing:.02em;
@@ -363,15 +370,19 @@
 
 /* ---------- claim-a-code modal (native only, harmless if unused) ---------- */
 .rl-unlock-modal{
-  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
-  padding:24px; background:rgba(5,9,15,.72);
+  position:fixed; inset:0; z-index:7; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:rgba(5,9,15,.78);
 }
 .rl-unlock-panel{
-  width:100%; max-width:320px; text-align:center; padding:20px 18px; border-radius:12px;
+  width:100%; max-width:320px; text-align:center; padding:22px 20px; border-radius:12px;
   background:var(--rl-panel); border:1px solid var(--rl-panel-line);
+  box-shadow:0 8px 28px rgba(0,0,0,.5);
 }
 .rl-unlock-panel h3{ font-family:var(--rl-font-display); font-size:17px; margin:0 0 14px; }
-.rl-unlock-panel p{ font-size:13px; color:var(--rl-dim); margin:0 0 10px; }
+.rl-unlock-panel p{ font-size:13px; color:var(--rl-dim); margin:0 0 12px; }
+.rl-unlock-panel .rl-btn{ margin-top:8px; }
+.rl-unlock-panel .rl-btn:first-of-type{ margin-top:2px; }
+.rl-unlock-panel .rl-error{ margin-top:10px; margin-bottom:0; }
 .rl-code-input{
   width:100%; padding:11px 12px; margin-bottom:10px; text-align:center; letter-spacing:.12em;
   text-transform:uppercase; border-radius:9px; border:1px solid var(--rl-panel-line);
