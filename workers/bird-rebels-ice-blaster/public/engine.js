@@ -23,7 +23,11 @@
 
   // All character art shares one canvas template (same size/framing), so a
   // single standard eye position works for every bird — no per-emblem tuning.
-  var STANDARD_EYE = { xr: 0.55, yr: 0.165 };
+  var ART_CANVAS_W = 887, ART_CANVAS_H = 937; // the shared art canvas every bird image is drawn on
+  // Pixel coords (on that canvas) where the laser originates — the center
+  // of the north star on each emblem. Per-bird overrides come from D1
+  // (laser_origin_x/y); when a bird doesn't specify one, this is used.
+  var DEFAULT_LASER_ORIGIN = { x: 444, y: 72 };
   var CHAR_ASPECT = 937 / 887; // height / width of the shared art canvas
 
   var SNOWFLAKE_INTERVAL = 24000;
@@ -413,6 +417,7 @@
     var selectedChar = null;
     var charImgs = {};
     var charAccent = {};
+    var charLaserOrigin = {};
     var RANDOM_CODE = '__RANDOM__';
 
     function preloadChar(ch) {
@@ -420,6 +425,9 @@
       preload.src = BASE + ch.src;
       charImgs[ch.code] = preload;
       charAccent[ch.code] = ch.accentColor || null;
+      charLaserOrigin[ch.code] = (ch.laserOriginX != null && ch.laserOriginY != null)
+        ? { x: ch.laserOriginX, y: ch.laserOriginY }
+        : null;
     }
 
     function rosterByCode(code) {
@@ -865,6 +873,7 @@
         cfg: {
           character: selectedChar,
           accentColor: accentColor,
+          laserOrigin: charLaserOrigin[selectedChar] || DEFAULT_LASER_ORIGIN,
           tier: selectedTier,
           kidMode: !!kidModeEl.checked,
           blizzard: blizzard
@@ -914,15 +923,18 @@
       }
     }
 
-    // ---------- eye position (one standard spot for every character) ----------
+    // ---------- eye/laser origin position ----------
     function getEyePos() {
       var loonW = clamp(W * 0.34, 90, 170);
       var loonH = loonW * CHAR_ASPECT;
       var left = S.loonX - loonW / 2;
       var top = H - loonH;
+      var origin = (S && S.cfg && S.cfg.laserOrigin) || DEFAULT_LASER_ORIGIN;
+      var xr = origin.x / ART_CANVAS_W;
+      var yr = origin.y / ART_CANVAS_H;
       return {
-        x: left + STANDARD_EYE.xr * loonW,
-        y: top + STANDARD_EYE.yr * loonH,
+        x: left + xr * loonW,
+        y: top + yr * loonH,
         loonLeft: left, loonTop: top, loonW: loonW, loonH: loonH
       };
     }
