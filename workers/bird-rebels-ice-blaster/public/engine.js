@@ -461,6 +461,22 @@
     var submitError = mount.querySelector('[data-rl-submit-error]');
     var scoreSubmitBlock = mount.querySelector('[data-rl-score-submit]');
     var kidNote = mount.querySelector('[data-rl-kid-note]');
+    var restartBtn = mount.querySelector('[data-rl-restart]');
+
+    // ---------- gameover safety: protect an unsaved high score from a stray tap ----------
+    var scoreSaved = false;       // true once the score has actually been POSTed successfully
+    var gameoverLockUntil = 0;    // Play Again ignores taps until this timestamp (absorbs momentum taps from fast play)
+    var restartArmed = false;     // true after a first confirm tap on Play Again while a score is unsaved
+    var restartArmTimer = null;
+    var GAMEOVER_INPUT_LOCK_MS = 700;
+    var RESTART_CONFIRM_WINDOW_MS = 2500;
+
+    function resetRestartConfirm() {
+      restartArmed = false;
+      if (restartArmTimer) { clearTimeout(restartArmTimer); restartArmTimer = null; }
+      restartBtn.textContent = 'Play Again';
+      restartBtn.classList.remove('rl-btn-confirm');
+    }
 
     var dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
     var W = 360, H = 480;
@@ -1398,7 +1414,10 @@
       initialInputs.forEach(function (inp) { inp.value = ''; });
       scoreSubmitBlock.hidden = S.cfg.kidMode;
       kidNote.hidden = !S.cfg.kidMode;
+      scoreSaved = S.cfg.kidMode; // kid mode never submits, so there's nothing to protect
+      resetRestartConfirm();
       showScreen('gameover');
+      gameoverLockUntil = Date.now() + GAMEOVER_INPUT_LOCK_MS;
       if (!S.cfg.kidMode) setTimeout(function () { initialInputs[0].focus(); }, 50);
     }
 
@@ -1437,6 +1456,8 @@
           boardInlineNote.textContent = SET_LABELS[S.cfg.blizzard ? 'blizzard' : 'normal'];
           renderBoard(boardInline, sortBoard(res.data.board, 'score'), res.data.submittedTs);
           btn.textContent = 'Saved';
+          scoreSaved = true;
+          resetRestartConfirm(); // score is safe now, Play Again goes back to a single tap
         })
         .catch(function () {
           submitError.textContent = 'Network error — try again.';
@@ -1444,9 +1465,26 @@
         });
     });
 
-    mount.querySelector('[data-rl-restart]').addEventListener('click', function () {
-      var btn = mount.querySelector('[data-rl-submit-score]');
-      btn.removeAttribute('disabled'); btn.textContent = 'Save Score';
+    restartBtn.addEventListener('click', function () {
+      // Absorb momentum taps that land right as the gameover screen appears —
+      // these are the accidental hits that were wiping out unsaved scores.
+      if (Date.now() < gameoverLockUntil) return;
+
+      // If the score hasn't been saved yet, require a second confirming tap
+      // instead of instantly discarding it.
+      if (!scoreSaved) {
+        if (!restartArmed) {
+          restartArmed = true;
+          restartBtn.textContent = 'Tap again to leave without saving';
+          restartBtn.classList.add('rl-btn-confirm');
+          restartArmTimer = setTimeout(resetRestartConfirm, RESTART_CONFIRM_WINDOW_MS);
+          return;
+        }
+      }
+
+      resetRestartConfirm();
+      var submitBtn = mount.querySelector('[data-rl-submit-score]');
+      submitBtn.removeAttribute('disabled'); submitBtn.textContent = 'Save Score';
       showScreen('start');
     });
 
