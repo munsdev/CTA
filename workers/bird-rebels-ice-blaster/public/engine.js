@@ -300,6 +300,7 @@
     + '      <h2>Rebel Shop</h2>'
     + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-claim-code>Claim a Code</button>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
     + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
     + '        <div class="rl-shop-detail-panel">'
@@ -307,6 +308,7 @@
     + '          <h3 data-rl-shop-detail-name></h3>'
     + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
     + '          <button class="rl-btn" data-rl-shop-detail-buy>Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-claim-code>Claim a Code Instead</button>'
     + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-back>Back</button>'
     + '        </div>'
     + '      </div>'
@@ -706,112 +708,131 @@
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
+    }
 
-      // ---- Claim a Code ----
-      var claimBtn = mount.querySelector('[data-rl-claim-code]');
-      var claimModal = mount.querySelector('[data-rl-claim-modal]');
-      var claimEntry = mount.querySelector('[data-rl-claim-entry]');
-      var claimPicker = mount.querySelector('[data-rl-claim-picker]');
-      var claimPickerGrid = mount.querySelector('[data-rl-claim-picker-grid]');
-      var claimInput = mount.querySelector('[data-rl-claim-input]');
-      var claimError = mount.querySelector('[data-rl-claim-error]');
-      var claimSubmitBtn = mount.querySelector('[data-rl-claim-submit]');
-      var claimCancelBtn = mount.querySelector('[data-rl-claim-cancel]');
-      var claimPickerCancelBtn = mount.querySelector('[data-rl-claim-picker-cancel]');
-      var pendingClaimCode = null;
+    // ---- Claim a Code ----
+    // Unconditional (not gated by shopEnabled) so it's safely callable from
+    // both the main-screen button and the shop's purchase-detail card. The
+    // button/modal are hidden via CSS on web regardless, same as everywhere else.
+    var claimBtn = mount.querySelector('[data-rl-claim-code]');
+    var claimShopBtn = mount.querySelector('[data-rl-shop-claim-code]');
+    var claimDetailBtn = mount.querySelector('[data-rl-shop-detail-claim-code]');
+    var claimModal = mount.querySelector('[data-rl-claim-modal]');
+    var claimEntry = mount.querySelector('[data-rl-claim-entry]');
+    var claimPicker = mount.querySelector('[data-rl-claim-picker]');
+    var claimPickerGrid = mount.querySelector('[data-rl-claim-picker-grid]');
+    var claimInput = mount.querySelector('[data-rl-claim-input]');
+    var claimError = mount.querySelector('[data-rl-claim-error]');
+    var claimSubmitBtn = mount.querySelector('[data-rl-claim-submit]');
+    var claimCancelBtn = mount.querySelector('[data-rl-claim-cancel]');
+    var claimPickerCancelBtn = mount.querySelector('[data-rl-claim-picker-cancel]');
+    var pendingClaimCode = null;
 
-      function openClaimModal() {
-        if (!claimModal) return;
-        if (claimInput) claimInput.value = '';
-        if (claimError) claimError.textContent = '';
-        if (claimEntry) claimEntry.hidden = false;
-        if (claimPicker) claimPicker.hidden = true;
-        claimModal.hidden = false;
-      }
-      function closeClaimModal() {
-        pendingClaimCode = null;
-        if (claimModal) claimModal.hidden = true;
-      }
-      function grantedToast(granted) {
-        var count = (granted || []).length;
-        toast(count > 1 ? count + ' items unlocked!' : (granted[0] ? granted[0].itemCode + ' unlocked!' : 'Unlocked!'));
-      }
-      function applyGranted(granted) {
-        (granted || []).forEach(function (g) {
-          if (g.itemType === 'rebel' && couponRebels.indexOf(g.itemCode) === -1) couponRebels.push(g.itemCode);
-        });
+    function openClaimModal() {
+      if (!claimModal) return;
+      if (claimInput) claimInput.value = '';
+      if (claimError) claimError.textContent = '';
+      if (claimEntry) claimEntry.hidden = false;
+      if (claimPicker) claimPicker.hidden = true;
+      claimModal.hidden = false;
+    }
+    function closeClaimModal() {
+      pendingClaimCode = null;
+      if (claimModal) claimModal.hidden = true;
+    }
+    function grantedToast(granted) {
+      var count = (granted || []).length;
+      toast(count > 1 ? count + ' items unlocked!' : (granted[0] ? granted[0].itemCode + ' unlocked!' : 'Unlocked!'));
+    }
+    function applyGranted(granted) {
+      var needsRosterRefresh = false;
+      (granted || []).forEach(function (g) {
+        if (g.itemType === 'rebel') {
+          if (couponRebels.indexOf(g.itemCode) === -1) couponRebels.push(g.itemCode);
+          if (!rosterByCode(g.itemCode)) needsRosterRefresh = true;
+        }
+      });
+      if (needsRosterRefresh) {
+        fetch(BASE + '/api/characters' + (DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
+          .then(function (r) { return r.json(); })
+          .then(function (data) { roster = Array.isArray(data) ? data : roster; renderCharGrid(); })
+          .catch(function () { renderCharGrid(); });
+      } else {
         renderCharGrid();
       }
+    }
 
-      if (claimBtn) claimBtn.addEventListener('click', openClaimModal);
-      if (claimCancelBtn) claimCancelBtn.addEventListener('click', closeClaimModal);
-      if (claimPickerCancelBtn) claimPickerCancelBtn.addEventListener('click', closeClaimModal);
-      if (claimSubmitBtn) {
-        claimSubmitBtn.addEventListener('click', function () {
-          var code = claimInput ? claimInput.value.trim() : '';
-          if (!code) { if (claimError) claimError.textContent = 'Enter a code first.'; return; }
-          fetch(BASE + '/api/entitlements/redeem', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ device: DEVICE_ID, code: code })
-          })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-              if (!data || !data.ok) {
-                if (claimError) claimError.textContent = (data && data.error) || 'That code didn\'t work.';
+    if (claimBtn) claimBtn.addEventListener('click', openClaimModal);
+    if (claimShopBtn) claimShopBtn.addEventListener('click', openClaimModal);
+    if (claimDetailBtn) claimDetailBtn.addEventListener('click', openClaimModal);
+    if (claimCancelBtn) claimCancelBtn.addEventListener('click', closeClaimModal);
+    if (claimPickerCancelBtn) claimPickerCancelBtn.addEventListener('click', closeClaimModal);
+    if (claimSubmitBtn) {
+      claimSubmitBtn.addEventListener('click', function () {
+        var code = claimInput ? claimInput.value.trim() : '';
+        if (!code) { if (claimError) claimError.textContent = 'Enter a code first.'; return; }
+        fetch(BASE + '/api/entitlements/redeem', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device: DEVICE_ID, code: code })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data || !data.ok) {
+              if (claimError) claimError.textContent = (data && data.error) || 'That code didn\'t work.';
+              return;
+            }
+            if (data.pick) {
+              pendingClaimCode = code;
+              if (!data.options || !data.options.length) {
+                if (claimError) claimError.textContent = 'Nothing left to choose from for this code.';
                 return;
               }
-              if (data.pick) {
-                pendingClaimCode = code;
-                if (!data.options || !data.options.length) {
-                  if (claimError) claimError.textContent = 'Nothing left to choose from for this code.';
-                  return;
-                }
-                claimPickerGrid.innerHTML = '';
-                data.options.forEach(function (opt) {
-                  var ch = rosterByCode(opt.itemCode);
-                  var card = document.createElement('button');
-                  card.type = 'button';
-                  card.className = 'rl-char-card';
-                  var img = document.createElement('img');
-                  img.alt = opt.label;
-                  if (ch) img.src = BASE + ch.src;
-                  var span = document.createElement('span');
-                  span.textContent = opt.label;
-                  card.appendChild(img); card.appendChild(span);
-                  card.addEventListener('click', function () {
-                    fetch(BASE + '/api/entitlements/redeem-choice', {
-                      method: 'POST', headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ device: DEVICE_ID, code: pendingClaimCode, itemCode: opt.itemCode })
-                    })
-                      .then(function (r) { return r.json(); })
-                      .then(function (res) {
-                        if (res && res.ok) {
-                          grantedToast(res.granted);
-                          applyGranted(res.granted);
-                          closeClaimModal();
-                        } else {
-                          if (claimError) claimError.textContent = (res && res.error) || 'That didn\'t work — try again.';
-                        }
-                      });
-                  });
-                  claimPickerGrid.appendChild(card);
+              claimPickerGrid.innerHTML = '';
+              data.options.forEach(function (opt) {
+                var ch = rosterByCode(opt.itemCode);
+                var card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'rl-char-card';
+                var img = document.createElement('img');
+                img.alt = opt.label;
+                if (ch) img.src = BASE + ch.src;
+                var span = document.createElement('span');
+                span.textContent = opt.label;
+                card.appendChild(img); card.appendChild(span);
+                card.addEventListener('click', function () {
+                  fetch(BASE + '/api/entitlements/redeem-choice', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device: DEVICE_ID, code: pendingClaimCode, itemCode: opt.itemCode })
+                  })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                      if (res && res.ok) {
+                        grantedToast(res.granted);
+                        applyGranted(res.granted);
+                        closeClaimModal();
+                      } else {
+                        if (claimError) claimError.textContent = (res && res.error) || 'That didn\'t work — try again.';
+                      }
+                    });
                 });
-                claimEntry.hidden = true;
-                claimPicker.hidden = false;
-              } else {
-                grantedToast(data.granted);
-                applyGranted(data.granted);
-                closeClaimModal();
-              }
-            })
-            .catch(function () { if (claimError) claimError.textContent = 'Couldn\'t reach the server — try again.'; });
-        });
-      }
+                claimPickerGrid.appendChild(card);
+              });
+              claimEntry.hidden = true;
+              claimPicker.hidden = false;
+            } else {
+              grantedToast(data.granted);
+              applyGranted(data.granted);
+              closeClaimModal();
+            }
+          })
+          .catch(function () { if (claimError) claimError.textContent = 'Couldn\'t reach the server — try again.'; });
+      });
     }
 
     Promise.all([
       loadCouponEntitlements(),
-      fetch(BASE + '/api/characters').then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
+      fetch(BASE + '/api/characters' + (shopEnabled && DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
+        .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
     ])
       .then(function (results) {
         roster = Array.isArray(results[1]) ? results[1] : [];
