@@ -191,6 +191,25 @@
   font-size:10.5px; color:var(--rl-gold); letter-spacing:.02em;
 }
 
+/* Long-list screens (Shop grid, Leaderboard) use the full vertical space
+   instead of centering a short capped-height box, native only */
+.rl-native [data-rl-screen="shop"],
+.rl-native [data-rl-screen="leaderboard"]{
+  justify-content:flex-start;
+}
+.rl-native [data-rl-screen="shop"] .rl-screen-inner,
+.rl-native [data-rl-screen="leaderboard"] .rl-screen-inner{
+  display:flex; flex-direction:column; height:100%;
+}
+.rl-native [data-rl-screen="shop"] .rl-char-grid{
+  flex:1 1 auto; min-height:0; max-height:none;
+  align-content:start; align-items:start;
+}
+.rl-native [data-rl-screen="leaderboard"] .rl-board{
+  flex:1 1 auto; min-height:0; max-height:none;
+}
+
+
 /* Rebel Shop item detail card — large image + Purchase, sits above the shop grid */
 .rl-shop-detail{
   position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
