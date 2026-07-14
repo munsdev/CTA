@@ -80,16 +80,16 @@
 .rl-char-card.rl-selected span{ color:var(--rl-ice); font-weight:700; }
 
 /* Native flock/shop tiles — only ever rendered when data-rl-shop="1" is set (native app), never on web */
-.rl-char-card.rl-char-random .rl-char-mystery{
+.rl-char-emblem{
   width:100%; aspect-ratio:887/937; display:flex; align-items:center; justify-content:center;
   margin-bottom:4px; border-radius:6px; background:rgba(255,255,255,.03);
-  font-family:var(--rl-font-display); font-weight:800; font-size:26px; color:var(--rl-dim);
 }
-.rl-char-card.rl-char-shop-tile{
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-  border-style:dashed;
+.rl-char-emblem-circle{
+  width:52%; aspect-ratio:1/1; border-radius:50%; border:2px solid var(--rl-panel-line);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--rl-font-display); font-weight:800; font-size:20px; color:var(--rl-dim); line-height:1;
 }
-.rl-char-shop-plus{ font-family:var(--rl-font-display); font-weight:800; font-size:22px; color:var(--rl-dim); line-height:1; }
+.rl-char-card.rl-char-shop-tile{ border-style:dashed; }
 
 /* ---------- difficulty tier selector ---------- */
 .rl-tier-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
@@ -133,16 +133,20 @@
   border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-dim);
   font-family:var(--rl-font-display); font-weight:800; font-size:15px; line-height:1;
 }
+.rl-logo{ display:none; } /* shown only under .rl-native below */
 .rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
 
 .rl-native [data-rl-screen="start"] .rl-sub,
 .rl-native [data-rl-screen="start"] .rl-tier-note,
-.rl-native [data-rl-screen="start"] .rl-check-row small{
+.rl-native [data-rl-screen="start"] .rl-check-row small,
+.rl-native [data-rl-screen="start"] .rl-h1{
   display:none;
 }
 .rl-native [data-rl-screen="start"] .rl-info-btn{ display:block; }
-.rl-native [data-rl-screen="start"] .rl-h1{ margin-right:36px; } /* keep title clear of the info button */
+.rl-native [data-rl-screen="start"] .rl-logo{
+  display:block; width:50%; max-width:220px; margin:0 auto 14px;
+}
 .rl-native [data-rl-screen="start"] .rl-screen-inner{
   position:relative; display:flex; flex-direction:column; height:100%;
 }
