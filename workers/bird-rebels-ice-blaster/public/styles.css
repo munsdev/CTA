@@ -260,7 +260,7 @@
 .rl-native [data-rl-screen="start"].rl-screen{ padding:0 0 24px; justify-content:flex-start; }
 .rl-native [data-rl-screen="start"] .rl-screen-inner{
   display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0 18px;
-  overflow-y:auto;
+  overflow-y:auto; overflow-x:hidden;
 }
 /* Whole Select Your Rebel section (heading through Start Game, wrapped as
    one group in the markup) is vertically centered on the screen as a
@@ -268,7 +268,7 @@
    the Start button to the bottom on its own. margin:auto 0 on a flex
    child centers it within whatever space .rl-screen-inner has left after
    the navbar. */
-.rl-select-rebel-group{ margin:auto 0; }
+.rl-select-rebel-group{ margin:auto 0; max-width:100%; overflow-x:hidden; }
 
 /* ---------- navbar (native only): logo left, menu icon right, ~6rem tall ---------- */
 [data-rl-topbar]{ display:none; }
