@@ -174,16 +174,16 @@
   var TEMPLATE = ''
     + '<div class="rl-frame">'
     + '  <div class="rl-screen" data-rl-screen="start">'
-    + '    <div class="rl-screen-inner">'
-    + '      <div class="rl-topbar" data-rl-topbar>'
-    + '        <h1 class="rl-topbar-title">Ice Blaster</h1>'
-    + '        <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu">&#9776;</button>'
-    + '        <div class="rl-menu-popup" data-rl-menu-popup hidden>'
-    + '          <button type="button" class="rl-menu-item" data-rl-menu-help>Help</button>'
-    + '          <button type="button" class="rl-menu-item" data-rl-menu-settings>Settings</button>'
-    + '          <button type="button" class="rl-menu-item" data-rl-menu-credits>Credits</button>'
-    + '        </div>'
+    + '    <div class="rl-topbar" data-rl-topbar>'
+    + '      <h1 class="rl-topbar-title">Ice Blaster</h1>'
+    + '      <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu">&#9776;</button>'
+    + '      <div class="rl-menu-popup" data-rl-menu-popup hidden>'
+    + '        <button type="button" class="rl-menu-item" data-rl-menu-help>Help</button>'
+    + '        <button type="button" class="rl-menu-item" data-rl-menu-settings>Settings</button>'
+    + '        <button type="button" class="rl-menu-item" data-rl-menu-credits>Credits</button>'
     + '      </div>'
+    + '    </div>'
+    + '    <div class="rl-screen-inner">'
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
@@ -411,6 +411,8 @@
       mount.classList.add('rl-native');
       var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
       if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Blizzard';
+      var introEl = mount.querySelector('[data-rl-screen="start"] .rl-sub');
+      if (introEl) introEl.textContent = 'Ice is raining down and it\'s your job to laser it before it hits the ground. Pick your Bird Rebel below to get started.';
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
