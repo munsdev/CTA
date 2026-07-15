@@ -668,13 +668,22 @@
 
     // Vibration on ice hitting the ground, native only. Defaults true so it
     // works before Settings has had a chance to load any saved preference.
-    // navigator.vibrate() (not a Capacitor plugin) — Android's WebView
-    // supports it natively; iOS's WKWebView does not, but this app is
-    // Android-only right now so that's not a gap yet.
+    // Uses the real Capacitor Haptics plugin (navigator.vibrate() was tried
+    // first but didn't actually work in this WebView) — same
+    // window.Capacitor.Plugins.X access pattern already used elsewhere in
+    // this app (see index.html's back-button handler for the App plugin).
     var vibrationEnabled = true;
-    function triggerVibration(ms) {
+    function triggerVibration() {
       if (!shopEnabled || !vibrationEnabled) return;
-      try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+      try {
+        var Haptics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+        // vibrate() takes no style argument, unlike impact({style:...}) —
+        // avoids needing to guess the exact raw string/enum casing Haptics
+        // expects for style when calling through the plugin bridge
+        // directly instead of importing the JS module (which exposes
+        // ImpactStyle as a proper enum).
+        if (Haptics && Haptics.vibrate) Haptics.vibrate();
+      } catch (e) {}
     }
 
     var screens = {};
@@ -958,9 +967,19 @@
       startSpacer.className = 'rl-carousel-spacer';
       carouselTrack.appendChild(startSpacer);
 
-      var cloneStart = buildCarouselCard(items[items.length - 1]);
-      cloneStart.classList.add('rl-carousel-clone');
-      carouselTrack.appendChild(cloneStart);
+      // Two clones per end instead of one. With a small roster (this app
+      // starts everyone with just 2-3 birds), a single clone sits close
+      // enough to center to be visibly mid-scale-transition itself — so the
+      // wraparound jump was swapping something the user could already see
+      // animating, reading as "the clones getting moved around" rather than
+      // a clean, invisible loop. A second clone pushes the swap point a
+      // full card-width further from the visible falloff zone. Uses modulo
+      // so this still works if the roster only has 1-2 real items.
+      var cloneStarts = [
+        buildCarouselCard(items[(items.length * 2 - 2) % items.length]),
+        buildCarouselCard(items[items.length - 1])
+      ];
+      cloneStarts.forEach(function (c) { c.classList.add('rl-carousel-clone'); carouselTrack.appendChild(c); });
 
       var realCards = [];
       items.forEach(function (item) {
@@ -969,9 +988,11 @@
         carouselTrack.appendChild(card);
       });
 
-      var cloneEnd = buildCarouselCard(items[0]);
-      cloneEnd.classList.add('rl-carousel-clone');
-      carouselTrack.appendChild(cloneEnd);
+      var cloneEnds = [
+        buildCarouselCard(items[0]),
+        buildCarouselCard(items[1 % items.length])
+      ];
+      cloneEnds.forEach(function (c) { c.classList.add('rl-carousel-clone'); carouselTrack.appendChild(c); });
 
       var endSpacer = document.createElement('div');
       endSpacer.className = 'rl-carousel-spacer';
@@ -983,9 +1004,11 @@
           scrollCarouselTo(card, true);
         });
       }
-      wireCard(cloneStart, items[items.length - 1]);
+      wireCard(cloneStarts[0], items[(items.length * 2 - 2) % items.length]);
+      wireCard(cloneStarts[1], items[items.length - 1]);
       realCards.forEach(function (card, i) { wireCard(card, items[i]); });
-      wireCard(cloneEnd, items[0]);
+      wireCard(cloneEnds[0], items[0]);
+      wireCard(cloneEnds[1], items[1 % items.length]);
 
       var suppressNextSettle = false;
       function jumpTo(card) {
@@ -999,12 +1022,22 @@
         if (suppressNextSettle) { suppressNextSettle = false; return; }
         var centered = findCenteredCarouselCard();
         if (!centered) return;
-        if (centered === cloneStart) {
-          jumpTo(realCards[realCards.length - 1]);
-          centered = realCards[realCards.length - 1];
-        } else if (centered === cloneEnd) {
-          jumpTo(realCards[0]);
-          centered = realCards[0];
+        var startCloneIdx = cloneStarts.indexOf(centered);
+        var endCloneIdx = cloneEnds.indexOf(centered);
+        if (startCloneIdx !== -1) {
+          // cloneStarts[0] depicts the second-to-last real item, [1] the
+          // last — jump to whichever real card that specific clone
+          // actually represents, not always the same one.
+          var startTarget = startCloneIdx === 0
+            ? realCards[(realCards.length * 2 - 2) % realCards.length]
+            : realCards[realCards.length - 1];
+          jumpTo(startTarget);
+          centered = startTarget;
+        } else if (endCloneIdx !== -1) {
+          // cloneEnds[0] depicts the first real item, [1] the second.
+          var endTarget = endCloneIdx === 0 ? realCards[0] : realCards[1 % realCards.length];
+          jumpTo(endTarget);
+          centered = endTarget;
         }
         var code = centered.getAttribute('data-rl-char');
         selectCarouselItem(code);
@@ -2111,7 +2144,7 @@
     function onCubeEscaped() {
       S.escaped++;
       playSound('explosion');
-      triggerVibration(35);
+      triggerVibration();
       if (S.cfg.kidMode) return;
       setLives(S.lives - 1, { pulse: true });
       if (S.lives <= 0) endGame();
