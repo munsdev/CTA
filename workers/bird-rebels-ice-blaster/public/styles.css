@@ -330,11 +330,15 @@
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
 .rl-carousel-track::-webkit-scrollbar{ display:none; }
-/* 50% of the track's own width, minus half the active card's expanded
-   width (140px * 1.75 scale / 2 = 122.5px, rounded to 123px to match the
-   active-card visual center) — this centers the active card in whatever
-   width the track actually has now that it's full-viewport. */
-.rl-carousel-spacer{ flex:0 0 calc(50% - 123px); }
+/* Half the card's UNSCALED layout width (140px / 2 = 70px) — NOT the scaled
+   visual size. transform:scale() is paint-only and never affects layout
+   geometry or what scroll-snap-align:center actually centers against, so
+   sizing this from the 1.75x peak-scale size (previous versions used 123px,
+   even earlier 97px) was wrong from the start: it made the spacer too
+   narrow, so scroll-snap could get close to true center for the first/last
+   real card but never quite reach it — worse the bigger the peak scale got,
+   which is why bumping the peak scale made this much more noticeable. */
+.rl-carousel-spacer{ flex:0 0 calc(50% - 70px); }
 .rl-carousel-card{
   flex:0 0 140px; scroll-snap-align:center; scroll-snap-stop:always; margin:0 4px;
   position:relative; z-index:1;
