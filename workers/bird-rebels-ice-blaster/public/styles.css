@@ -184,19 +184,10 @@
 }
 
 /* Difficulty + Scene buttons side by side in one row, per instruction —
-   condenses what used to be a full-width tier row + note + two checkboxes
-   stacked inline into two compact buttons. */
+   both open a full-screen picker overlay when tapped (see [data-rl-screen
+   ="difficulty"] / [data-rl-screen="scenes"]). */
 .rl-picker-row{ display:flex; gap:8px; margin:10px 0 14px; }
 .rl-picker-row .rl-scene-btn{ margin:0; flex:1 1 0; }
-.rl-picker-wrap{ position:relative; flex:1 1 0; }
-.rl-picker-popup{
-  position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:9;
-  background:var(--rl-panel); border:1px solid var(--rl-panel-line); border-radius:10px;
-  box-shadow:0 8px 22px rgba(0,0,0,.5); padding:14px;
-}
-.rl-picker-popup .rl-tier-row{ margin-bottom:12px; }
-.rl-picker-popup .rl-tier-note{ margin:-4px 0 12px; }
-.rl-picker-popup .rl-check-row{ margin:0; }
 
 /* ---------- native app simplified UI (data-rl-shop="1" only — never applies on web) ---------- */
 .rl-native{
@@ -208,14 +199,15 @@
   background-size:220px 220px, cover;
   background-blend-mode:soft-light, normal;
 }
-/* Home screen only: solid black instead of the themed navy gradient, to
-   match the site (birdrebels.art uses near-black, not blue). Higher
-   specificity than the rule above, so this wins only while [data-rl-screen
-   ="start"] is the visible screen inside .rl-frame — gameplay keeps its
+/* Home screens (Welcome + setup) only: solid black instead of the themed
+   navy gradient, to match the site (birdrebels.art uses near-black, not
+   blue). Higher specificity than the rule above, so this wins only while
+   either is the visible screen inside .rl-frame — gameplay keeps its
    current themed gradient untouched, since .rl-frame itself is shared
    across every screen and this only overrides it conditionally. The
    diamond texture overlay stays, just recolored onto black instead of navy. */
-.rl-native:has([data-rl-screen="start"]:not([hidden])) .rl-frame{
+.rl-native:has([data-rl-screen="start"]:not([hidden])) .rl-frame,
+.rl-native:has([data-rl-screen="welcome"]:not([hidden])) .rl-frame{
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-menu-bg),var(--rl-menu-bg));
   background-size:220px 220px, cover;
   /* screen, not soft-light: soft-light barely lightens near-black
@@ -227,6 +219,37 @@
 }
 .rl-info-block{ font-size:18px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
+
+/* ---------- welcome screen (native only, shown first) ---------- */
+.rl-native [data-rl-screen="welcome"]{ display:flex; flex-direction:column; padding:0; }
+.rl-welcome-inner{
+  display:flex; flex-direction:column; align-items:center; flex:1 1 auto; min-height:0;
+  padding:0 26px max(24px, env(safe-area-inset-bottom));
+}
+/* Logo sits a little above true vertical center: the spacer above (::before,
+   flex-grow 1) is smaller than the space claimed below the Start button
+   (the icon row's flex-grow 1.4), so the whole block balances slightly
+   high rather than dead center. */
+.rl-welcome-inner::before{ content:''; flex:1 1 0; }
+.rl-welcome-logo{
+  width:min(72vw, 340px); height:auto; display:block; margin-bottom:18px;
+  filter:drop-shadow(0 6px 20px rgba(0,0,0,.5));
+}
+.rl-welcome-desc{
+  font-size:15px; line-height:1.55; color:var(--rl-ink); text-align:center;
+  max-width:380px; margin:0 0 22px;
+}
+[data-rl-welcome-start]{ max-width:320px; }
+.rl-welcome-icons{
+  flex:1.4 1 0; display:flex; align-items:flex-end; justify-content:center; gap:22px;
+  padding-bottom:10px; margin-top:20px;
+}
+.rl-welcome-icon-btn{
+  appearance:none; cursor:pointer; width:48px; height:48px; border-radius:50%;
+  border:1.5px solid var(--rl-panel-line); background:rgba(255,255,255,.03);
+  color:var(--rl-ink); font-size:20px; display:flex; align-items:center; justify-content:center;
+}
+.rl-welcome-icon-btn:active{ background:rgba(255,255,255,.08); }
 
 .rl-native [data-rl-screen="start"] .rl-tier-note,
 .rl-native [data-rl-screen="start"] .rl-check-row small,
@@ -244,6 +267,7 @@
 .rl-native [data-rl-screen="start"].rl-screen{ padding:0 0 24px; justify-content:flex-start; }
 .rl-native [data-rl-screen="start"] .rl-screen-inner{
   display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0 18px;
+  overflow-y:auto;
 }
 /* Fills the screen to full height: everything above flows naturally from
    the top, then Start Game (and the Leaderboard button + error text right
@@ -257,33 +281,29 @@
 .rl-native [data-rl-screen="start"] [data-rl-topbar]{
   display:flex; align-items:center; justify-content:center;
   position:relative; left:50%; transform:translateX(-50%);
-  flex:0 0 auto; width:100vw; height:78px; padding:0 18px; margin-bottom:14px;
+  flex:0 0 auto; width:100vw; padding:14px 18px; margin-bottom:10px;
   background-color:#0a0a0a;
   background-image:url('textures/knobs.png');
   background-repeat:repeat;
   border-bottom:1px solid rgba(255,255,255,.08);
+  /* The transform above creates its own stacking context, which means the
+     dropdown menu popup nested inside (z-index:9) was only ever being
+     compared against other elements INSIDE the topbar — never against the
+     carousel cards outside it, which are also transformed (scale) and
+     create their own competing stack. Explicit z-index here lifts the
+     whole topbar+popup stack above the carousel's. */
+  z-index:20;
 }
-.rl-topbar-title{
-  font-family:'Black Elite', var(--rl-font-display); font-weight:700; font-size:39px;
-  letter-spacing:.04em; color:#fff; margin:0; text-transform:uppercase;
+.rl-topbar-logo{
+  /* 60vw per instruction, clamped so it can't grow unreasonably large on
+     wide/tablet screens where 60% of the viewport would be excessive. */
+  width:clamp(180px, 60vw, 420px); height:auto; display:block;
 }
 .rl-topbar-menu-btn{
   position:absolute; right:16px; top:50%; transform:translateY(-50%);
   width:48px; height:48px; appearance:none; cursor:pointer; background:transparent; border:none;
   color:#fff; font-size:29px; line-height:1;
 }
-.rl-menu-popup{
-  position:absolute; top:70px; right:8px; z-index:9;
-  background:var(--rl-panel); border:1px solid var(--rl-panel-line); border-radius:10px;
-  box-shadow:0 8px 22px rgba(0,0,0,.5); overflow:hidden; min-width:210px;
-}
-.rl-menu-item{
-  display:block; width:100%; padding:16px 24px; text-align:left; background:transparent; border:none;
-  border-bottom:1px solid var(--rl-panel-line); color:var(--rl-ink); font-family:var(--rl-font-body);
-  font-size:20px; cursor:pointer;
-}
-.rl-menu-item:last-child{ border-bottom:none; }
-.rl-menu-item:active{ background:rgba(255,255,255,.06); }
 
 .rl-slider-row{ margin:0 0 20px; }
 .rl-slider-row label{ display:block; font-size:18px; color:var(--rl-dim); margin-bottom:6px; letter-spacing:.02em; }
@@ -318,7 +338,7 @@
 .rl-native [data-rl-screen="start"] [data-rl-get-more-rebels]{ display:block; margin-bottom:10px; }
 
 .rl-carousel-track{
-  flex:1; height:260px; display:flex; align-items:center;
+  flex:1; height:clamp(180px, 30vh, 260px); display:flex; align-items:center;
   overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
