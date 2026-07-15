@@ -184,8 +184,7 @@
     + '      </div>'
     + '    </div>'
     + '    <div class="rl-screen-inner">'
-    + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
-    + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
+    + '      <div class="rl-char-label-row rl-field-label rl-field-label-lg">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
     + '      <div class="rl-carousel" data-rl-carousel>'
     + '        <button type="button" class="rl-carousel-arrow rl-carousel-prev" data-rl-carousel-prev aria-label="Previous rebel">&#8249;</button>'
@@ -193,25 +192,32 @@
     + '        <button type="button" class="rl-carousel-arrow rl-carousel-next" data-rl-carousel-next aria-label="Next rebel">&#8250;</button>'
     + '      </div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels>Get More Rebels</button>'
-    + '      <div class="rl-field-label" style="margin-bottom:8px;">Difficulty</div>'
-    + '      <div class="rl-tier-row" data-rl-tier-row>'
-    + '        <button type="button" class="rl-tier-btn" data-rl-tier="easy">Easy</button>'
-    + '        <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium">Medium</button>'
-    + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
-    + '      </div>'
-    + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
-    + '      <div class="rl-toggle-row">'
-    + '        <div class="rl-check-row">'
-    + '          <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
-    + '          <label for="rl-kidmode-toggle">Casual Mode'
-    + '            <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
-    + '          </label>'
+    + '      <div class="rl-picker-row">'
+    + '        <div class="rl-picker-wrap">'
+    + '          <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
+    + '            <span class="rl-scene-btn-label">Difficulty</span>'
+    + '            <span class="rl-scene-btn-name" data-rl-difficulty-btn-name>Medium</span>'
+    + '          </button>'
+    + '          <div class="rl-picker-popup" data-rl-difficulty-popup hidden>'
+    + '            <div class="rl-tier-row" data-rl-tier-row>'
+    + '              <button type="button" class="rl-tier-btn" data-rl-tier="easy">Easy</button>'
+    + '              <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium">Medium</button>'
+    + '              <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
+    + '            </div>'
+    + '            <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '            <div class="rl-check-row">'
+    + '              <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
+    + '              <label for="rl-kidmode-toggle">Casual Mode'
+    + '                <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
+    + '              </label>'
+    + '            </div>'
+    + '          </div>'
     + '        </div>'
+    + '        <button type="button" class="rl-scene-btn" data-rl-scene-btn>'
+    + '          <span class="rl-scene-btn-label">Scene</span>'
+    + '          <span class="rl-scene-btn-name" data-rl-scene-btn-name>Standard</span>'
+    + '        </button>'
     + '      </div>'
-    + '      <button type="button" class="rl-scene-btn" data-rl-scene-btn>'
-    + '        <span class="rl-scene-btn-label">Scene</span>'
-    + '        <span class="rl-scene-btn-name" data-rl-scene-btn-name>Standard</span>'
-    + '      </button>'
     + '      <button class="rl-btn" data-rl-start>Start Game</button>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard>Leaderboard</button>'
     + '      <p class="rl-error" data-rl-start-error></p>'
@@ -418,8 +424,6 @@
     var shopEnabled = mount.getAttribute('data-rl-shop') === '1';
     if (shopEnabled) {
       mount.classList.add('rl-native');
-      var introEl = mount.querySelector('[data-rl-screen="start"] .rl-sub');
-      if (introEl) introEl.textContent = 'Ice is raining down and it\'s your job to laser it before it hits the ground. Pick your Bird Rebel below to get started.';
 
       // Diagnostic only — confirms in chrome://inspect whether the brand
       // fonts actually loaded, instead of guessing from a screenshot.
@@ -956,6 +960,7 @@
     }
 
     mount.querySelector('[data-rl-scene-btn]').addEventListener('click', function () {
+      if (difficultyPopup) difficultyPopup.hidden = true;
       renderSceneGrid();
       showScreen('scenes-from-start');
     });
@@ -1254,14 +1259,43 @@
         charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
       });
 
-    // ---------- difficulty tier selector ----------
+    // ---------- difficulty tier selector (condensed into a popup off the
+    // Difficulty button, alongside the Scene button) ----------
     var selectedTier = DEFAULT_TIER;
+    var difficultyBtn = mount.querySelector('[data-rl-difficulty-btn]');
+    var difficultyBtnName = mount.querySelector('[data-rl-difficulty-btn-name]');
+    var difficultyPopup = mount.querySelector('[data-rl-difficulty-popup]');
+    function updateDifficultyButton() {
+      if (difficultyBtnName) difficultyBtnName.textContent = (TIERS[selectedTier] || TIERS[DEFAULT_TIER]).label;
+    }
+    function closeDifficultyPopup() { if (difficultyPopup) difficultyPopup.hidden = true; }
+    if (difficultyBtn) {
+      difficultyBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (difficultyPopup) difficultyPopup.hidden = !difficultyPopup.hidden;
+      });
+    }
+    // Tapping anywhere outside the popup closes it — same pattern as the
+    // hamburger menu popup elsewhere on this screen.
+    document.addEventListener('click', function (e) {
+      if (difficultyPopup && !difficultyPopup.hidden && difficultyBtn
+          && !difficultyPopup.contains(e.target) && e.target !== difficultyBtn && !difficultyBtn.contains(e.target)) {
+        closeDifficultyPopup();
+      }
+    });
     mount.querySelectorAll('[data-rl-tier]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         selectedTier = btn.getAttribute('data-rl-tier');
         mount.querySelectorAll('[data-rl-tier]').forEach(function (b) { b.classList.toggle('rl-selected', b === btn); });
+        updateDifficultyButton();
+        // Difficulty is a cheap, reversible pick (unlike scene selection,
+        // which stays open until Confirm) — closing immediately on tap
+        // keeps this feeling like a compact menu rather than adding an
+        // extra confirm step for no real benefit.
+        closeDifficultyPopup();
       });
     });
+    updateDifficultyButton();
 
     var kidModeEl = mount.querySelector('[data-rl-kidmode]');
 
