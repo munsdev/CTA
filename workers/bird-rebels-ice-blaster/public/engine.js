@@ -178,6 +178,12 @@
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
+    + '      <div class="rl-carousel" data-rl-carousel>'
+    + '        <button type="button" class="rl-carousel-arrow rl-carousel-prev" data-rl-carousel-prev aria-label="Previous rebel">&#8249;</button>'
+    + '        <div class="rl-carousel-track" data-rl-carousel-track></div>'
+    + '        <button type="button" class="rl-carousel-arrow rl-carousel-next" data-rl-carousel-next aria-label="Next rebel">&#8250;</button>'
+    + '      </div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels>Get More Rebels</button>'
     + '      <div class="rl-field-label" style="margin-bottom:8px;">Difficulty</div>'
     + '      <div class="rl-tier-row" data-rl-tier-row>'
     + '        <button type="button" class="rl-tier-btn" data-rl-tier="easy">Easy</button>'
@@ -524,94 +530,187 @@
         return;
       }
 
-      // ---- native flock/shop layout ----
-      charGrid.innerHTML = '';
+      // ---- native: build the carousel instead of the char-grid ----
       var og = rosterByCode(OG_CODE) || roster[0];
-      var flock = getFlock();
-      // Keep whatever was already selected (e.g. a bird just bought in the
-      // shop) across a re-render; only fall back to OG on the very first render.
-      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || selectedChar === og.code || flock.indexOf(selectedChar) !== -1))
+      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || rosterByCode(selectedChar)))
         ? selectedChar
         : og.code;
+      selectedChar = wantSelected;
+      updateMenuBg(wantSelected);
+      renderCarousel();
+    }
 
-      function addTile(opts) {
-        var card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'rl-char-card' + (opts.code === wantSelected ? ' rl-selected' : '');
-        if (opts.code) card.setAttribute('data-rl-char', opts.code);
-        if (opts.code && charAccent[opts.code]) card.style.setProperty('--tile-accent', charAccent[opts.code]);
-        var img = document.createElement('img');
-        img.alt = opts.label;
-        img.src = opts.imgSrc;
-        var span = document.createElement('span');
-        span.textContent = opts.label;
-        card.appendChild(img); card.appendChild(span);
-        card.addEventListener('click', opts.onClick);
-        charGrid.appendChild(card);
-        return card;
-      }
+    // A rebel is "owned" if it's OG, marked auto_unlock in D1 (free +
+    // automatic, no purchase needed — e.g. MN by default), or actually in
+    // the flock (bought or claimed via coupon).
+    function ownedRebelCodes() {
+      var codes = [OG_CODE];
+      roster.forEach(function (ch) { if (ch.autoUnlock && codes.indexOf(ch.code) === -1) codes.push(ch.code); });
+      getFlock().forEach(function (code) { if (codes.indexOf(code) === -1) codes.push(code); });
+      return codes;
+    }
 
-      // Shared emblem box (same footprint as a bird portrait) so Random/Shop
-      // tiles hold their size even when they land alone on the last row.
-      function buildEmblem(symbol) {
+    // ---------- carousel (native only) ----------
+    // True infinite looping that behaves identically whether you swipe or
+    // tap the arrows: the track is [spacer, clone-of-last, ...real items,
+    // clone-of-first, spacer]. Landing on a clone (however you got there)
+    // triggers an instant, invisible jump to the matching real card.
+    var carouselTrack = mount.querySelector('[data-rl-carousel-track]');
+    var carouselPrevBtn = mount.querySelector('[data-rl-carousel-prev]');
+    var carouselNextBtn = mount.querySelector('[data-rl-carousel-next]');
+    var carouselSettleTimer = null;
+
+    function buildCarouselItems() {
+      var og = rosterByCode(OG_CODE) || roster[0];
+      var owned = ownedRebelCodes();
+      var items = [{ code: og.code, label: og.label, imgSrc: BASE + og.src }];
+      owned.forEach(function (code) {
+        if (code === og.code) return;
+        var ch = rosterByCode(code);
+        if (ch) items.push({ code: ch.code, label: ch.label, imgSrc: BASE + ch.src });
+      });
+      items.push({ code: RANDOM_CODE, label: 'Random', imgSrc: null, isRandom: true });
+      return items;
+    }
+
+    function buildCarouselCard(item) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'rl-char-card rl-carousel-card';
+      card.setAttribute('data-rl-char', item.code);
+      if (item.isRandom) {
+        card.classList.add('rl-char-random');
         var box = document.createElement('div');
         box.className = 'rl-char-emblem';
         var circle = document.createElement('div');
         circle.className = 'rl-char-emblem-circle';
-        circle.textContent = symbol;
+        circle.textContent = '?';
         box.appendChild(circle);
-        return box;
+        card.appendChild(box);
+      } else {
+        if (charAccent[item.code]) card.style.setProperty('--tile-accent', charAccent[item.code]);
+        var img = document.createElement('img');
+        img.alt = item.label;
+        img.src = item.imgSrc;
+        card.appendChild(img);
+      }
+      var span = document.createElement('span');
+      span.textContent = item.label;
+      card.appendChild(span);
+      return card;
+    }
+
+    function scrollCarouselTo(card, smooth) {
+      if (!carouselTrack || !card) return;
+      var target = card.offsetLeft - (carouselTrack.clientWidth - card.offsetWidth) / 2;
+      carouselTrack.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    function findCenteredCarouselCard() {
+      if (!carouselTrack) return null;
+      var trackCenter = carouselTrack.scrollLeft + carouselTrack.clientWidth / 2;
+      var closest = null, closestDist = Infinity;
+      carouselTrack.querySelectorAll('.rl-carousel-card').forEach(function (card) {
+        var cardCenter = card.offsetLeft + card.offsetWidth / 2;
+        var dist = Math.abs(cardCenter - trackCenter);
+        if (dist < closestDist) { closestDist = dist; closest = card; }
+      });
+      return closest;
+    }
+
+    function setActiveCarouselCard(card) {
+      if (!carouselTrack) return;
+      carouselTrack.querySelectorAll('.rl-carousel-card').forEach(function (c) { c.classList.toggle('rl-carousel-active', c === card); });
+    }
+
+    function selectCarouselItem(code) {
+      selectedChar = code;
+      updateMenuBg(code);
+    }
+
+    function renderCarousel() {
+      if (!carouselTrack) return;
+      var items = buildCarouselItems();
+      carouselTrack.innerHTML = '';
+      if (!items.length) return;
+
+      var startSpacer = document.createElement('div');
+      startSpacer.className = 'rl-carousel-spacer';
+      carouselTrack.appendChild(startSpacer);
+
+      var cloneStart = buildCarouselCard(items[items.length - 1]);
+      cloneStart.classList.add('rl-carousel-clone');
+      carouselTrack.appendChild(cloneStart);
+
+      var realCards = [];
+      items.forEach(function (item) {
+        var card = buildCarouselCard(item);
+        realCards.push(card);
+        carouselTrack.appendChild(card);
+      });
+
+      var cloneEnd = buildCarouselCard(items[0]);
+      cloneEnd.classList.add('rl-carousel-clone');
+      carouselTrack.appendChild(cloneEnd);
+
+      var endSpacer = document.createElement('div');
+      endSpacer.className = 'rl-carousel-spacer';
+      carouselTrack.appendChild(endSpacer);
+
+      function wireCard(card, item) {
+        card.addEventListener('click', function () {
+          selectCarouselItem(item.code);
+          scrollCarouselTo(card, true);
+        });
+      }
+      wireCard(cloneStart, items[items.length - 1]);
+      realCards.forEach(function (card, i) { wireCard(card, items[i]); });
+      wireCard(cloneEnd, items[0]);
+
+      function onSettle() {
+        var centered = findCenteredCarouselCard();
+        if (!centered) return;
+        if (centered === cloneStart) {
+          scrollCarouselTo(realCards[realCards.length - 1], false);
+          centered = realCards[realCards.length - 1];
+        } else if (centered === cloneEnd) {
+          scrollCarouselTo(realCards[0], false);
+          centered = realCards[0];
+        }
+        var code = centered.getAttribute('data-rl-char');
+        selectCarouselItem(code);
+        setActiveCarouselCard(centered);
       }
 
-      // OG — free default, always first
-      var ogCard = addTile({
-        code: og.code, label: og.label, imgSrc: BASE + og.src,
-        onClick: function () { selectedChar = og.code; selectCard(ogCard); }
+      carouselTrack.addEventListener('scroll', function () {
+        clearTimeout(carouselSettleTimer);
+        carouselSettleTimer = setTimeout(onSettle, 120);
+      }, { passive: true });
+
+      // Land centered on OG (real index 0) to start.
+      requestAnimationFrame(function () {
+        scrollCarouselTo(realCards[0], false);
+        selectCarouselItem(items[0].code);
+        setActiveCarouselCard(realCards[0]);
       });
 
-      // Owned flock birds, in the order they were added
-      flock.forEach(function (code) {
-        if (code === og.code) return;
-        var ch = rosterByCode(code);
-        if (!ch) return;
-        var card;
-        card = addTile({
-          code: ch.code, label: ch.label, imgSrc: BASE + ch.src,
-          onClick: function () { selectedChar = ch.code; selectCard(card); }
-        });
-      });
-
-      // Random — picks a surprise from the WHOLE roster, not just your flock, revealed only once the round starts
-      var randomCard = addTile({
-        code: RANDOM_CODE, label: 'Random', imgSrc: '',
-        onClick: function () { selectedChar = RANDOM_CODE; selectCard(randomCard); }
-      });
-      randomCard.classList.add('rl-char-random');
-      randomCard.querySelector('img').remove();
-      randomCard.insertBefore(buildEmblem('?'), randomCard.firstChild);
-
-      selectedChar = wantSelected;
-      updateMenuBg(wantSelected);
-
-      // Shop tile — always last
-      var shopTile = document.createElement('button');
-      shopTile.type = 'button';
-      shopTile.className = 'rl-char-card rl-char-shop-tile';
-      shopTile.appendChild(buildEmblem('+'));
-      var shopLabel = document.createElement('span');
-      shopLabel.textContent = 'Rebel Shop';
-      shopTile.appendChild(shopLabel);
-      shopTile.addEventListener('click', function () {
-        renderShopGrid();
-        showScreen('shop-from-start');
-      });
-      charGrid.appendChild(shopTile);
+      function stepCarousel(dir) {
+        var current = findCenteredCarouselCard();
+        if (!current) return;
+        var target = dir > 0 ? current.nextElementSibling : current.previousElementSibling;
+        while (target && !target.classList.contains('rl-carousel-card')) {
+          target = dir > 0 ? target.nextElementSibling : target.previousElementSibling;
+        }
+        if (target) scrollCarouselTo(target, true);
+      }
+      if (carouselPrevBtn) carouselPrevBtn.onclick = function () { stepCarousel(-1); };
+      if (carouselNextBtn) carouselNextBtn.onclick = function () { stepCarousel(1); };
     }
 
     function renderShopGrid() {
       if (!shopGrid) return;
-      var flock = getFlock();
-      var available = roster.filter(function (ch) { return ch.code !== OG_CODE && flock.indexOf(ch.code) === -1; });
+      var owned = ownedRebelCodes();
+      var available = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1; });
       if (!available.length) {
         shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
         return;
@@ -714,6 +813,14 @@
     // Unconditional (not gated by shopEnabled) so it's safely callable from
     // both the main-screen button and the shop's purchase-detail card. The
     // button/modal are hidden via CSS on web regardless, same as everywhere else.
+    var getMoreBtn = mount.querySelector('[data-rl-get-more-rebels]');
+    if (getMoreBtn) {
+      getMoreBtn.addEventListener('click', function () {
+        renderShopGrid();
+        showScreen('shop-from-start');
+      });
+    }
+
     var claimBtn = mount.querySelector('[data-rl-claim-code]');
     var claimShopBtn = mount.querySelector('[data-rl-shop-claim-code]');
     var claimDetailBtn = mount.querySelector('[data-rl-shop-detail-claim-code]');
