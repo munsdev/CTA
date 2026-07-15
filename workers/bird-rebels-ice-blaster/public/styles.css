@@ -276,33 +276,12 @@
    toggles above it. */
 .rl-native [data-rl-screen="start"] [data-rl-start]{ margin-top:auto; }
 
-/* ---------- top bar (native only) ---------- */
+/* ---------- setup screen logo (native only, no bar/background) ---------- */
 [data-rl-topbar]{ display:none; }
-.rl-native [data-rl-screen="start"] [data-rl-topbar]{
-  display:flex; align-items:center; justify-content:center;
-  position:relative; left:50%; transform:translateX(-50%);
-  flex:0 0 auto; width:100vw; padding:14px 18px; margin-bottom:10px;
-  background-color:#0a0a0a;
-  background-image:url('textures/knobs.png');
-  background-repeat:repeat;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  /* The transform above creates its own stacking context, which means the
-     dropdown menu popup nested inside (z-index:9) was only ever being
-     compared against other elements INSIDE the topbar — never against the
-     carousel cards outside it, which are also transformed (scale) and
-     create their own competing stack. Explicit z-index here lifts the
-     whole topbar+popup stack above the carousel's. */
-  z-index:20;
-}
-.rl-topbar-logo{
-  /* 60vw per instruction, clamped so it can't grow unreasonably large on
-     wide/tablet screens where 60% of the viewport would be excessive. */
-  width:clamp(180px, 60vw, 420px); height:auto; display:block;
-}
-.rl-topbar-menu-btn{
-  position:absolute; right:16px; top:50%; transform:translateY(-50%);
-  width:48px; height:48px; appearance:none; cursor:pointer; background:transparent; border:none;
-  color:#fff; font-size:29px; line-height:1;
+.rl-setup-logo{ display:none; }
+.rl-native [data-rl-screen="start"] .rl-setup-logo{
+  display:block; width:clamp(160px, 55vw, 340px); height:auto;
+  margin:14px auto 8px;
 }
 
 .rl-slider-row{ margin:0 0 20px; }
