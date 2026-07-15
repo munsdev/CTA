@@ -644,9 +644,8 @@
     }
 
     function scrollCarouselTo(card, smooth) {
-      if (!carouselTrack || !card) return;
-      var target = card.offsetLeft - (carouselTrack.clientWidth - card.offsetWidth) / 2;
-      carouselTrack.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
+      if (!card) return;
+      card.scrollIntoView({ inline: 'center', block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
     }
 
     function findCenteredCarouselCard() {
@@ -732,9 +731,9 @@
 
       // Land centered on OG (real index 0) to start.
       requestAnimationFrame(function () {
-        scrollCarouselTo(realCards[0], false);
         selectCarouselItem(items[0].code);
         setActiveCarouselCard(realCards[0]);
+        scrollCarouselTo(realCards[0], false);
       });
 
       function stepCarousel(dir) {
