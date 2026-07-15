@@ -380,24 +380,29 @@ export default {
       return redeemCouponChoice(request, env);
     }
 
-    // Everything else (loader.js, engine.js, styles.css, sounds/*, and
-    // anything unmatched) falls through to static assets in ./public.
-    // The sound loader pulls these via fetch() (needed to decode them for
-    // the Web Audio API), and fetch() enforces CORS even though a plain
+    // Everything else (loader.js, engine.js, styles.css, fonts/*, sounds/*,
+    // and anything unmatched) falls through to static assets in ./public.
+    // The sound/font loaders pull these via fetch() (needed to decode audio
+    // for the Web Audio API, and @font-face cross-origin loads enforce CORS
+    // the same way), and fetch() enforces CORS even though a plain
     // <script src> or <img src> load wouldn't — so these need an explicit
     // Access-Control-Allow-Origin header, unlike loader.js/engine.js which
     // load fine without one.
     const assetResponse = await env.ASSETS.fetch(request);
     const response = new Response(assetResponse.body, assetResponse);
     response.headers.set('Access-Control-Allow-Origin', '*');
-    // loader.js/engine.js/styles.css are the files that change on every
-    // deploy but are requested from a fixed, unversioned URL — without this,
-    // browsers and the Android WebView can hang onto a stale cached copy
-    // for a while after a push, which has caused "why isn't my fix showing
-    // up" confusion more than once. Force revalidation on every load for
-    // just these three; everything else (sounds, logo, character art via
-    // R2) keeps its normal caching since those change far less often.
-    if (path === '/loader.js' || path === '/engine.js' || path === '/styles.css') {
+    // loader.js/engine.js/styles.css/fonts are the files most likely to be
+    // requested from a fixed, unversioned URL while still changing — without
+    // this, Cloudflare's edge cache (and browsers/WebViews) can keep serving
+    // a stale cached copy for a while after a push. This bit us for real:
+    // font files cached at the edge *before* the CORS header above existed
+    // kept being served as cf-cache-status:HIT with no
+    // Access-Control-Allow-Origin at all, breaking @font-face loads in the
+    // Capacitor WebView even though the Worker code was already fixed.
+    // Force revalidation on every load for these; everything else (sounds,
+    // logo, character art via R2) keeps its normal caching since those
+    // change far less often.
+    if (path === '/loader.js' || path === '/engine.js' || path === '/styles.css' || path.startsWith('/fonts/')) {
       response.headers.set('Cache-Control', 'no-cache, must-revalidate');
     }
     return response;
