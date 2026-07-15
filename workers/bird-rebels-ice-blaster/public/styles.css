@@ -102,8 +102,6 @@
 }
 .rl-btn:disabled{ opacity:.55; cursor:default; }
 .rl-btn + .rl-btn{ margin-top:10px; }
-.rl-btn-row{ display:flex; gap:10px; }
-.rl-btn-row .rl-btn{ margin-top:0; }
 
 .rl-loading{ text-align:center; color:var(--rl-dim); font-size:12.5px; padding:20px 0; }
 .rl-error{ text-align:center; color:var(--rl-laser); font-size:12px; margin:8px 0 0; min-height:1.4em; }
@@ -456,7 +454,6 @@
   color:var(--rl-ink); padding:6px 12px; border-radius:20px; cursor:pointer; flex:none;
 }
 .rl-hud-btn:hover{ border-color:var(--rl-ice); color:var(--rl-ice); }
-.rl-hud-btns{ display:flex; gap:6px; align-items:center; }
 
 .rl-powerup-bar{
   position:absolute; top:0; left:0; right:0; height:22px;
