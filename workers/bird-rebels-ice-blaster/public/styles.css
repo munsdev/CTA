@@ -137,7 +137,15 @@
 .rl-check-row input[data-rl-rainbow-toggle]:checked::before{ transform:translateX(18px); }
 
 /* ---------- native app simplified UI (data-rl-shop="1" only — never applies on web) ---------- */
-.rl-native{ --rl-font-body:'Genos', var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace); }
+.rl-native{
+  --rl-font-display:'Black Elite', var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
+  --rl-font-body:'Genos', var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
+}
+.rl-native .rl-frame{
+  background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-bg-top),var(--rl-bg-bottom));
+  background-size:220px 220px, cover;
+  background-blend-mode:soft-light, normal;
+}
 .rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
 
