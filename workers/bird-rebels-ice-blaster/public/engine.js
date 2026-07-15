@@ -1514,6 +1514,13 @@
       .then(function (results) {
         roster = Array.isArray(results[1]) ? results[1] : [];
         renderCharGrid();
+        // Preload every roster character's art immediately, so by the time
+        // a card scrolls into view (including the carousel's wraparound
+        // clones/first-last cards) the image is already cached and decoded
+        // instead of being a cold network fetch at that exact moment —
+        // this was the actual cause of the visible pause/pop-in at the
+        // carousel's loop boundary, not the carousel's own timing logic.
+        roster.forEach(preloadChar);
         sceneRoster = Array.isArray(results[2]) ? results[2] : [];
         renderSceneGrid();
         updateSceneButton();
