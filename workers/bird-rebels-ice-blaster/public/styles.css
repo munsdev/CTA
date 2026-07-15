@@ -70,15 +70,19 @@
   /* Solid-fill buttons are, with only rare exceptions, commit/confirm
      actions — Start, Resume, Save Score, Purchase, Submit, Confirm — so
      green is the sensible default rather than styling each one
-     individually. Ghost/outline buttons are the "everything else" tier
-     (see .rl-btn-ghost below) and default to yellow; back/cancel actions
-     are red (see .rl-btn-back below). */
-  background:var(--rl-life-on); color:#042010; transition:transform .12s ease, filter .12s ease;
+     individually. Muted rather than a bright saturated green: full
+     brightness read as much bolder/louder than the yellow and red buttons
+     next to it. White text instead of near-black keeps it legible without
+     needing the fill itself to carry all the contrast. Ghost/outline
+     buttons are the "everything else" tier (see .rl-btn-ghost below) and
+     default to yellow; back/cancel actions are red (see .rl-btn-back below). */
+  background:color-mix(in srgb, var(--rl-life-on) 55%, #0d0a00 45%); color:#fff;
+  transition:transform .12s ease, filter .12s ease;
 }
 /* Kept as an explicit statement of intent even though it now matches the
    base color above — Start Game being green is deliberate, not incidental. */
-[data-rl-start]{ background:var(--rl-life-on); color:#042010; }
-.rl-btn:hover{ filter:brightness(1.08); }
+[data-rl-start]{ background:color-mix(in srgb, var(--rl-life-on) 55%, #0d0a00 45%); color:#fff; }
+.rl-btn:hover{ filter:brightness(1.15); }
 .rl-btn:active{ transform:scale(.97); }
 .rl-btn.rl-btn-ghost{
   background:rgba(255,200,0,.1); color:var(--rl-accent); border:1px solid var(--rl-accent);
@@ -89,9 +93,12 @@
 /* Genuine "go back one level" buttons AND Cancel buttons — both dismiss
    without committing, so both are red. Not every ghost button, though:
    rl-btn-ghost is still shared with genuinely neutral actions (Restart
-   Run, Claim a Code, Leaderboard, Load More, etc.) that stay yellow. */
+   Run, Claim a Code, Leaderboard, Load More, etc.) that stay yellow.
+   Border+text+background all in red read as too much — now a neutral dark
+   fill with just the red border and white text, so red still reads
+   clearly as the signal without saturating the whole button. */
 .rl-btn.rl-btn-ghost.rl-btn-back{
-  background:rgba(255,74,74,.12); color:var(--rl-laser); border-color:var(--rl-laser);
+  background:rgba(255,255,255,.03); color:#fff; border-color:var(--rl-laser);
 }
 .rl-btn:disabled{ opacity:.55; cursor:default; }
 .rl-btn + .rl-btn{ margin-top:10px; }
@@ -103,6 +110,14 @@
 
 /* ---------- character select ---------- */
 .rl-field-label{ font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--rl-dim); }
+/* "Select Your Rebel" specifically — at least double the base label size,
+   rounded up a bit. At this size it reads as a heading rather than a small
+   field label, so it switches to the display font and brighter ink color
+   to match that role. */
+.rl-field-label-lg{
+  font-size:26px; font-family:var(--rl-font-display); font-weight:800; color:var(--rl-ink);
+  letter-spacing:.02em;
+}
 .rl-char-label-row{ margin-bottom:8px; }
 .rl-char-grid{
   display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:16px;
@@ -155,7 +170,7 @@
 /* ---------- scene select button (main menu) ---------- */
 .rl-scene-btn{
   display:flex; align-items:center; justify-content:space-between; width:100%;
-  appearance:none; cursor:pointer; margin:10px 0 14px; padding:12px 14px;
+  appearance:none; cursor:pointer; padding:12px 14px;
   border:1.5px solid var(--tile-accent, var(--rl-accent)); border-radius:9px;
   background:color-mix(in srgb, var(--tile-accent, var(--rl-accent)) 10%, transparent);
   font-family:var(--rl-font-body);
@@ -167,6 +182,21 @@
   font-family:var(--rl-font-display); font-weight:800; font-size:15px;
   color:var(--tile-accent, var(--rl-accent)); margin-left:8px;
 }
+
+/* Difficulty + Scene buttons side by side in one row, per instruction —
+   condenses what used to be a full-width tier row + note + two checkboxes
+   stacked inline into two compact buttons. */
+.rl-picker-row{ display:flex; gap:8px; margin:10px 0 14px; }
+.rl-picker-row .rl-scene-btn{ margin:0; flex:1 1 0; }
+.rl-picker-wrap{ position:relative; flex:1 1 0; }
+.rl-picker-popup{
+  position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:9;
+  background:var(--rl-panel); border:1px solid var(--rl-panel-line); border-radius:10px;
+  box-shadow:0 8px 22px rgba(0,0,0,.5); padding:14px;
+}
+.rl-picker-popup .rl-tier-row{ margin-bottom:12px; }
+.rl-picker-popup .rl-tier-note{ margin:-4px 0 12px; }
+.rl-picker-popup .rl-check-row{ margin:0; }
 
 /* ---------- native app simplified UI (data-rl-shop="1" only — never applies on web) ---------- */
 .rl-native{
@@ -317,16 +347,12 @@
 .rl-carousel-card img{
   background:transparent; border-radius:0;
 }
-.rl-carousel-card span{ font-size:11px; margin-top:4px; }
+.rl-carousel-card span{ font-size:11px; margin-top:4px; color:var(--tile-accent, var(--rl-accent)); }
 .rl-carousel-arrow{
   flex:0 0 auto; width:34px; height:34px; border-radius:50%; appearance:none; cursor:pointer;
   border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-ink);
   font-size:20px; line-height:1; display:flex; align-items:center; justify-content:center;
 }
-
-/* Two toggles side by side, native only */
-.rl-native [data-rl-screen="start"] .rl-toggle-row{ display:flex; gap:8px; }
-.rl-native [data-rl-screen="start"] .rl-toggle-row .rl-check-row{ flex:1 1 0; margin:8px 0; justify-content:center; }
 
 /* Gameplay control hint removed on native — the app doesn't need the desktop-style reminder */
 .rl-native .rl-pause-hint{ display:none; }
@@ -336,7 +362,11 @@
    the carousel card is now emblem-only with no box to tint, so the accent
    shows on the text instead. Shop grid tiles (which do still have a card
    box) keep the border+background treatment via the base rule above. */
-.rl-native .rl-carousel-card.rl-carousel-active span{ color:var(--tile-accent, var(--rl-accent)); }
+/* rl-carousel-active no longer drives label color (see .rl-carousel-card
+   span above — it's constant now, not conditional on settle/active state).
+   The class itself is still toggled in JS to track which card is the
+   current selection for other purposes (e.g. updating the menu
+   background). */
 
 /* Give Casual Mode the same pill-toggle treatment as Rainbow Blizzard, native only */
 .rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]{
