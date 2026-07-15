@@ -173,15 +173,22 @@
 
   var TEMPLATE = ''
     + '<div class="rl-frame">'
+    + '  <div class="rl-screen" data-rl-screen="welcome" hidden>'
+    + '    <div class="rl-welcome-inner">'
+    + '      <img class="rl-welcome-logo" src="logo/ice-blaster-logo-round.png" alt="Bird Rebels: Ice Blaster">'
+    + '      <p class="rl-welcome-desc">Ice cubes are falling — laser them down before they reach the bottom. Pick your Bird Rebel, choose a difficulty, and see how long your flock can hold the line.</p>'
+    + '      <button type="button" class="rl-btn" data-rl-welcome-start>Start</button>'
+    + '      <div class="rl-welcome-icons">'
+    + '        <button type="button" class="rl-welcome-icon-btn" data-rl-welcome-help aria-label="Help" title="Help">&#10067;</button>'
+    + '        <button type="button" class="rl-welcome-icon-btn" data-rl-welcome-settings aria-label="Settings" title="Settings">&#9881;</button>'
+    + '        <button type="button" class="rl-welcome-icon-btn" data-rl-welcome-credits aria-label="Credits" title="Credits">&#9733;</button>'
+    + '      </div>'
+    + '    </div>'
+    + '  </div>'
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-topbar" data-rl-topbar>'
-    + '      <h1 class="rl-topbar-title">Ice Blaster</h1>'
-    + '      <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu">&#9776;</button>'
-    + '      <div class="rl-menu-popup" data-rl-menu-popup hidden>'
-    + '        <button type="button" class="rl-menu-item" data-rl-menu-help>Help</button>'
-    + '        <button type="button" class="rl-menu-item" data-rl-menu-settings>Settings</button>'
-    + '        <button type="button" class="rl-menu-item" data-rl-menu-credits>Credits</button>'
-    + '      </div>'
+    + '      <img class="rl-topbar-logo" src="logo/ice-blaster-logo.png" alt="Bird Rebels: Ice Blaster">'
+    + '      <button class="rl-topbar-menu-btn" data-rl-exit-to-welcome type="button" aria-label="Back to Welcome" title="Back to Welcome">&#8962;</button>'
     + '    </div>'
     + '    <div class="rl-screen-inner">'
     + '      <div class="rl-char-label-row rl-field-label rl-field-label-lg">Select Your Rebel</div>'
@@ -193,26 +200,10 @@
     + '      </div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels>Get More Rebels</button>'
     + '      <div class="rl-picker-row">'
-    + '        <div class="rl-picker-wrap">'
-    + '          <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
-    + '            <span class="rl-scene-btn-label">Difficulty</span>'
-    + '            <span class="rl-scene-btn-name" data-rl-difficulty-btn-name>Medium</span>'
-    + '          </button>'
-    + '          <div class="rl-picker-popup" data-rl-difficulty-popup hidden>'
-    + '            <div class="rl-tier-row" data-rl-tier-row>'
-    + '              <button type="button" class="rl-tier-btn" data-rl-tier="easy">Easy</button>'
-    + '              <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium">Medium</button>'
-    + '              <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
-    + '            </div>'
-    + '            <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
-    + '            <div class="rl-check-row">'
-    + '              <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
-    + '              <label for="rl-kidmode-toggle">Casual Mode'
-    + '                <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
-    + '              </label>'
-    + '            </div>'
-    + '          </div>'
-    + '        </div>'
+    + '        <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
+    + '          <span class="rl-scene-btn-label">Difficulty</span>'
+    + '          <span class="rl-scene-btn-name" data-rl-difficulty-btn-name>Medium</span>'
+    + '        </button>'
     + '        <button type="button" class="rl-scene-btn" data-rl-scene-btn>'
     + '          <span class="rl-scene-btn-label">Scene</span>'
     + '          <span class="rl-scene-btn-name" data-rl-scene-btn-name>Standard</span>'
@@ -377,6 +368,26 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-overlay" data-rl-screen="difficulty" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Difficulty</h2>'
+    + '      <p class="rl-sub">Pick a challenge level and any extra options.</p>'
+    + '      <div class="rl-tier-row" data-rl-tier-row>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-tier="easy">Easy</button>'
+    + '        <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium">Medium</button>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
+    + '      </div>'
+    + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <div class="rl-check-row">'
+    + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
+    + '        <label for="rl-kidmode-toggle">Casual Mode'
+    + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
+    + '        </label>'
+    + '      </div>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-difficulty>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-unlock-modal" data-rl-claim-modal hidden>'
     + '    <div class="rl-unlock-panel">'
     + '      <h3>Claim a Code</h3>'
@@ -504,17 +515,27 @@
     mount.querySelectorAll('[data-rl-screen]').forEach(function (e) {
       screens[e.getAttribute('data-rl-screen')] = e;
     });
+    // Native boots to Welcome instead of straight to setup. Web embed never
+    // sets data-rl-shop, so it's unaffected and keeps opening on setup
+    // directly, same as before.
+    if (shopEnabled && screens.welcome) {
+      screens.welcome.hidden = false;
+      screens.start.hidden = true;
+    }
+    var infoReturnScreen = 'start'; // which screen Help/Settings/Credits should return to on close
     function showScreen(name) {
       screens.pause.hidden = true;
       screens.gameover.hidden = true;
       screens.leaderboard.hidden = true;
       if (screens.shop) screens.shop.hidden = true;
       if (screens.scenes) screens.scenes.hidden = true;
+      if (screens.difficulty) screens.difficulty.hidden = true;
       if (screens.info) screens.info.hidden = true;
       if (screens.settings) screens.settings.hidden = true;
       if (screens.credits) screens.credits.hidden = true;
-      if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
+      if (name === 'welcome') { if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; }
+      else if (name === 'start') { if (screens.welcome) screens.welcome.hidden = true; screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'game') { if (screens.welcome) screens.welcome.hidden = true; screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
       else if (name === 'gameover') { screens.start.hidden = true; screens.game.hidden = false; screens.gameover.hidden = false; }
       else if (name === 'leaderboard-from-start') { screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
@@ -523,12 +544,17 @@
       else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'scenes-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.scenes) screens.scenes.hidden = false; }
       else if (name === 'scenes-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
-      else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'settings-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
-      else if (name === 'settings-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'credits-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.credits) screens.credits.hidden = false; }
-      else if (name === 'credits-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'difficulty-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.difficulty) screens.difficulty.hidden = false; }
+      else if (name === 'difficulty-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'info-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; if (screens.welcome) screens.welcome.hidden = true; if (screens.info) screens.info.hidden = false; }
+      else if (name === 'info-from-welcome') { infoReturnScreen = 'welcome'; if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
+      else if (name === 'info-close') { showScreen(infoReturnScreen); }
+      else if (name === 'settings-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; if (screens.welcome) screens.welcome.hidden = true; if (screens.settings) screens.settings.hidden = false; }
+      else if (name === 'settings-from-welcome') { infoReturnScreen = 'welcome'; if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
+      else if (name === 'settings-close') { showScreen(infoReturnScreen); }
+      else if (name === 'credits-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; if (screens.welcome) screens.welcome.hidden = true; if (screens.credits) screens.credits.hidden = false; }
+      else if (name === 'credits-from-welcome') { infoReturnScreen = 'welcome'; if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; if (screens.credits) screens.credits.hidden = false; }
+      else if (name === 'credits-close') { showScreen(infoReturnScreen); }
     }
 
     // ---------- character roster (live from the API) ----------
@@ -960,7 +986,6 @@
     }
 
     mount.querySelector('[data-rl-scene-btn]').addEventListener('click', function () {
-      if (difficultyPopup) difficultyPopup.hidden = true;
       renderSceneGrid();
       showScreen('scenes-from-start');
     });
@@ -1046,22 +1071,20 @@
       var closeCreditsBtn = mount.querySelector('[data-rl-close-credits]');
       if (closeCreditsBtn) closeCreditsBtn.addEventListener('click', function () { showScreen('credits-close'); });
 
-      // ---- Top bar menu: Help / Settings / Credits ----
-      var menuBtn = mount.querySelector('[data-rl-menu-btn]');
-      var menuPopup = mount.querySelector('[data-rl-menu-popup]');
-      var menuHelpBtn = mount.querySelector('[data-rl-menu-help]');
-      var menuSettingsBtn = mount.querySelector('[data-rl-menu-settings]');
-      var menuCreditsBtn = mount.querySelector('[data-rl-menu-credits]');
-      if (menuBtn) {
-        menuBtn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          if (menuPopup) menuPopup.hidden = !menuPopup.hidden;
-        });
-      }
-      document.addEventListener('click', function () { if (menuPopup) menuPopup.hidden = true; });
-      if (menuHelpBtn) menuHelpBtn.addEventListener('click', function () { menuPopup.hidden = true; showScreen('info-from-start'); });
-      if (menuSettingsBtn) menuSettingsBtn.addEventListener('click', function () { menuPopup.hidden = true; showScreen('settings-from-start'); });
-      if (menuCreditsBtn) menuCreditsBtn.addEventListener('click', function () { menuPopup.hidden = true; showScreen('credits-from-start'); });
+      // ---- Welcome screen: Start button + Help/Settings/Credits icons ----
+      var welcomeStartBtn = mount.querySelector('[data-rl-welcome-start]');
+      if (welcomeStartBtn) welcomeStartBtn.addEventListener('click', function () { showScreen('start'); });
+      var welcomeHelpBtn = mount.querySelector('[data-rl-welcome-help]');
+      var welcomeSettingsBtn = mount.querySelector('[data-rl-welcome-settings]');
+      var welcomeCreditsBtn = mount.querySelector('[data-rl-welcome-credits]');
+      if (welcomeHelpBtn) welcomeHelpBtn.addEventListener('click', function () { showScreen('info-from-welcome'); });
+      if (welcomeSettingsBtn) welcomeSettingsBtn.addEventListener('click', function () { showScreen('settings-from-welcome'); });
+      if (welcomeCreditsBtn) welcomeCreditsBtn.addEventListener('click', function () { showScreen('credits-from-welcome'); });
+
+      // ---- Setup screen: single icon button back to Welcome (replaces the
+      // old hamburger menu — Help/Settings/Credits now live on Welcome) ----
+      var exitToWelcomeBtn = mount.querySelector('[data-rl-exit-to-welcome]');
+      if (exitToWelcomeBtn) exitToWelcomeBtn.addEventListener('click', function () { showScreen('welcome'); });
 
       // ---- Settings: SFX/Music volume, persisted ----
       var sfxSlider = mount.querySelector('[data-rl-sfx-volume]');
@@ -1259,30 +1282,20 @@
         charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
       });
 
-    // ---------- difficulty tier selector (condensed into a popup off the
-    // Difficulty button, alongside the Scene button) ----------
+    // ---------- difficulty tier selector (full-screen overlay off the
+    // Difficulty button, matching the Scene picker's shape) ----------
     var selectedTier = DEFAULT_TIER;
     var difficultyBtn = mount.querySelector('[data-rl-difficulty-btn]');
     var difficultyBtnName = mount.querySelector('[data-rl-difficulty-btn-name]');
-    var difficultyPopup = mount.querySelector('[data-rl-difficulty-popup]');
     function updateDifficultyButton() {
       if (difficultyBtnName) difficultyBtnName.textContent = (TIERS[selectedTier] || TIERS[DEFAULT_TIER]).label;
     }
-    function closeDifficultyPopup() { if (difficultyPopup) difficultyPopup.hidden = true; }
     if (difficultyBtn) {
-      difficultyBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (difficultyPopup) difficultyPopup.hidden = !difficultyPopup.hidden;
+      difficultyBtn.addEventListener('click', function () {
+        showScreen('difficulty-from-start');
       });
     }
-    // Tapping anywhere outside the popup closes it — same pattern as the
-    // hamburger menu popup elsewhere on this screen.
-    document.addEventListener('click', function (e) {
-      if (difficultyPopup && !difficultyPopup.hidden && difficultyBtn
-          && !difficultyPopup.contains(e.target) && e.target !== difficultyBtn && !difficultyBtn.contains(e.target)) {
-        closeDifficultyPopup();
-      }
-    });
+    mount.querySelector('[data-rl-close-difficulty]').addEventListener('click', function () { showScreen('difficulty-close'); });
     mount.querySelectorAll('[data-rl-tier]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         selectedTier = btn.getAttribute('data-rl-tier');
@@ -1290,9 +1303,9 @@
         updateDifficultyButton();
         // Difficulty is a cheap, reversible pick (unlike scene selection,
         // which stays open until Confirm) — closing immediately on tap
-        // keeps this feeling like a compact menu rather than adding an
-        // extra confirm step for no real benefit.
-        closeDifficultyPopup();
+        // keeps this feeling snappy rather than adding an extra confirm
+        // step for no real benefit.
+        showScreen('difficulty-close');
       });
     });
     updateDifficultyButton();
