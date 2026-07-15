@@ -82,6 +82,13 @@
 .rl-btn.rl-btn-ghost.rl-btn-confirm{
   background:rgba(255,200,0,.12); color:var(--rl-accent); border-color:var(--rl-accent);
 }
+/* Genuine "go back one level" buttons only — not every ghost button, since
+   rl-btn-ghost is shared with non-back actions (Restart Run, Cancel, Claim
+   a Code, Leaderboard, etc.) that shouldn't turn red just because they
+   share the same base ghost styling. */
+.rl-btn.rl-btn-ghost.rl-btn-back{
+  background:rgba(255,74,74,.12); color:var(--rl-laser); border-color:var(--rl-laser);
+}
 .rl-btn:disabled{ opacity:.55; cursor:default; }
 .rl-btn + .rl-btn{ margin-top:10px; }
 .rl-btn-row{ display:flex; gap:10px; }
@@ -173,9 +180,14 @@
 .rl-native:has([data-rl-screen="start"]:not([hidden])) .rl-frame{
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-menu-bg),var(--rl-menu-bg));
   background-size:220px 220px, cover;
-  background-blend-mode:soft-light, normal;
+  /* screen, not soft-light: soft-light barely lightens near-black
+     (--rl-menu-bg is #0d0a00), so the texture was rendering as invisible.
+     screen actually shows the diamond pattern as a subtle lighter overlay
+     against black. The gameplay .rl-frame rule above keeps soft-light,
+     since that was tuned correctly for its navy gradient background. */
+  background-blend-mode:screen, normal;
 }
-.rl-info-block{ font-size:12px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
+.rl-info-block{ font-size:18px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
 
 .rl-native [data-rl-screen="start"] .rl-tier-note,
@@ -195,42 +207,48 @@
 .rl-native [data-rl-screen="start"] .rl-screen-inner{
   display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0 18px;
 }
+/* Fills the screen to full height: everything above flows naturally from
+   the top, then Start Game (and the Leaderboard button + error text right
+   after it) gets pushed all the way to the bottom as a group, instead of
+   the whole block just sitting wherever it naturally falls after the
+   toggles above it. */
+.rl-native [data-rl-screen="start"] [data-rl-start]{ margin-top:auto; }
 
 /* ---------- top bar (native only) ---------- */
 [data-rl-topbar]{ display:none; }
 .rl-native [data-rl-screen="start"] [data-rl-topbar]{
   display:flex; align-items:center; justify-content:center;
   position:relative; left:50%; transform:translateX(-50%);
-  flex:0 0 auto; width:100vw; height:52px; padding:0 18px; margin-bottom:14px;
+  flex:0 0 auto; width:100vw; height:78px; padding:0 18px; margin-bottom:14px;
   background-color:#0a0a0a;
   background-image:url('textures/knobs.png');
   background-repeat:repeat;
   border-bottom:1px solid rgba(255,255,255,.08);
 }
 .rl-topbar-title{
-  font-family:'Black Elite', var(--rl-font-display); font-weight:700; font-size:26px;
+  font-family:'Black Elite', var(--rl-font-display); font-weight:700; font-size:39px;
   letter-spacing:.04em; color:#fff; margin:0; text-transform:uppercase;
 }
 .rl-topbar-menu-btn{
-  position:absolute; right:14px; top:50%; transform:translateY(-50%);
-  width:32px; height:32px; appearance:none; cursor:pointer; background:transparent; border:none;
-  color:#fff; font-size:19px; line-height:1;
+  position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  width:48px; height:48px; appearance:none; cursor:pointer; background:transparent; border:none;
+  color:#fff; font-size:29px; line-height:1;
 }
 .rl-menu-popup{
-  position:absolute; top:46px; right:8px; z-index:9;
+  position:absolute; top:70px; right:8px; z-index:9;
   background:var(--rl-panel); border:1px solid var(--rl-panel-line); border-radius:10px;
-  box-shadow:0 8px 22px rgba(0,0,0,.5); overflow:hidden; min-width:150px;
+  box-shadow:0 8px 22px rgba(0,0,0,.5); overflow:hidden; min-width:210px;
 }
 .rl-menu-item{
-  display:block; width:100%; padding:11px 16px; text-align:left; background:transparent; border:none;
+  display:block; width:100%; padding:16px 24px; text-align:left; background:transparent; border:none;
   border-bottom:1px solid var(--rl-panel-line); color:var(--rl-ink); font-family:var(--rl-font-body);
-  font-size:13.5px; cursor:pointer;
+  font-size:20px; cursor:pointer;
 }
 .rl-menu-item:last-child{ border-bottom:none; }
 .rl-menu-item:active{ background:rgba(255,255,255,.06); }
 
 .rl-slider-row{ margin:0 0 20px; }
-.rl-slider-row label{ display:block; font-size:12px; color:var(--rl-dim); margin-bottom:6px; letter-spacing:.02em; }
+.rl-slider-row label{ display:block; font-size:18px; color:var(--rl-dim); margin-bottom:6px; letter-spacing:.02em; }
 .rl-slider-row input[type="range"]{
   width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px;
   background:var(--rl-panel-line); outline:none;
@@ -442,7 +460,7 @@
   overflow-y:auto;
 }
 .rl-overlay h2{
-  font-family:var(--rl-font-display); font-size:22px; font-weight:800; text-align:center; margin:0 0 4px;
+  font-family:var(--rl-font-display); font-size:33px; font-weight:800; text-align:center; margin:0 0 4px;
 }
 .rl-overlay .rl-final{
   text-align:center; color:var(--rl-dim); font-size:13px; margin:0 0 18px;
@@ -465,6 +483,19 @@
 .rl-tab.rl-selected{ border-color:var(--rl-accent); color:var(--rl-accent); background:rgba(255,200,0,.1); }
 
 .rl-board{ margin:6px 0 16px; max-height:190px; overflow-y:auto; border:1px solid var(--rl-panel-line); border-radius:9px; }
+/* Leaderboard specifically: fill the full screen height instead of
+   shrinking to fit content centered in the middle, and let the row list
+   grow to fill whatever space is left instead of stopping at a fixed
+   190px — same full-height direction as the home screen. Other overlays
+   sharing .rl-overlay (pause, gameover, shop confirm) are short, deliberately
+   centered dialogs and are untouched by this. */
+[data-rl-screen="leaderboard"]{ justify-content:flex-start; }
+[data-rl-screen="leaderboard"] .rl-screen-inner{
+  display:flex; flex-direction:column; flex:1 1 auto; min-height:0;
+}
+[data-rl-screen="leaderboard"] .rl-board{
+  flex:1 1 auto; max-height:none; min-height:0;
+}
 .rl-board-row{
   display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
   font-size:13px; border-bottom:1px solid var(--rl-panel-line);
@@ -472,11 +503,11 @@
 .rl-board-row:last-child{ border-bottom:none; }
 .rl-board-row .rl-rank{ color:var(--rl-dim); width:22px; flex:none; font-family:var(--rl-font-display); }
 .rl-board-row .rl-char-tag{
-  flex:none; font-size:9.5px; font-weight:800; letter-spacing:.04em; color:var(--rl-dim);
-  border:1px solid var(--rl-panel-line); border-radius:5px; padding:2px 5px; margin-right:8px;
+  flex:none; font-size:9.5px; font-weight:800; letter-spacing:.04em; color:var(--row-accent, var(--rl-accent));
+  border:1px solid var(--row-accent, var(--rl-accent)); border-radius:5px; padding:2px 5px; margin-right:8px;
   font-family:var(--rl-font-display);
 }
-.rl-board-row .rl-init{ flex:1; font-family:var(--rl-font-display); font-weight:800; letter-spacing:.08em; color:var(--row-accent, var(--rl-accent)); }
+.rl-board-row .rl-init{ flex:1; font-family:var(--rl-font-display); font-weight:800; letter-spacing:.08em; color:var(--rl-accent); }
 .rl-board-row .rl-pts{ color:var(--rl-ink); font-weight:700; }
 .rl-board-row.rl-me{ background:rgba(255,207,77,.08); }
 .rl-board-empty{ padding:18px 12px; text-align:center; color:var(--rl-dim); font-size:12.5px; }
@@ -491,7 +522,11 @@
   flex:none; width:36px; height:6px; border-radius:3px; background:rgba(255,255,255,.12);
   overflow:hidden; margin:0 8px;
 }
-.rl-board-row .rl-acc-fill{ display:block; height:100%; background:var(--row-accent, var(--rl-accent)); border-radius:3px; }
+/* Accuracy fill is always the flat brand accent — the per-character
+   theming lives on the state badge only now (see .rl-char-tag above),
+   which is the more sensible place for a "themed per state" idea since the
+   badge is literally the state name. */
+.rl-board-row .rl-acc-fill{ display:block; height:100%; background:var(--rl-accent); border-radius:3px; }
 
 /* ---------- pause overlay ---------- */
 .rl-pause-panel{ width:100%; max-width:280px; margin:0 auto; text-align:center; }
