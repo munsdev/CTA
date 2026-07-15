@@ -7,7 +7,7 @@
 //                                                  binding (see wrangler.toml)
 //   GET  /api/characters                       -> character roster from D1
 //   GET  /characters/:filename                  -> proxies the PNG from R2
-//   GET  /api/leaderboard?tier=easy|medium|hard -> top 10 for that tier
+//   GET  /api/leaderboard?tier=easy|medium|hard&limit=20 -> {rows, total} for that tier, up to 1000 stored
 //   POST /api/leaderboard  {initials,tier,score} -> submit a score
 //
 // Adding a new state bird later is just: upload STATE.png to the R2 bucket,
@@ -17,7 +17,7 @@
 
 const TIERS = ['easy', 'medium', 'hard', 'easy-blizzard', 'medium-blizzard', 'hard-blizzard'];
 const MAX_SCORE = 100000; // sanity ceiling, not a real gameplay cap
-const LB_MAX = 10;
+const LB_MAX = 1000;
 
 function corsHeaders() {
   return {
@@ -132,7 +132,14 @@ async function getLeaderboard(url, env) {
   if (!TIERS.includes(tier)) return json({ error: 'tier must be easy, medium, hard, easy-blizzard, medium-blizzard, or hard-blizzard' }, 400);
   const raw = await env.LEADERBOARD.get('board:' + tier);
   const arr = raw ? JSON.parse(raw) : [];
-  return json(arr);
+  // Optional limit so the client can request just the page it's about to
+  // show (e.g. 20 rows) instead of always shipping the full up-to-1000-row
+  // blob over the network just to render a paginated list. Omitted, every
+  // stored row is returned (existing behavior, unaffected).
+  const limitParam = url.searchParams.get('limit');
+  const limit = limitParam ? Math.max(1, Math.min(LB_MAX, parseInt(limitParam, 10) || 0)) : null;
+  const page = limit ? arr.slice(0, limit) : arr;
+  return json({ rows: page, total: arr.length });
 }
 
 async function postLeaderboard(request, env) {
