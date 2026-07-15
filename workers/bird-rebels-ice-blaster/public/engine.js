@@ -972,24 +972,16 @@
       realCards.forEach(function (card, i) { wireCard(card, items[i]); });
       wireCard(cloneEnd, items[0]);
 
-      var jumpCooldownUntil = 0;
+      var suppressNextSettle = false;
       function jumpTo(card) {
+        suppressNextSettle = true;
         carouselTrack.style.scrollSnapType = 'none';
         scrollCarouselTo(card, false);
-        // Ignore ALL scroll events (however many actually fire — the
-        // scroll itself, and possibly the scroll-snap-type toggle) until
-        // this window closes, rather than trying to suppress exactly one
-        // "next" settle call. A single-flag approach broke here: if the
-        // snap-type toggle itself fired an extra scroll event, it could
-        // consume the suppression flag before the real post-jump scroll
-        // event arrived, leaving that one unprotected and able to
-        // re-trigger onSettle() while the track was still mid-jump —
-        // which is what was breaking the forward loop specifically.
-        jumpCooldownUntil = Date.now() + 90;
         setTimeout(function () { carouselTrack.style.scrollSnapType = ''; }, 60);
       }
 
       function onSettle() {
+        if (suppressNextSettle) { suppressNextSettle = false; return; }
         var centered = findCenteredCarouselCard();
         if (!centered) return;
         if (centered === cloneStart) {
@@ -1011,7 +1003,6 @@
       carouselTrack.addEventListener('scroll', function () {
         startCarouselRaf();
         clearTimeout(carouselSettleTimer);
-        if (Date.now() < jumpCooldownUntil) return; // ignore scroll noise from an in-progress jump
         // Was 120ms — that fixed wait before even checking whether the
         // clone-wraparound jump was needed was the actual source of the
         // "takes too long" lag at the carousel ends (the jump itself is
