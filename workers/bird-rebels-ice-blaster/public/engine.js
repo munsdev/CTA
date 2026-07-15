@@ -56,7 +56,7 @@
       creditsArt: 'Original Rebel Loon artwork by Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
       supportArtist: 'Support the Artist',
-      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language',
+      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
       claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
@@ -88,7 +88,7 @@
       creditsArt: 'Original Rebel-Loon-Artwork von Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
       supportArtist: 'Den Künstler unterstützen',
-      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache',
+      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
       claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
@@ -120,7 +120,7 @@
       creditsArt: 'Illustration originale de Rebel Loon par Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
       supportArtist: 'Soutenir l\'artiste',
-      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue',
+      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
       claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
@@ -152,7 +152,7 @@
       creditsArt: 'Arte original de Rebel Loon por Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
       supportArtist: 'Apoya al artista',
-      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma',
+      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
       claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
@@ -468,6 +468,10 @@
     + '        <button type="button" class="rl-tier-btn" data-rl-lang="fr">Français</button>'
     + '        <button type="button" class="rl-tier-btn" data-rl-lang="es">Español</button>'
     + '      </div>'
+    + '      <div class="rl-check-row" style="margin-top:18px;">'
+    + '        <input type="checkbox" id="rl-vibration-toggle" data-rl-vibration checked>'
+    + '        <label for="rl-vibration-toggle" data-i18n="vibration">Vibration</label>'
+    + '      </div>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
@@ -661,6 +665,17 @@
     applyMusicVolume();
     blizzardTheme.preload = 'auto';
     function stopBlizzardTheme() { try { blizzardTheme.pause(); blizzardTheme.currentTime = 0; } catch (e) {} }
+
+    // Vibration on ice hitting the ground, native only. Defaults true so it
+    // works before Settings has had a chance to load any saved preference.
+    // navigator.vibrate() (not a Capacitor plugin) — Android's WebView
+    // supports it natively; iOS's WKWebView does not, but this app is
+    // Android-only right now so that's not a gap yet.
+    var vibrationEnabled = true;
+    function triggerVibration(ms) {
+      if (!shopEnabled || !vibrationEnabled) return;
+      try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+    }
 
     var screens = {};
     mount.querySelectorAll('[data-rl-screen]').forEach(function (e) {
@@ -1009,8 +1024,16 @@
         // instant, behavior:'auto'). 50ms still reliably distinguishes
         // "still scrolling" from "stopped" without the noticeable pause.
         carouselSettleTimer = setTimeout(function () {
-          stopCarouselRaf();
+          // Stopping the RAF loop BEFORE onSettle() used to leave a real
+          // gap if onSettle() then triggered a wraparound jump: the
+          // continuous scale/opacity/z-index update had already halted and
+          // had to wait for a fresh requestAnimationFrame callback to
+          // resume (RAF doesn't fire synchronously), producing a brief
+          // stutter right at the boundary. onSettle() now runs first, and
+          // the loop is only stopped afterward — so it keeps running
+          // uninterrupted through any jump it triggers.
           onSettle();
+          stopCarouselRaf();
         }, 50);
       }, { passive: true });
 
@@ -1304,6 +1327,24 @@
           applyLanguage(currentLang);
         });
       });
+
+      // ---- Settings: Vibration toggle, persisted ----
+      var VIBRATION_KEY = 'rl_vibration_v1';
+      var vibrationToggle = mount.querySelector('[data-rl-vibration]');
+      function loadVibrationPref() {
+        try { var v = localStorage.getItem(VIBRATION_KEY); return v === null ? true : v === '1'; } catch (e) { return true; }
+      }
+      function saveVibrationPref(on) {
+        try { localStorage.setItem(VIBRATION_KEY, on ? '1' : '0'); } catch (e) {}
+      }
+      vibrationEnabled = loadVibrationPref();
+      if (vibrationToggle) {
+        vibrationToggle.checked = vibrationEnabled;
+        vibrationToggle.addEventListener('change', function () {
+          vibrationEnabled = vibrationToggle.checked;
+          saveVibrationPref(vibrationEnabled);
+        });
+      }
     }
 
     // ---- Claim a Code ----
@@ -2063,6 +2104,7 @@
     function onCubeEscaped() {
       S.escaped++;
       playSound('explosion');
+      triggerVibration(35);
       if (S.cfg.kidMode) return;
       setLives(S.lives - 1, { pulse: true });
       if (S.lives <= 0) endGame();
