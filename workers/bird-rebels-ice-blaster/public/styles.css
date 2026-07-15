@@ -220,6 +220,14 @@
 [data-rl-carousel]{ display:none; }
 .rl-native [data-rl-screen="start"] [data-rl-carousel]{
   display:flex; align-items:center; gap:4px; margin:4px 0 14px;
+  /* Escape .rl-screen-inner's 18px padding so the track's centering math
+     (.rl-carousel-spacer below) is computed against the TRUE screen width,
+     not the padded width. Without this, the spacer came up short, the
+     active card never reached true center, and it landed hard-clipped
+     against the padding edge instead of fading at the real screen edge —
+     same escape-hatch pattern already used for [data-rl-topbar] above. */
+  position:relative; left:50%; transform:translateX(-50%);
+  width:100vw; padding:0 12px; box-sizing:border-box;
 }
 [data-rl-get-more-rebels]{ display:none; }
 .rl-native [data-rl-screen="start"] [data-rl-get-more-rebels]{ display:block; margin-bottom:10px; }
@@ -230,6 +238,10 @@
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
 .rl-carousel-track::-webkit-scrollbar{ display:none; }
+/* 50% of the track's own width, minus half the active card's expanded
+   width (140px * 1.4 scale / 2 = 98px, rounded to 97px to match the
+   existing active-card visual center) — this centers the active card
+   in whatever width the track actually has now that it's full-viewport. */
 .rl-carousel-spacer{ flex:0 0 calc(50% - 97px); }
 .rl-carousel-card{
   flex:0 0 140px; scroll-snap-align:center; scroll-snap-stop:always; margin:0 4px;
