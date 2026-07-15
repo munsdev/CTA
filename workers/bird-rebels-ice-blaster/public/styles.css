@@ -235,12 +235,29 @@
    shown on top of everything while the app boots ---------- */
 .rl-splash{
   display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center;
-  background:var(--rl-menu-bg);
+  background-color:var(--rl-menu-bg);
+  background-image:url('textures/diamonds-dark.png');
+  background-size:220px 220px;
+  background-blend-mode:screen; /* screen, not soft-light — see the setup-screen background comment elsewhere for why: soft-light barely lightens near-black */
+  /* Whole-overlay fade-out: once .rl-splash-hide is added, this fades to
+     transparent, revealing the setup screen underneath — that reveal IS
+     the crossfade into the game session, since the splash sits on top of
+     already-rendered content rather than the game being built fresh after. */
+  opacity:1; transition:opacity .5s ease;
 }
 .rl-native .rl-splash{ display:flex; }
+.rl-splash.rl-splash-hide{ opacity:0; pointer-events:none; }
 .rl-splash-logo{
   width:min(60vw, 300px); height:auto; filter:drop-shadow(0 8px 24px rgba(0,0,0,.6));
+  /* Starts invisible; .rl-splash-visible fades it in. Separate from the
+     overlay's own opacity so the logo can fade in AFTER the black+texture
+     background is already showing, then fade back out on its own before
+     the whole overlay fades away — matching "start black, fade logo+bg
+     in, then fade logo out and the game in" as three distinct beats
+     instead of one flat cross-fade. */
+  opacity:0; transition:opacity .6s ease;
 }
+.rl-splash-logo.rl-splash-visible{ opacity:1; }
 
 .rl-native [data-rl-screen="start"] .rl-tier-note,
 .rl-native [data-rl-screen="start"] .rl-check-row small,
