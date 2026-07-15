@@ -674,8 +674,64 @@
       return closest;
     }
 
+    // Continuous scale/opacity driven directly by scroll position, recalculated
+    // every animation frame while the track is moving. This is what makes
+    // growth toward center feel buttery instead of laggy: the previous
+    // approach only toggled a CSS class (with a .18s transition) once
+    // scrolling settled, so cards visibly snapped from small to big instead
+    // of growing smoothly as they approached center, and always lagged a
+    // step behind a fast swipe. No CSS transition is applied to these
+    // properties anymore (see .rl-carousel-card in styles.css) — the scroll
+    // motion itself, which the browser already renders smoothly, is what
+    // drives the animation now, so there's nothing for JS to race against.
+    var CAROUSEL_MIN_SCALE = 0.65, CAROUSEL_MAX_SCALE = 1.4;
+    var CAROUSEL_MIN_OPACITY = 0.5, CAROUSEL_MAX_OPACITY = 1;
+    // Distance (px) from track-center at which a card reaches minimum
+    // scale/opacity — roughly one card-width-plus-gap out, so neighboring
+    // cards are still visibly mid-transition rather than jumping straight
+    // to their resting small size right next to the active one.
+    var CAROUSEL_FALLOFF_PX = 170;
+    var carouselRafId = null;
+
+    function updateCarouselCardScales() {
+      if (!carouselTrack) return;
+      var trackRect = carouselTrack.getBoundingClientRect();
+      var trackCenter = trackRect.left + trackRect.width / 2;
+      carouselTrack.querySelectorAll('.rl-carousel-card').forEach(function (card) {
+        var r = card.getBoundingClientRect();
+        var cardCenter = r.left + r.width / 2;
+        var dist = Math.min(Math.abs(cardCenter - trackCenter), CAROUSEL_FALLOFF_PX);
+        var t = 1 - dist / CAROUSEL_FALLOFF_PX; // 1 at dead-center, 0 at/beyond falloff
+        var scale = CAROUSEL_MIN_SCALE + (CAROUSEL_MAX_SCALE - CAROUSEL_MIN_SCALE) * t;
+        var opacity = CAROUSEL_MIN_OPACITY + (CAROUSEL_MAX_OPACITY - CAROUSEL_MIN_OPACITY) * t;
+        card.style.transform = 'scale(' + scale.toFixed(3) + ')';
+        card.style.opacity = opacity.toFixed(3);
+      });
+    }
+
+    function carouselRafLoop() {
+      updateCarouselCardScales();
+      carouselRafId = requestAnimationFrame(carouselRafLoop);
+    }
+    function startCarouselRaf() {
+      if (carouselRafId != null) return;
+      carouselRafLoop();
+    }
+    function stopCarouselRaf() {
+      if (carouselRafId == null) return;
+      cancelAnimationFrame(carouselRafId);
+      carouselRafId = null;
+      // One final settle so scale/opacity land on their exact resting
+      // values instead of whatever the last frame happened to compute.
+      updateCarouselCardScales();
+    }
+
     function setActiveCarouselCard(card) {
       if (!carouselTrack) return;
+      // rl-carousel-active no longer drives scale/opacity (that's fully
+      // continuous now, see above) — it's kept purely as a semantic marker
+      // so the per-bird accent-color-on-label CSS rule still knows which
+      // card is the selected one.
       carouselTrack.querySelectorAll('.rl-carousel-card').forEach(function (c) { c.classList.toggle('rl-carousel-active', c === card); });
     }
 
@@ -742,11 +798,19 @@
         var code = centered.getAttribute('data-rl-char');
         selectCarouselItem(code);
         setActiveCarouselCard(centered);
+        // Recompute after any wraparound jump above repositions the track,
+        // so resting scale/opacity always reflect the final layout rather
+        // than whatever the last animation frame saw before the jump.
+        updateCarouselCardScales();
       }
 
       carouselTrack.addEventListener('scroll', function () {
+        startCarouselRaf();
         clearTimeout(carouselSettleTimer);
-        carouselSettleTimer = setTimeout(onSettle, 120);
+        carouselSettleTimer = setTimeout(function () {
+          stopCarouselRaf();
+          onSettle();
+        }, 120);
       }, { passive: true });
 
       // Land centered on OG (real index 0) to start.
@@ -754,6 +818,9 @@
         selectCarouselItem(items[0].code);
         setActiveCarouselCard(realCards[0]);
         jumpTo(realCards[0]);
+        // One-off scale pass so OG starts at full size instead of sitting
+        // at resting-small scale until the first scroll/swipe happens.
+        updateCarouselCardScales();
       });
 
       function stepCarousel(dir) {
@@ -1130,7 +1197,13 @@
       arr.forEach(function (row, i) {
         var mine = highlightTs && row.ts === highlightTs;
         var accPct = Math.round((row.accuracy || 0) * 100);
-        html += '<div class="rl-board-row' + (mine ? ' rl-me' : '') + '">'
+        // Theme this row by the character the player used that run, same
+        // accent source as the rebel-select cards. Falls back to the brand
+        // accent yellow when we don't have a color on record for that
+        // character code (e.g. an older row from before accentColor
+        // existed, or a code no longer in the roster).
+        var rowAccent = (row.character && charAccent[row.character]) || 'var(--rl-accent)';
+        html += '<div class="rl-board-row' + (mine ? ' rl-me' : '') + '" style="--row-accent:' + rowAccent + '">'
           + '<span class="rl-rank">' + (i + 1) + '</span>'
           + '<span class="rl-char-tag">' + (row.character || '—') + '</span>'
           + '<span class="rl-init">' + row.initials + '</span>'
