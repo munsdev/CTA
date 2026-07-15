@@ -157,6 +157,15 @@
 }
 .rl-tier-btn.rl-selected{ border-color:var(--rl-accent); background:rgba(255,200,0,.1); color:var(--rl-accent); }
 .rl-tier-note{ font-size:11px; color:var(--rl-dim); margin:-8px 0 16px; line-height:1.45; text-align:center; }
+/* 2x2 instead of 4-across: some language names (Français, Español) are
+   longer than Easy/Medium/Hard and would get cramped in a single row on a
+   typical phone width. Reuses .rl-tier-btn's visual style. */
+.rl-lang-row{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px; }
+
+/* Megamenu list items: stacked full-width buttons, same ghost styling as
+   other secondary actions but left-aligned like a menu list rather than
+   centered like a typical button, since these read as navigation entries. */
+.rl-menu-list-item{ text-align:left; margin-bottom:10px; }
 
 .rl-check-row{
   display:flex; align-items:center; gap:10px; margin:14px 0;
@@ -199,15 +208,14 @@
   background-size:220px 220px, cover;
   background-blend-mode:soft-light, normal;
 }
-/* Home screens (Welcome + setup) only: solid black instead of the themed
-   navy gradient, to match the site (birdrebels.art uses near-black, not
-   blue). Higher specificity than the rule above, so this wins only while
-   either is the visible screen inside .rl-frame — gameplay keeps its
-   current themed gradient untouched, since .rl-frame itself is shared
-   across every screen and this only overrides it conditionally. The
-   diamond texture overlay stays, just recolored onto black instead of navy. */
-.rl-native:has([data-rl-screen="start"]:not([hidden])) .rl-frame,
-.rl-native:has([data-rl-screen="welcome"]:not([hidden])) .rl-frame{
+/* Setup screen only: solid black instead of the themed navy gradient, to
+   match the site (birdrebels.art uses near-black, not blue). Higher
+   specificity than the rule above, so this wins only while it's the
+   visible screen inside .rl-frame — gameplay keeps its current themed
+   gradient untouched, since .rl-frame itself is shared across every screen
+   and this only overrides it conditionally. The diamond texture overlay
+   stays, just recolored onto black instead of navy. */
+.rl-native:has([data-rl-screen="start"]:not([hidden])) .rl-frame{
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-menu-bg),var(--rl-menu-bg));
   background-size:220px 220px, cover;
   /* screen, not soft-light: soft-light barely lightens near-black
@@ -219,37 +227,22 @@
 }
 .rl-info-block{ font-size:18px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
 .rl-info-block b{ color:var(--rl-ink); }
+.rl-info-divider{ height:1px; background:var(--rl-panel-line); margin:18px 0; }
+.rl-info-subhead{
+  font-family:var(--rl-font-display); font-weight:800; font-size:16px; color:var(--rl-ink);
+  text-transform:uppercase; letter-spacing:.03em; margin:0 0 10px;
+}
 
-/* ---------- welcome screen (native only, shown first) ---------- */
-.rl-native [data-rl-screen="welcome"]{ display:flex; flex-direction:column; padding:0; }
-.rl-welcome-inner{
-  display:flex; flex-direction:column; align-items:center; flex:1 1 auto; min-height:0;
-  padding:0 26px max(24px, env(safe-area-inset-bottom));
+/* ---------- splash screen (native only) — logo only, no menus/buttons,
+   shown on top of everything while the app boots ---------- */
+.rl-splash{
+  display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center;
+  background:var(--rl-menu-bg);
 }
-/* Logo sits a little above true vertical center: the spacer above (::before,
-   flex-grow 1) is smaller than the space claimed below the Start button
-   (the icon row's flex-grow 1.4), so the whole block balances slightly
-   high rather than dead center. */
-.rl-welcome-inner::before{ content:''; flex:1 1 0; }
-.rl-welcome-logo{
-  width:min(72vw, 340px); height:auto; display:block; margin-bottom:18px;
-  filter:drop-shadow(0 6px 20px rgba(0,0,0,.5));
+.rl-native .rl-splash{ display:flex; }
+.rl-splash-logo{
+  width:min(60vw, 300px); height:auto; filter:drop-shadow(0 8px 24px rgba(0,0,0,.6));
 }
-.rl-welcome-desc{
-  font-size:15px; line-height:1.55; color:var(--rl-ink); text-align:center;
-  max-width:380px; margin:0 0 22px;
-}
-[data-rl-welcome-start]{ max-width:320px; }
-.rl-welcome-icons{
-  flex:1.4 1 0; display:flex; align-items:flex-end; justify-content:center; gap:22px;
-  padding-bottom:10px; margin-top:20px;
-}
-.rl-welcome-icon-btn{
-  appearance:none; cursor:pointer; width:48px; height:48px; border-radius:50%;
-  border:1.5px solid var(--rl-panel-line); background:rgba(255,255,255,.03);
-  color:var(--rl-ink); font-size:20px; display:flex; align-items:center; justify-content:center;
-}
-.rl-welcome-icon-btn:active{ background:rgba(255,255,255,.08); }
 
 .rl-native [data-rl-screen="start"] .rl-tier-note,
 .rl-native [data-rl-screen="start"] .rl-check-row small,
@@ -269,19 +262,36 @@
   display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0 18px;
   overflow-y:auto;
 }
-/* Fills the screen to full height: everything above flows naturally from
-   the top, then Start Game (and the Leaderboard button + error text right
-   after it) gets pushed all the way to the bottom as a group, instead of
-   the whole block just sitting wherever it naturally falls after the
-   toggles above it. */
-.rl-native [data-rl-screen="start"] [data-rl-start]{ margin-top:auto; }
+/* Whole Select Your Rebel section (heading through Start Game, wrapped as
+   one group in the markup) is vertically centered on the screen as a
+   single unit, per instruction — replaces the old approach of just pinning
+   the Start button to the bottom on its own. margin:auto 0 on a flex
+   child centers it within whatever space .rl-screen-inner has left after
+   the navbar. */
+.rl-select-rebel-group{ margin:auto 0; }
 
-/* ---------- setup screen logo (native only, no bar/background) ---------- */
+/* ---------- navbar (native only): logo left, menu icon right, ~6rem tall ---------- */
 [data-rl-topbar]{ display:none; }
-.rl-setup-logo{ display:none; }
-.rl-native [data-rl-screen="start"] .rl-setup-logo{
-  display:block; width:clamp(160px, 55vw, 340px); height:auto;
-  margin:14px auto 8px;
+.rl-native [data-rl-screen="start"] [data-rl-topbar]{
+  display:flex; align-items:center; justify-content:space-between;
+  position:relative; left:50%; transform:translateX(-50%);
+  flex:0 0 auto; width:100vw; height:6rem; padding:0 18px;
+  background-color:#0a0a0a;
+  background-image:url('textures/knobs.png');
+  background-repeat:repeat;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  /* A transform (translateX, used for centering) creates its own stacking
+     context — without an explicit z-index here, the megamenu button and
+     anything that later overlays this bar could end up painted behind
+     other transformed elements on the page (e.g. the scaled carousel
+     cards) purely due to DOM/paint order, not intent. */
+  z-index:20;
+}
+.rl-topbar-logo{ height:calc(6rem - 28px); width:auto; display:block; }
+.rl-topbar-menu-btn{
+  appearance:none; cursor:pointer; background:transparent; border:none;
+  color:#fff; font-size:28px; line-height:1; width:44px; height:44px;
+  display:flex; align-items:center; justify-content:center; flex:none;
 }
 
 .rl-slider-row{ margin:0 0 20px; }
@@ -317,16 +327,16 @@
 .rl-native [data-rl-screen="start"] [data-rl-get-more-rebels]{ display:block; margin-bottom:10px; }
 
 .rl-carousel-track{
-  flex:1; height:clamp(180px, 30vh, 260px); display:flex; align-items:center;
+  flex:1; height:clamp(210px, 34vh, 290px); display:flex; align-items:center;
   overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
 .rl-carousel-track::-webkit-scrollbar{ display:none; }
 /* 50% of the track's own width, minus half the active card's expanded
-   width (140px * 1.4 scale / 2 = 98px, rounded to 97px to match the
-   existing active-card visual center) — this centers the active card
-   in whatever width the track actually has now that it's full-viewport. */
-.rl-carousel-spacer{ flex:0 0 calc(50% - 97px); }
+   width (140px * 1.75 scale / 2 = 122.5px, rounded to 123px to match the
+   active-card visual center) — this centers the active card in whatever
+   width the track actually has now that it's full-viewport. */
+.rl-carousel-spacer{ flex:0 0 calc(50% - 123px); }
 .rl-carousel-card{
   flex:0 0 140px; scroll-snap-align:center; scroll-snap-stop:always; margin:0 4px;
   /* No CSS transition here on purpose: transform/opacity are now set
