@@ -1318,7 +1318,6 @@
       });
     }
 
-    var claimBtn = mount.querySelector('[data-rl-claim-code]');
     var claimShopBtn = mount.querySelector('[data-rl-shop-claim-code]');
     var claimDetailBtn = mount.querySelector('[data-rl-shop-detail-claim-code]');
     var claimModal = mount.querySelector('[data-rl-claim-modal]');
@@ -1369,7 +1368,6 @@
       }
     }
 
-    if (claimBtn) claimBtn.addEventListener('click', openClaimModal);
     if (claimShopBtn) claimShopBtn.addEventListener('click', openClaimModal);
     if (claimDetailBtn) claimDetailBtn.addEventListener('click', openClaimModal);
     if (claimCancelBtn) claimCancelBtn.addEventListener('click', closeClaimModal);
