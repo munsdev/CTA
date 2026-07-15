@@ -1523,13 +1523,31 @@
     }
 
     var splashEl = mount.querySelector('[data-rl-splash]');
+    var splashLogoEl = mount.querySelector('.rl-splash-logo');
     var splashMinTimePassed = false;
     var splashLoadDone = false;
     function maybeHideSplash() {
-      if (splashEl && splashMinTimePassed && splashLoadDone) splashEl.hidden = true;
+      if (!splashEl || !splashMinTimePassed || !splashLoadDone) return;
+      // Fade the logo out first, then fade the whole overlay away once
+      // that's finished — "fade the logo out and the regular game session
+      // in" as two beats, not an instant cut once loading's done.
+      if (splashLogoEl) splashLogoEl.classList.remove('rl-splash-visible');
+      setTimeout(function () {
+        splashEl.classList.add('rl-splash-hide');
+        // Actually detach after the fade transition finishes, so it isn't
+        // sitting invisibly on top of the game intercepting taps.
+        setTimeout(function () { splashEl.hidden = true; }, 550);
+      }, 350);
     }
     if (shopEnabled && splashEl) {
       splashEl.hidden = false;
+      // Starts on a plain black+texture frame (opacity:0 on the logo by
+      // default in CSS), then fades the logo in shortly after boot.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          if (splashLogoEl) splashLogoEl.classList.add('rl-splash-visible');
+        });
+      });
       setTimeout(function () { splashMinTimePassed = true; maybeHideSplash(); }, 2000);
     } else {
       splashMinTimePassed = true;
