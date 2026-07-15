@@ -21,6 +21,147 @@
   var MAX_LIVES = 5;
   var START_LIVES = 3;
 
+  // ---------- translations ----------
+  // English is the base/fallback set — every key must exist here. Other
+  // languages only need to list what actually differs from English;
+  // applyLanguage() falls back to the English string for any key a
+  // language doesn't override, so a partial translation never breaks.
+  var I18N = {
+    en: {
+      selectYourRebel: 'Select Your Rebel', loadingRoster: 'Loading roster…',
+      getMoreRebels: 'Get More Rebels', difficulty: 'Difficulty', scene: 'Scene',
+      startGame: 'Start Game', finish: 'Finish', pause: 'Pause',
+      hudMelted: 'Melted<br><b data-rl-score>0</b>', hudEscaped: 'Escaped<br><b data-rl-escaped>0</b>',
+      blizzardBannerText: '❄️ Rainbow Blizzard Mode', pauseHint: 'move to aim · tap / click / space to fire',
+      paused: 'Paused', resume: 'Resume', restartRun: 'Restart Run', reset: 'Reset',
+      meltedThrough: 'Melted Through!', iceCubesMelted: 'Ice cubes melted<b data-rl-final-score>0</b>',
+      accuracy: 'Accuracy<b data-rl-final-accuracy>0%</b>', saveScore: 'Save Score',
+      casualNoLeaderboard: 'Casual Mode runs aren\'t added to the leaderboard.', playAgain: 'Play Again',
+      leaderboard: 'Leaderboard', tierEasy: 'Easy', tierMedium: 'Medium', tierHard: 'Hard',
+      sortBy: 'Sort by', sortScore: 'Score', sortAccuracy: 'Accuracy', sortName: 'Name', sortDate: 'Date',
+      loading: 'Loading…', loadMore: 'Load More', back: 'Back',
+      about: 'About',
+      aboutIce: 'Ice cubes are falling — laser them down before they reach the bottom.',
+      aboutSpeed: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
+      aboutCasual: '<b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.',
+      aboutBlizzard: '<b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.',
+      credits: 'Credits',
+      creditsTheme: 'Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.',
+      creditsArt: 'Original Rebel Loon artwork by Casey The American.',
+      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
+      supportArtist: 'Support the Artist',
+      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language',
+      rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
+      claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel',
+      selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
+      difficultySub: 'Pick a challenge level and any extra options.',
+      difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
+      casualModeLabel: 'Casual Mode<small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>',
+      menu: 'Menu'
+    },
+    de: {
+      selectYourRebel: 'Wähle deinen Rebellen', loadingRoster: 'Lade Vogelliste…',
+      getMoreRebels: 'Mehr Rebellen holen', difficulty: 'Schwierigkeit', scene: 'Szene',
+      startGame: 'Spiel starten', finish: 'Beenden', pause: 'Pause',
+      hudMelted: 'Geschmolzen<br><b data-rl-score>0</b>', hudEscaped: 'Entkommen<br><b data-rl-escaped>0</b>',
+      blizzardBannerText: '❄️ Regenbogen-Blizzard-Modus', pauseHint: 'bewegen zum Zielen · tippen / klicken / Leertaste zum Feuern',
+      paused: 'Pausiert', resume: 'Fortsetzen', restartRun: 'Lauf neu starten', reset: 'Zurücksetzen',
+      meltedThrough: 'Durchgeschmolzen!', iceCubesMelted: 'Geschmolzene Eiswürfel<b data-rl-final-score>0</b>',
+      accuracy: 'Genauigkeit<b data-rl-final-accuracy>0%</b>', saveScore: 'Punktzahl speichern',
+      casualNoLeaderboard: 'Läufe im entspannten Modus zählen nicht für die Bestenliste.', playAgain: 'Nochmal spielen',
+      leaderboard: 'Bestenliste', tierEasy: 'Leicht', tierMedium: 'Mittel', tierHard: 'Schwer',
+      sortBy: 'Sortieren nach', sortScore: 'Punktzahl', sortAccuracy: 'Genauigkeit', sortName: 'Name', sortDate: 'Datum',
+      loading: 'Lädt…', loadMore: 'Mehr laden', back: 'Zurück',
+      about: 'Über',
+      aboutIce: 'Eiswürfel fallen herab — schieß sie ab, bevor sie den Boden erreichen.',
+      aboutSpeed: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
+      aboutCasual: '<b>Entspannter Modus</b> — keine Lebensanzeige, keine Strafe für verpasste Würfel. Waffen-Powerups funktionieren normal.',
+      aboutBlizzard: '<b>Regenbogen-Blizzard</b> — ersetzt deinen Laser durch Raketen, fügt eine eigene Bestenliste hinzu.',
+      credits: 'Mitwirkende',
+      creditsTheme: 'Regenbogen-Blizzard-Musik: bearbeitet nach einem Stück von Emmett Doyle.',
+      creditsArt: 'Original Rebel-Loon-Artwork von Casey The American.',
+      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
+      supportArtist: 'Den Künstler unterstützen',
+      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache',
+      rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
+      claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen',
+      selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
+      difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
+      difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
+      casualModeLabel: 'Entspannter Modus<small>Keine Lebensanzeige, keine Strafe für verpasste Würfel — Waffen-Powerups funktionieren normal</small>',
+      menu: 'Menü'
+    },
+    fr: {
+      selectYourRebel: 'Choisis ton rebelle', loadingRoster: 'Chargement de la liste…',
+      getMoreRebels: 'Obtenir plus de rebelles', difficulty: 'Difficulté', scene: 'Scène',
+      startGame: 'Démarrer', finish: 'Terminer', pause: 'Pause',
+      hudMelted: 'Fondus<br><b data-rl-score>0</b>', hudEscaped: 'Échappés<br><b data-rl-escaped>0</b>',
+      blizzardBannerText: '❄️ Mode Blizzard Arc-en-ciel', pauseHint: 'bouger pour viser · toucher / cliquer / espace pour tirer',
+      paused: 'En pause', resume: 'Reprendre', restartRun: 'Recommencer la partie', reset: 'Réinitialiser',
+      meltedThrough: 'Tout a fondu !', iceCubesMelted: 'Glaçons fondus<b data-rl-final-score>0</b>',
+      accuracy: 'Précision<b data-rl-final-accuracy>0%</b>', saveScore: 'Enregistrer le score',
+      casualNoLeaderboard: 'Les parties en Mode Détente ne comptent pas pour le classement.', playAgain: 'Rejouer',
+      leaderboard: 'Classement', tierEasy: 'Facile', tierMedium: 'Moyen', tierHard: 'Difficile',
+      sortBy: 'Trier par', sortScore: 'Score', sortAccuracy: 'Précision', sortName: 'Nom', sortDate: 'Date',
+      loading: 'Chargement…', loadMore: 'Charger plus', back: 'Retour',
+      about: 'À propos',
+      aboutIce: 'Des glaçons tombent — détruis-les avant qu\'ils n\'atteignent le sol.',
+      aboutSpeed: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
+      aboutCasual: '<b>Mode Détente</b> — pas de barre de vie, aucune pénalité pour les glaçons manqués. Les bonus d\'armes fonctionnent normalement.',
+      aboutBlizzard: '<b>Blizzard Arc-en-ciel</b> — remplace ton laser par des roquettes, ajoute un classement séparé.',
+      credits: 'Crédits',
+      creditsTheme: 'Thème musical du Blizzard Arc-en-ciel : adapté d\'un morceau d\'Emmett Doyle.',
+      creditsArt: 'Illustration originale de Rebel Loon par Casey The American.',
+      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
+      supportArtist: 'Soutenir l\'artiste',
+      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue',
+      rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
+      claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler',
+      selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
+      difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
+      difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
+      casualModeLabel: 'Mode Détente<small>Pas de barre de vie, aucune pénalité pour les glaçons manqués — les bonus d\'armes fonctionnent normalement</small>',
+      menu: 'Menu'
+    },
+    es: {
+      selectYourRebel: 'Elige a tu rebelde', loadingRoster: 'Cargando la lista…',
+      getMoreRebels: 'Consigue más rebeldes', difficulty: 'Dificultad', scene: 'Escena',
+      startGame: 'Empezar', finish: 'Finalizar', pause: 'Pausa',
+      hudMelted: 'Derretidos<br><b data-rl-score>0</b>', hudEscaped: 'Escapados<br><b data-rl-escaped>0</b>',
+      blizzardBannerText: '❄️ Modo Ventisca Arcoíris', pauseHint: 'mueve para apuntar · toca / clic / espacio para disparar',
+      paused: 'Pausado', resume: 'Reanudar', restartRun: 'Reiniciar partida', reset: 'Restablecer',
+      meltedThrough: '¡Todo se derritió!', iceCubesMelted: 'Cubos de hielo derretidos<b data-rl-final-score>0</b>',
+      accuracy: 'Precisión<b data-rl-final-accuracy>0%</b>', saveScore: 'Guardar puntuación',
+      casualNoLeaderboard: 'Las partidas en Modo Casual no se añaden a la clasificación.', playAgain: 'Jugar de nuevo',
+      leaderboard: 'Clasificación', tierEasy: 'Fácil', tierMedium: 'Medio', tierHard: 'Difícil',
+      sortBy: 'Ordenar por', sortScore: 'Puntuación', sortAccuracy: 'Precisión', sortName: 'Nombre', sortDate: 'Fecha',
+      loading: 'Cargando…', loadMore: 'Cargar más', back: 'Atrás',
+      about: 'Acerca de',
+      aboutIce: 'Están cayendo cubos de hielo — destrúyelos antes de que lleguen al suelo.',
+      aboutSpeed: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
+      aboutCasual: '<b>Modo Casual</b> — sin barra de vida, sin penalización por cubos perdidos. Las mejoras de armas funcionan con normalidad.',
+      aboutBlizzard: '<b>Ventisca Arcoíris</b> — cambia tu láser por cohetes y añade una clasificación aparte.',
+      credits: 'Créditos',
+      creditsTheme: 'Tema de la Ventisca Arcoíris: adaptado de una pista de Emmett Doyle.',
+      creditsArt: 'Arte original de Rebel Loon por Casey The American.',
+      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
+      supportArtist: 'Apoya al artista',
+      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma',
+      rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
+      claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar',
+      selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
+      difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
+      difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
+      casualModeLabel: 'Modo Casual<small>Sin barra de vida, sin penalización por cubos perdidos — las mejoras de armas funcionan con normalidad</small>',
+      menu: 'Menú'
+    }
+  };
+  var LANG_KEY = 'rl_lang_v1';
+  function t(key, lang) {
+    var dict = I18N[lang] || I18N.en;
+    return (key in dict) ? dict[key] : I18N.en[key];
+  }
+
   // All character art shares one canvas template (same size/framing), so a
   // single standard eye position works for every bird — no per-emblem tuning.
   var STANDARD_EYE = { xr: 0.55, yr: 0.165 };
@@ -173,49 +314,43 @@
 
   var TEMPLATE = ''
     + '<div class="rl-frame">'
-    + '  <div class="rl-screen" data-rl-screen="welcome" hidden>'
-    + '    <div class="rl-welcome-inner">'
-    + '      <img class="rl-welcome-logo" src="logo/ice-blaster-logo-round.png" alt="Bird Rebels: Ice Blaster">'
-    + '      <p class="rl-welcome-desc">Ice cubes are falling — laser them down before they reach the bottom. Pick your Bird Rebel, choose a difficulty, and see how long your flock can hold the line.</p>'
-    + '      <button type="button" class="rl-btn" data-rl-welcome-start>Start</button>'
-    + '      <div class="rl-welcome-icons">'
-    + '        <button type="button" class="rl-welcome-icon-btn" data-rl-welcome-help aria-label="Help" title="Help">&#10067;</button>'
-    + '        <button type="button" class="rl-welcome-icon-btn" data-rl-welcome-settings aria-label="Settings" title="Settings">&#9881;</button>'
-    + '        <button type="button" class="rl-welcome-icon-btn" data-rl-welcome-credits aria-label="Credits" title="Credits">&#9733;</button>'
-    + '      </div>'
-    + '    </div>'
+    + '  <div class="rl-splash" data-rl-splash hidden>'
+    + '    <img class="rl-splash-logo" src="logo/ice-blaster-logo-round.png" alt="Bird Rebels: Ice Blaster">'
     + '  </div>'
     + '  <div class="rl-screen" data-rl-screen="start">'
-    + '    <img class="rl-setup-logo" src="logo/ice-blaster-logo.png" alt="Bird Rebels: Ice Blaster">'
+    + '    <div class="rl-topbar" data-rl-topbar>'
+    + '      <img class="rl-topbar-logo" src="logo/ice-blaster-logo.png" alt="Bird Rebels: Ice Blaster">'
+    + '      <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu" title="Menu">&#9776;</button>'
+    + '    </div>'
     + '    <div class="rl-screen-inner">'
-    + '      <div class="rl-char-label-row rl-field-label rl-field-label-lg">Select Your Rebel</div>'
-    + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
-    + '      <div class="rl-carousel" data-rl-carousel>'
-    + '        <button type="button" class="rl-carousel-arrow rl-carousel-prev" data-rl-carousel-prev aria-label="Previous rebel">&#8249;</button>'
-    + '        <div class="rl-carousel-track" data-rl-carousel-track></div>'
-    + '        <button type="button" class="rl-carousel-arrow rl-carousel-next" data-rl-carousel-next aria-label="Next rebel">&#8250;</button>'
+    + '      <div class="rl-select-rebel-group" data-rl-select-rebel-group>'
+    + '        <div class="rl-char-label-row rl-field-label rl-field-label-lg" data-i18n="selectYourRebel">Select Your Rebel</div>'
+    + '        <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading" data-i18n="loadingRoster">Loading roster…</div></div>'
+    + '        <div class="rl-carousel" data-rl-carousel>'
+    + '          <button type="button" class="rl-carousel-arrow rl-carousel-prev" data-rl-carousel-prev aria-label="Previous rebel">&#8249;</button>'
+    + '          <div class="rl-carousel-track" data-rl-carousel-track></div>'
+    + '          <button type="button" class="rl-carousel-arrow rl-carousel-next" data-rl-carousel-next aria-label="Next rebel">&#8250;</button>'
+    + '        </div>'
+    + '        <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels data-i18n="getMoreRebels">Get More Rebels</button>'
+    + '        <div class="rl-picker-row">'
+    + '          <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
+    + '            <span class="rl-scene-btn-label" data-i18n="difficulty">Difficulty</span>'
+    + '            <span class="rl-scene-btn-name" data-rl-difficulty-btn-name data-i18n="tierMedium">Medium</span>'
+    + '          </button>'
+    + '          <button type="button" class="rl-scene-btn" data-rl-scene-btn>'
+    + '            <span class="rl-scene-btn-label" data-i18n="scene">Scene</span>'
+    + '            <span class="rl-scene-btn-name" data-rl-scene-btn-name>Standard</span>'
+    + '          </button>'
+    + '        </div>'
+    + '        <button class="rl-btn" data-rl-start data-i18n="startGame">Start Game</button>'
+    + '        <p class="rl-error" data-rl-start-error></p>'
     + '      </div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels>Get More Rebels</button>'
-    + '      <div class="rl-picker-row">'
-    + '        <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
-    + '          <span class="rl-scene-btn-label">Difficulty</span>'
-    + '          <span class="rl-scene-btn-name" data-rl-difficulty-btn-name>Medium</span>'
-    + '        </button>'
-    + '        <button type="button" class="rl-scene-btn" data-rl-scene-btn>'
-    + '          <span class="rl-scene-btn-label">Scene</span>'
-    + '          <span class="rl-scene-btn-name" data-rl-scene-btn-name>Standard</span>'
-    + '        </button>'
-    + '      </div>'
-    + '      <button class="rl-btn" data-rl-start>Start Game</button>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard>Leaderboard</button>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-exit-to-welcome>Home</button>'
-    + '      <p class="rl-error" data-rl-start-error></p>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-screen rl-game-wrap" data-rl-screen="game" hidden>'
     + '    <div class="rl-hud">'
-    + '      <div class="rl-hud-stat">Melted<br><b data-rl-score>0</b></div>'
+    + '      <div class="rl-hud-stat" data-i18n-html="hudMelted">Melted<br><b data-rl-score>0</b></div>'
     + '      <div class="rl-lives" data-rl-lives>'
     + '        <svg class="rl-life" viewBox="0 0 24 24" data-on="1"><g class="rl-life-glyph"><line x1="12" y1="2" x2="12" y2="22"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(60 12 12)"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(120 12 12)"/></g></svg>'
     + '        <svg class="rl-life" viewBox="0 0 24 24" data-on="1"><g class="rl-life-glyph"><line x1="12" y1="2" x2="12" y2="22"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(60 12 12)"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(120 12 12)"/></g></svg>'
@@ -223,134 +358,136 @@
     + '        <svg class="rl-life" viewBox="0 0 24 24" data-on="0"><g class="rl-life-glyph"><line x1="12" y1="2" x2="12" y2="22"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(60 12 12)"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(120 12 12)"/></g></svg>'
     + '        <svg class="rl-life" viewBox="0 0 24 24" data-on="0"><g class="rl-life-glyph"><line x1="12" y1="2" x2="12" y2="22"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(60 12 12)"/><line x1="12" y1="2" x2="12" y2="22" transform="rotate(120 12 12)"/></g></svg>'
     + '      </div>'
-    + '      <button class="rl-hud-btn" data-rl-finish hidden>Finish</button>'
-    + '      <div class="rl-hud-stat" style="text-align:right;">Escaped<br><b data-rl-escaped>0</b></div>'
-    + '      <button class="rl-hud-btn" data-rl-pause title="Pause">Pause</button>'
+    + '      <button class="rl-hud-btn" data-rl-finish hidden data-i18n="finish">Finish</button>'
+    + '      <div class="rl-hud-stat" style="text-align:right;" data-i18n-html="hudEscaped">Escaped<br><b data-rl-escaped>0</b></div>'
+    + '      <button class="rl-hud-btn" data-rl-pause title="Pause" data-i18n="pause">Pause</button>'
     + '    </div>'
     + '    <div class="rl-stage-outer" data-rl-stage-outer>'
     + '      <div class="rl-powerup-bar" data-rl-triple-banner hidden>'
     + '        <div class="rl-powerup-bar-fill" data-rl-powerup-bar-fill></div>'
     + '        <span class="rl-powerup-bar-label"><span data-rl-powerup-label>⚡ Triple Laser</span> <span data-rl-triple-timer>10</span>s</span>'
     + '      </div>'
-    + '      <div class="rl-blizzard-banner" data-rl-blizzard-banner hidden>❄️ Rainbow Blizzard Mode</div>'
+    + '      <div class="rl-blizzard-banner" data-rl-blizzard-banner hidden data-i18n="blizzardBannerText">❄️ Rainbow Blizzard Mode</div>'
     + '      <div class="rl-stage" data-rl-stage><canvas data-rl-canvas></canvas></div>'
     + '    </div>'
-    + '    <div class="rl-pause-hint">move to aim · tap / click / space to fire</div>'
+    + '    <div class="rl-pause-hint" data-i18n="pauseHint">move to aim · tap / click / space to fire</div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="pause" hidden>'
     + '    <div class="rl-pause-panel">'
-    + '      <h2>Paused</h2>'
-    + '      <button class="rl-btn" data-rl-resume>Resume</button>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-restart-run>Restart Run</button>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-reset>Reset</button>'
+    + '      <h2 data-i18n="paused">Paused</h2>'
+    + '      <button class="rl-btn" data-rl-resume data-i18n="resume">Resume</button>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-restart-run data-i18n="restartRun">Restart Run</button>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-reset data-i18n="reset">Reset</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="gameover" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Melted Through!</h2>'
-    + '      <p class="rl-final">Ice cubes melted<b data-rl-final-score>0</b></p>'
-    + '      <p class="rl-final">Accuracy<b data-rl-final-accuracy>0%</b></p>'
+    + '      <h2 data-i18n="meltedThrough">Melted Through!</h2>'
+    + '      <p class="rl-final" data-i18n="iceCubesMelted">Ice cubes melted<b data-rl-final-score>0</b></p>'
+    + '      <p class="rl-final" data-i18n="accuracy">Accuracy<b data-rl-final-accuracy>0%</b></p>'
     + '      <div data-rl-score-submit>'
     + '        <div class="rl-initials-row">'
     + '          <input type="text" maxlength="1" data-rl-initial="0" autocomplete="off" autocapitalize="characters">'
     + '          <input type="text" maxlength="1" data-rl-initial="1" autocomplete="off" autocapitalize="characters">'
     + '          <input type="text" maxlength="1" data-rl-initial="2" autocomplete="off" autocapitalize="characters">'
     + '        </div>'
-    + '        <button class="rl-btn" data-rl-submit-score>Save Score</button>'
+    + '        <button class="rl-btn" data-rl-submit-score data-i18n="saveScore">Save Score</button>'
     + '        <p class="rl-error" data-rl-submit-error></p>'
     + '        <p class="rl-lb-set-note" data-rl-board-inline-note hidden></p>'
     + '        <div class="rl-board" data-rl-board-inline hidden></div>'
     + '      </div>'
-    + '      <p class="rl-tier-note" data-rl-kid-note hidden>Casual Mode runs aren\'t added to the leaderboard.</p>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-restart>Play Again</button>'
+    + '      <p class="rl-tier-note" data-rl-kid-note hidden data-i18n="casualNoLeaderboard">Casual Mode runs aren\'t added to the leaderboard.</p>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-restart data-i18n="playAgain">Play Again</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="leaderboard" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2 style="margin-bottom:2px;">Leaderboard</h2>'
+    + '      <h2 style="margin-bottom:2px;" data-i18n="leaderboard">Leaderboard</h2>'
     + '      <p class="rl-lb-set-note" data-rl-lb-set-note>Normal scores</p>'
     + '      <div class="rl-tabs" data-rl-lb-tabs>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy">Easy</button>'
-    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium">Medium</button>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-tab="hard">Hard</button>'
+    + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy" data-i18n="tierEasy">Easy</button>'
+    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium" data-i18n="tierMedium">Medium</button>'
+    + '        <button type="button" class="rl-tab" data-rl-lb-tab="hard" data-i18n="tierHard">Hard</button>'
     + '      </div>'
     + '      <div class="rl-lb-sort-row">'
-    + '        <label for="rl-lb-sort">Sort by</label>'
+    + '        <label for="rl-lb-sort" data-i18n="sortBy">Sort by</label>'
     + '        <select id="rl-lb-sort" data-rl-lb-sort>'
-    + '          <option value="score">Score</option>'
-    + '          <option value="accuracy">Accuracy</option>'
-    + '          <option value="initials">Name</option>'
-    + '          <option value="ts">Date</option>'
+    + '          <option value="score" data-i18n="sortScore">Score</option>'
+    + '          <option value="accuracy" data-i18n="sortAccuracy">Accuracy</option>'
+    + '          <option value="initials" data-i18n="sortName">Name</option>'
+    + '          <option value="ts" data-i18n="sortDate">Date</option>'
     + '        </select>'
     + '      </div>'
-    + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
-    + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-lb-load-more hidden>Load More</button>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-leaderboard>Back</button>'
+    + '      <div class="rl-board" data-rl-board-full><div class="rl-loading" data-i18n="loading">Loading…</div></div>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-lb-load-more hidden data-i18n="loadMore">Load More</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-leaderboard data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="info" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>How to Play</h2>'
-    + '      <p class="rl-info-block">Ice cubes are falling — laser them down before they reach the bottom.</p>'
-    + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
-    + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
-    + '      <p class="rl-info-block"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-info>Back</button>'
+    + '      <h2 data-i18n="about">About</h2>'
+    + '      <p class="rl-info-block" data-i18n="aboutIce">Ice cubes are falling — laser them down before they reach the bottom.</p>'
+    + '      <p class="rl-info-block" data-i18n="aboutSpeed">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="aboutCasual"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="aboutBlizzard"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
+    + '      <div class="rl-info-divider"></div>'
+    + '      <h3 class="rl-info-subhead" data-i18n="credits">Credits</h3>'
+    + '      <p class="rl-info-block" data-i18n="creditsTheme">Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.</p>'
+    + '      <p class="rl-info-block" data-i18n="creditsArt">Original Rebel Loon artwork by Casey The American.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="creditsLink"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
+    + '      <a class="rl-btn rl-btn-ghost" href="https://birdrebels.art" target="_blank" rel="noopener" data-i18n="supportArtist">Support the Artist</a>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-info data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="settings" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Settings</h2>'
+    + '      <h2 data-i18n="settings">Settings</h2>'
     + '      <div class="rl-slider-row">'
-    + '        <label for="rl-sfx-volume">Sound Effects</label>'
+    + '        <label for="rl-sfx-volume" data-i18n="soundEffects">Sound Effects</label>'
     + '        <input type="range" id="rl-sfx-volume" data-rl-sfx-volume min="0" max="100" value="100">'
     + '      </div>'
     + '      <div class="rl-slider-row">'
-    + '        <label for="rl-music-volume">Music</label>'
+    + '        <label for="rl-music-volume" data-i18n="music">Music</label>'
     + '        <input type="range" id="rl-music-volume" data-rl-music-volume min="0" max="100" value="100">'
     + '      </div>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings>Back</button>'
-    + '    </div>'
-    + '  </div>'
-
-    + '  <div class="rl-overlay" data-rl-screen="credits" hidden>'
-    + '    <div class="rl-screen-inner">'
-    + '      <h2>Credits</h2>'
-    + '      <p class="rl-info-block">Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.</p>'
-    + '      <p class="rl-info-block">Original Rebel Loon artwork by Casey The American.</p>'
-    + '      <p class="rl-info-block"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
-    + '      <a class="rl-btn rl-btn-ghost" href="https://birdrebels.art" target="_blank" rel="noopener">Support the Artist</a>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-credits>Back</button>'
+    + '      <div class="rl-field-label" style="margin:18px 0 8px;" data-rl-lang-label data-i18n="language">Language</div>'
+    + '      <div class="rl-lang-row" data-rl-lang-row>'
+    + '        <button type="button" class="rl-tier-btn rl-selected" data-rl-lang="en">English</button>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-lang="de">Deutsch</button>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-lang="fr">Français</button>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-lang="es">Español</button>'
+    + '      </div>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="shop" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Rebel Shop</h2>'
-    + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
+    + '      <h2 data-i18n="rebelShop">Rebel Shop</h2>'
+    + '      <p class="rl-sub" data-i18n="rebelShopSub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-claim-code>Claim a Code</button>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-shop>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-claim-code data-i18n="claimCode">Claim a Code</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-shop data-i18n="back">Back</button>'
     + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
     + '        <div class="rl-shop-detail-panel">'
     + '          <img data-rl-shop-detail-img alt="">'
     + '          <h3 data-rl-shop-detail-name></h3>'
     + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
-    + '          <button class="rl-btn" data-rl-shop-detail-buy>Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-claim-code>Claim a Code Instead</button>'
-    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-detail-back>Back</button>'
+    + '          <button class="rl-btn" data-rl-shop-detail-buy data-i18n="purchase">Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-claim-code data-i18n="claimCodeInstead">Claim a Code Instead</button>'
+    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-detail-back data-i18n="back">Back</button>'
     + '        </div>'
     + '      </div>'
     + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
     + '        <div class="rl-shop-confirm-panel">'
     + '          <p data-rl-shop-confirm-text></p>'
-    + '          <button class="rl-btn" data-rl-shop-confirm-yes>Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-confirm-no>Cancel</button>'
+    + '          <button class="rl-btn" data-rl-shop-confirm-yes data-i18n="purchase">Purchase</button>'
+    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-confirm-no data-i18n="cancel">Cancel</button>'
     + '        </div>'
     + '      </div>'
     + '    </div>'
@@ -358,31 +495,41 @@
 
     + '  <div class="rl-overlay" data-rl-screen="scenes" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Select Scene</h2>'
-    + '      <p class="rl-sub">Pick which look you want to play.</p>'
-    + '      <div class="rl-char-grid" data-rl-scene-grid><div class="rl-loading">Loading…</div></div>'
-    + '      <button type="button" class="rl-btn" data-rl-scene-confirm disabled>Confirm</button>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-scenes>Back</button>'
+    + '      <h2 data-i18n="selectScene">Select Scene</h2>'
+    + '      <p class="rl-sub" data-i18n="selectSceneSub">Pick which look you want to play.</p>'
+    + '      <div class="rl-char-grid" data-rl-scene-grid><div class="rl-loading" data-i18n="loading">Loading…</div></div>'
+    + '      <button type="button" class="rl-btn" data-rl-scene-confirm disabled data-i18n="confirm">Confirm</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-scenes data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
 
     + '  <div class="rl-overlay" data-rl-screen="difficulty" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2>Difficulty</h2>'
-    + '      <p class="rl-sub">Pick a challenge level and any extra options.</p>'
+    + '      <h2 data-i18n="difficulty">Difficulty</h2>'
+    + '      <p class="rl-sub" data-i18n="difficultySub">Pick a challenge level and any extra options.</p>'
     + '      <div class="rl-tier-row" data-rl-tier-row>'
-    + '        <button type="button" class="rl-tier-btn" data-rl-tier="easy">Easy</button>'
-    + '        <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium">Medium</button>'
-    + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard">Hard</button>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-tier="easy" data-i18n="tierEasy">Easy</button>'
+    + '        <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium" data-i18n="tierMedium">Medium</button>'
+    + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard" data-i18n="tierHard">Hard</button>'
     + '      </div>'
-    + '      <p class="rl-tier-note">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <p class="rl-tier-note" data-i18n="difficultyNote">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <div class="rl-check-row">'
     + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
-    + '        <label for="rl-kidmode-toggle">Casual Mode'
+    + '        <label for="rl-kidmode-toggle" data-i18n-html="casualModeLabel">Casual Mode'
     + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
     + '        </label>'
     + '      </div>'
-    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-difficulty>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-difficulty data-i18n="back">Back</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-overlay" data-rl-screen="menu" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2 data-i18n="menu">Menu</h2>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-about data-i18n="about">About</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-menu data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -513,14 +660,7 @@
     mount.querySelectorAll('[data-rl-screen]').forEach(function (e) {
       screens[e.getAttribute('data-rl-screen')] = e;
     });
-    // Native boots to Welcome instead of straight to setup. Web embed never
-    // sets data-rl-shop, so it's unaffected and keeps opening on setup
-    // directly, same as before.
-    if (shopEnabled && screens.welcome) {
-      screens.welcome.hidden = false;
-      screens.start.hidden = true;
-    }
-    var infoReturnScreen = 'start'; // which screen Help/Settings/Credits should return to on close
+    var infoReturnScreen = 'start'; // which screen Help/Settings/Leaderboard should return to on close
     function showScreen(name) {
       screens.pause.hidden = true;
       screens.gameover.hidden = true;
@@ -530,29 +670,25 @@
       if (screens.difficulty) screens.difficulty.hidden = true;
       if (screens.info) screens.info.hidden = true;
       if (screens.settings) screens.settings.hidden = true;
-      if (screens.credits) screens.credits.hidden = true;
-      if (name === 'welcome') { if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; }
-      else if (name === 'start') { if (screens.welcome) screens.welcome.hidden = true; screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'game') { if (screens.welcome) screens.welcome.hidden = true; screens.start.hidden = true; screens.game.hidden = false; }
+      if (screens.menu) screens.menu.hidden = true;
+      if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
       else if (name === 'gameover') { screens.start.hidden = true; screens.game.hidden = false; screens.gameover.hidden = false; }
-      else if (name === 'leaderboard-from-start') { screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
-      else if (name === 'leaderboard-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'shop-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.shop) screens.shop.hidden = false; }
       else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'scenes-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.scenes) screens.scenes.hidden = false; }
       else if (name === 'scenes-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'difficulty-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.difficulty) screens.difficulty.hidden = false; }
       else if (name === 'difficulty-close') { screens.start.hidden = false; screens.game.hidden = true; }
-      else if (name === 'info-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; if (screens.welcome) screens.welcome.hidden = true; if (screens.info) screens.info.hidden = false; }
-      else if (name === 'info-from-welcome') { infoReturnScreen = 'welcome'; if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
-      else if (name === 'info-close') { showScreen(infoReturnScreen); }
-      else if (name === 'settings-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; if (screens.welcome) screens.welcome.hidden = true; if (screens.settings) screens.settings.hidden = false; }
-      else if (name === 'settings-from-welcome') { infoReturnScreen = 'welcome'; if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
-      else if (name === 'settings-close') { showScreen(infoReturnScreen); }
-      else if (name === 'credits-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; if (screens.welcome) screens.welcome.hidden = true; if (screens.credits) screens.credits.hidden = false; }
-      else if (name === 'credits-from-welcome') { infoReturnScreen = 'welcome'; if (screens.welcome) screens.welcome.hidden = false; screens.start.hidden = true; screens.game.hidden = true; if (screens.credits) screens.credits.hidden = false; }
-      else if (name === 'credits-close') { showScreen(infoReturnScreen); }
+      else if (name === 'menu-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.menu) screens.menu.hidden = false; }
+      else if (name === 'menu-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'info-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
+      else if (name === 'info-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
+      else if (name === 'settings-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
+      else if (name === 'settings-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
+      else if (name === 'leaderboard-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
+      else if (name === 'leaderboard-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
     }
 
     // ---------- character roster (live from the API) ----------
@@ -729,7 +865,7 @@
     // properties anymore (see .rl-carousel-card in styles.css) — the scroll
     // motion itself, which the browser already renders smoothly, is what
     // drives the animation now, so there's nothing for JS to race against.
-    var CAROUSEL_MIN_SCALE = 0.65, CAROUSEL_MAX_SCALE = 1.4;
+    var CAROUSEL_MIN_SCALE = 0.65, CAROUSEL_MAX_SCALE = 1.75; // peak bumped 25% bigger (was 1.4) per instruction
     var CAROUSEL_MIN_OPACITY = 0.5, CAROUSEL_MAX_OPACITY = 1;
     // Distance (px) from track-center at which a card reaches minimum
     // scale/opacity — roughly one card-width-plus-gap out, so neighboring
@@ -1066,23 +1202,27 @@
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
       var closeSettingsBtn = mount.querySelector('[data-rl-close-settings]');
       if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', function () { showScreen('settings-close'); });
-      var closeCreditsBtn = mount.querySelector('[data-rl-close-credits]');
-      if (closeCreditsBtn) closeCreditsBtn.addEventListener('click', function () { showScreen('credits-close'); });
 
-      // ---- Welcome screen: Start button + Help/Settings/Credits icons ----
-      var welcomeStartBtn = mount.querySelector('[data-rl-welcome-start]');
-      if (welcomeStartBtn) welcomeStartBtn.addEventListener('click', function () { showScreen('start'); });
-      var welcomeHelpBtn = mount.querySelector('[data-rl-welcome-help]');
-      var welcomeSettingsBtn = mount.querySelector('[data-rl-welcome-settings]');
-      var welcomeCreditsBtn = mount.querySelector('[data-rl-welcome-credits]');
-      if (welcomeHelpBtn) welcomeHelpBtn.addEventListener('click', function () { showScreen('info-from-welcome'); });
-      if (welcomeSettingsBtn) welcomeSettingsBtn.addEventListener('click', function () { showScreen('settings-from-welcome'); });
-      if (welcomeCreditsBtn) welcomeCreditsBtn.addEventListener('click', function () { showScreen('credits-from-welcome'); });
-
-      // ---- Setup screen: single icon button back to Welcome (replaces the
-      // old hamburger menu — Help/Settings/Credits now live on Welcome) ----
-      var exitToWelcomeBtn = mount.querySelector('[data-rl-exit-to-welcome]');
-      if (exitToWelcomeBtn) exitToWelcomeBtn.addEventListener('click', function () { showScreen('welcome'); });
+      // ---- Setup screen: hamburger opens the full-screen megamenu
+      // (About [includes Credits], Settings, Leaderboard) ----
+      var menuBtn = mount.querySelector('[data-rl-menu-btn]');
+      if (menuBtn) menuBtn.addEventListener('click', function () { showScreen('menu-from-start'); });
+      var closeMenuBtn = mount.querySelector('[data-rl-close-menu]');
+      if (closeMenuBtn) closeMenuBtn.addEventListener('click', function () { showScreen('menu-close'); });
+      var menuAboutBtn = mount.querySelector('[data-rl-menu-about]');
+      var menuSettingsBtn = mount.querySelector('[data-rl-menu-settings]');
+      var menuLeaderboardBtn = mount.querySelector('[data-rl-menu-leaderboard]');
+      if (menuAboutBtn) menuAboutBtn.addEventListener('click', function () { showScreen('info-from-menu'); });
+      if (menuSettingsBtn) menuSettingsBtn.addEventListener('click', function () { showScreen('settings-from-menu'); });
+      if (menuLeaderboardBtn) {
+        menuLeaderboardBtn.addEventListener('click', function () {
+          lbTier = DEFAULT_TIER;
+          lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
+          mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
+          loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
+          showScreen('leaderboard-from-menu');
+        });
+      }
 
       // ---- Settings: SFX/Music volume, persisted ----
       var sfxSlider = mount.querySelector('[data-rl-sfx-volume]');
@@ -1115,6 +1255,40 @@
           var prefs = loadVolumePrefs(); prefs.music = Number(musicSlider.value); saveVolumePrefs(prefs);
         });
       }
+
+      // ---- Settings: language, persisted ----
+      // Walks every element currently in the DOM tagged with data-i18n
+      // (plain text swap) or data-i18n-html (innerHTML swap, for strings
+      // that need to keep a nested element like a live-updating <b> score
+      // or a <small> sub-line). Called once at boot with the saved/default
+      // language, and again immediately whenever a language button is
+      // tapped — no page reload needed.
+      function applyLanguage(lang) {
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          el.textContent = t(el.getAttribute('data-i18n'), lang);
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+          el.innerHTML = t(el.getAttribute('data-i18n-html'), lang);
+        });
+      }
+      function loadLangPref() {
+        try { return localStorage.getItem(LANG_KEY) || 'en'; } catch (e) { return 'en'; }
+      }
+      function saveLangPref(lang) {
+        try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+      }
+      var currentLang = loadLangPref();
+      applyLanguage(currentLang);
+      mount.querySelectorAll('[data-rl-lang]').forEach(function (btn) {
+        if (btn.getAttribute('data-rl-lang') === currentLang) btn.classList.add('rl-selected');
+        else btn.classList.remove('rl-selected');
+        btn.addEventListener('click', function () {
+          currentLang = btn.getAttribute('data-rl-lang');
+          saveLangPref(currentLang);
+          mount.querySelectorAll('[data-rl-lang]').forEach(function (b) { b.classList.toggle('rl-selected', b === btn); });
+          applyLanguage(currentLang);
+        });
+      });
     }
 
     // ---- Claim a Code ----
@@ -1261,6 +1435,20 @@
       });
     }
 
+    var splashEl = mount.querySelector('[data-rl-splash]');
+    var splashMinTimePassed = false;
+    var splashLoadDone = false;
+    function maybeHideSplash() {
+      if (splashEl && splashMinTimePassed && splashLoadDone) splashEl.hidden = true;
+    }
+    if (shopEnabled && splashEl) {
+      splashEl.hidden = false;
+      setTimeout(function () { splashMinTimePassed = true; maybeHideSplash(); }, 2000);
+    } else {
+      splashMinTimePassed = true;
+      splashLoadDone = true;
+    }
+
     Promise.all([
       loadCouponEntitlements(),
       fetch(BASE + '/api/characters' + (shopEnabled && DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
@@ -1278,7 +1466,8 @@
       })
       .catch(function () {
         charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
-      });
+      })
+      .finally(function () { splashLoadDone = true; maybeHideSplash(); });
 
     // ---------- difficulty tier selector (full-screen overlay off the
     // Difficulty button, matching the Scene picker's shape) ----------
@@ -1393,13 +1582,6 @@
       if (loadMoreBtn) loadMoreBtn.hidden = !hasMore;
     }
 
-    mount.querySelector('[data-rl-open-leaderboard]').addEventListener('click', function () {
-      lbTier = DEFAULT_TIER;
-      lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal'; // whatever scene is currently selected on the main screen
-      mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
-      loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
-      showScreen('leaderboard-from-start');
-    });
     mount.querySelector('[data-rl-close-leaderboard]').addEventListener('click', function () { showScreen('leaderboard-close'); });
     mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (tab) {
       tab.addEventListener('click', function () {
