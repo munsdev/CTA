@@ -207,13 +207,11 @@
     + '            <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
     + '          </label>'
     + '        </div>'
-    + '        <div class="rl-check-row">'
-    + '          <input type="checkbox" id="rl-rainbow-toggle" data-rl-rainbow-toggle>'
-    + '          <label for="rl-rainbow-toggle"><span data-rl-rainbow-label>Rainbow Blizzard Mode</span>'
-    + '            <small>Swaps your laser for rockets, adds a separate leaderboard</small>'
-    + '          </label>'
-    + '        </div>'
     + '      </div>'
+    + '      <button type="button" class="rl-scene-btn" data-rl-scene-btn>'
+    + '        <span class="rl-scene-btn-label">Scene</span>'
+    + '        <span class="rl-scene-btn-name" data-rl-scene-btn-name>Standard</span>'
+    + '      </button>'
     + '      <button class="rl-btn" data-rl-start>Start Game</button>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard>Leaderboard</button>'
     + '      <p class="rl-error" data-rl-start-error></p>'
@@ -363,6 +361,16 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-overlay" data-rl-screen="scenes" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Select Scene</h2>'
+    + '      <p class="rl-sub">Pick which look you want to play.</p>'
+    + '      <div class="rl-char-grid" data-rl-scene-grid><div class="rl-loading">Loading…</div></div>'
+    + '      <button type="button" class="rl-btn" data-rl-scene-confirm disabled>Confirm</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-scenes>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-unlock-modal" data-rl-claim-modal hidden>'
     + '    <div class="rl-unlock-panel">'
     + '      <h3>Claim a Code</h3>'
@@ -410,8 +418,6 @@
     var shopEnabled = mount.getAttribute('data-rl-shop') === '1';
     if (shopEnabled) {
       mount.classList.add('rl-native');
-      var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
-      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Blizzard';
       var introEl = mount.querySelector('[data-rl-screen="start"] .rl-sub');
       if (introEl) introEl.textContent = 'Ice is raining down and it\'s your job to laser it before it hits the ground. Pick your Bird Rebel below to get started.';
 
@@ -499,6 +505,7 @@
       screens.gameover.hidden = true;
       screens.leaderboard.hidden = true;
       if (screens.shop) screens.shop.hidden = true;
+      if (screens.scenes) screens.scenes.hidden = true;
       if (screens.info) screens.info.hidden = true;
       if (screens.settings) screens.settings.hidden = true;
       if (screens.credits) screens.credits.hidden = true;
@@ -510,6 +517,8 @@
       else if (name === 'leaderboard-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'shop-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.shop) screens.shop.hidden = false; }
       else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'scenes-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.scenes) screens.scenes.hidden = false; }
+      else if (name === 'scenes-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
       else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'settings-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
@@ -527,6 +536,13 @@
     var charImgs = {};
     var charAccent = {};
     var RANDOM_CODE = '__RANDOM__';
+
+    // ---------- scene roster (live from the API — Standard, Rainbow
+    // Blizzard, and any future purchasable scenes) ----------
+    var sceneGrid = mount.querySelector('[data-rl-scene-grid]');
+    var sceneRoster = [];
+    var selectedScene = 'standard';
+    var pendingSceneCode = null; // picker's in-progress pick, before Confirm
 
     function preloadChar(ch) {
       var preload = new Image();
@@ -868,6 +884,85 @@
       });
     }
 
+    // Scenes reuse the .rl-char-card tile look for visual consistency with
+    // rebel select/shop, but tap-to-highlight-then-Confirm instead of
+    // tap-to-open-a-purchase-detail — same mechanic as the claim-code
+    // picker (see claimPickerGrid below), just for scenes instead of a
+    // multi-item coupon's options. Nothing is applied until Confirm is
+    // tapped, so browsing/tapping around doesn't change gameplay mid-tap.
+    var sceneConfirmBtn = mount.querySelector('[data-rl-scene-confirm]');
+    function renderSceneGrid() {
+      if (!sceneGrid) return;
+      if (!sceneRoster.length) {
+        sceneGrid.innerHTML = '<div class="rl-loading">Couldn\'t load scenes.</div>';
+        return;
+      }
+      pendingSceneCode = selectedScene;
+      sceneGrid.innerHTML = '';
+      sceneRoster.forEach(function (sc) {
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'rl-char-card';
+        card.setAttribute('data-rl-scene', sc.code);
+        if (!sc.unlocked) card.classList.add('rl-char-shop-tile');
+        if (sc.accentColor) card.style.setProperty('--tile-accent', sc.accentColor);
+        if (sc.code === selectedScene) card.classList.add('rl-selected');
+        var swatch = document.createElement('div');
+        swatch.className = 'rl-scene-swatch';
+        swatch.style.background = 'linear-gradient(135deg, ' + (sc.primaryColor || '#333') + ', ' + (sc.secondaryColor || sc.primaryColor || '#333') + ')';
+        var span = document.createElement('span');
+        span.textContent = sc.label;
+        card.appendChild(swatch); card.appendChild(span);
+        if (!sc.unlocked) {
+          var lock = document.createElement('span');
+          lock.className = 'rl-shop-price';
+          lock.textContent = sc.priceCents ? '$' + (sc.priceCents / 100).toFixed(2) : 'Locked';
+          card.appendChild(lock);
+        }
+        card.addEventListener('click', function () {
+          // Locked scenes aren't selectable yet — no purchase flow exists
+          // for scenes yet (this is the future-purchase scaffolding), so
+          // tapping one is a no-op rather than a broken purchase attempt.
+          if (!sc.unlocked) return;
+          sceneGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
+          pendingSceneCode = sc.code;
+          if (sceneConfirmBtn) sceneConfirmBtn.disabled = false;
+        });
+        sceneGrid.appendChild(card);
+      });
+      if (sceneConfirmBtn) sceneConfirmBtn.disabled = false;
+    }
+
+    function sceneByCode(code) {
+      for (var i = 0; i < sceneRoster.length; i++) if (sceneRoster[i].code === code) return sceneRoster[i];
+      return null;
+    }
+
+    // Syncs the main-menu scene button to whatever's currently selected —
+    // the scene NAME is always shown as text (never relying on color alone
+    // to communicate which scene is active), with the accent color applied
+    // to the button's border/text as a secondary visual cue.
+    function updateSceneButton() {
+      var btn = mount.querySelector('[data-rl-scene-btn]');
+      var nameEl = mount.querySelector('[data-rl-scene-btn-name]');
+      var sc = sceneByCode(selectedScene);
+      if (nameEl) nameEl.textContent = sc ? sc.label : 'Standard';
+      if (btn) btn.style.setProperty('--tile-accent', (sc && sc.accentColor) || 'var(--rl-accent)');
+    }
+
+    mount.querySelector('[data-rl-scene-btn]').addEventListener('click', function () {
+      renderSceneGrid();
+      showScreen('scenes-from-start');
+    });
+    mount.querySelector('[data-rl-close-scenes]').addEventListener('click', function () { showScreen('scenes-close'); });
+    if (sceneConfirmBtn) {
+      sceneConfirmBtn.addEventListener('click', function () {
+        if (pendingSceneCode) selectedScene = pendingSceneCode;
+        updateSceneButton();
+        showScreen('scenes-close');
+      });
+    }
+
     var shopDetailEl = mount.querySelector('[data-rl-shop-detail]');
     var shopDetailImg = mount.querySelector('[data-rl-shop-detail-img]');
     var shopDetailName = mount.querySelector('[data-rl-shop-detail-name]');
@@ -1138,11 +1233,17 @@
     Promise.all([
       loadCouponEntitlements(),
       fetch(BASE + '/api/characters' + (shopEnabled && DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
+        .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); }),
+      fetch(BASE + '/api/scenes' + (DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
         .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
+        .catch(function () { return []; }) // scenes are non-essential to boot — fall back to just Standard rather than blocking the whole roster load
     ])
       .then(function (results) {
         roster = Array.isArray(results[1]) ? results[1] : [];
         renderCharGrid();
+        sceneRoster = Array.isArray(results[2]) ? results[2] : [];
+        renderSceneGrid();
+        updateSceneButton();
       })
       .catch(function () {
         charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
@@ -1158,7 +1259,6 @@
     });
 
     var kidModeEl = mount.querySelector('[data-rl-kidmode]');
-    var rainbowToggleEl = mount.querySelector('[data-rl-rainbow-toggle]');
 
     // ---------- leaderboard ----------
     // Same Easy/Medium/Hard tabs either way — which of the 6 underlying
@@ -1245,7 +1345,7 @@
 
     mount.querySelector('[data-rl-open-leaderboard]').addEventListener('click', function () {
       lbTier = DEFAULT_TIER;
-      lbSet = rainbowToggleEl.checked ? 'blizzard' : 'normal'; // whatever the main-screen toggle currently says
+      lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal'; // whatever scene is currently selected on the main screen
       mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
       loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
       showScreen('leaderboard-from-start');
@@ -1339,7 +1439,7 @@
     var S = null;
     function freshState() {
       var accentColor = charAccent[selectedChar] || null;
-      var blizzard = !!rainbowToggleEl.checked; // works on any difficulty tier
+      var blizzard = selectedScene === 'blizzard'; // works on any difficulty tier
       var tierCfg = TIERS[selectedTier] || TIERS[DEFAULT_TIER];
       // Max wind velocity such that, if it stayed pinned at max the whole
       // fall, a cube would drift about WIND_MAX_RATIO of stage width by the
