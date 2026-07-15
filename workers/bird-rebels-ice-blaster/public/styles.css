@@ -339,6 +339,7 @@
 .rl-carousel-spacer{ flex:0 0 calc(50% - 123px); }
 .rl-carousel-card{
   flex:0 0 140px; scroll-snap-align:center; scroll-snap-stop:always; margin:0 4px;
+  position:relative; z-index:1;
   /* No CSS transition here on purpose: transform/opacity are now set
      directly, every animation frame, from actual scroll position (see the
      rAF loop in engine.js). A CSS transition chasing a discrete class
