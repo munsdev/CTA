@@ -972,13 +972,16 @@
       realCards.forEach(function (card, i) { wireCard(card, items[i]); });
       wireCard(cloneEnd, items[0]);
 
+      var suppressNextSettle = false;
       function jumpTo(card) {
+        suppressNextSettle = true;
         carouselTrack.style.scrollSnapType = 'none';
         scrollCarouselTo(card, false);
         setTimeout(function () { carouselTrack.style.scrollSnapType = ''; }, 60);
       }
 
       function onSettle() {
+        if (suppressNextSettle) { suppressNextSettle = false; return; }
         var centered = findCenteredCarouselCard();
         if (!centered) return;
         if (centered === cloneStart) {
