@@ -67,25 +67,29 @@
   display:block; width:100%; appearance:none; border:none; cursor:pointer;
   font-family:var(--rl-font-display); font-weight:800; letter-spacing:.03em; font-size:15px;
   padding:13px 16px; border-radius:9px; text-align:center; text-transform:uppercase;
-  background:var(--rl-laser); color:#1a0505; transition:transform .12s ease, filter .12s ease;
+  /* Solid-fill buttons are, with only rare exceptions, commit/confirm
+     actions — Start, Resume, Save Score, Purchase, Submit, Confirm — so
+     green is the sensible default rather than styling each one
+     individually. Ghost/outline buttons are the "everything else" tier
+     (see .rl-btn-ghost below) and default to yellow; back/cancel actions
+     are red (see .rl-btn-back below). */
+  background:var(--rl-life-on); color:#042010; transition:transform .12s ease, filter .12s ease;
 }
-/* Start Game is a deliberate one-off "go" green, not part of the yellow
-   brand-accent system used everywhere else — a green start button is a
-   near-universal game-UI convention and reads clearly against the black
-   home screen. Every other plain .rl-btn keeps the shared base styling. */
+/* Kept as an explicit statement of intent even though it now matches the
+   base color above — Start Game being green is deliberate, not incidental. */
 [data-rl-start]{ background:var(--rl-life-on); color:#042010; }
 .rl-btn:hover{ filter:brightness(1.08); }
 .rl-btn:active{ transform:scale(.97); }
 .rl-btn.rl-btn-ghost{
-  background:transparent; color:var(--rl-ink); border:1px solid var(--rl-panel-line);
+  background:rgba(255,200,0,.1); color:var(--rl-accent); border:1px solid var(--rl-accent);
 }
 .rl-btn.rl-btn-ghost.rl-btn-confirm{
   background:rgba(255,200,0,.12); color:var(--rl-accent); border-color:var(--rl-accent);
 }
-/* Genuine "go back one level" buttons only — not every ghost button, since
-   rl-btn-ghost is shared with non-back actions (Restart Run, Cancel, Claim
-   a Code, Leaderboard, etc.) that shouldn't turn red just because they
-   share the same base ghost styling. */
+/* Genuine "go back one level" buttons AND Cancel buttons — both dismiss
+   without committing, so both are red. Not every ghost button, though:
+   rl-btn-ghost is still shared with genuinely neutral actions (Restart
+   Run, Claim a Code, Leaderboard, Load More, etc.) that stay yellow. */
 .rl-btn.rl-btn-ghost.rl-btn-back{
   background:rgba(255,74,74,.12); color:var(--rl-laser); border-color:var(--rl-laser);
 }
