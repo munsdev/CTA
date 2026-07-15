@@ -413,6 +413,20 @@
       if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Blizzard';
       var introEl = mount.querySelector('[data-rl-screen="start"] .rl-sub');
       if (introEl) introEl.textContent = 'Ice is raining down and it\'s your job to laser it before it hits the ground. Pick your Bird Rebel below to get started.';
+
+      // Diagnostic only — confirms in chrome://inspect whether the brand
+      // fonts actually loaded, instead of guessing from a screenshot.
+      if (document.fonts) {
+        Promise.all([
+          document.fonts.load('700 16px "Black Elite"'),
+          document.fonts.load('400 16px "Genos"')
+        ]).then(function () {
+          console.log('[rl fonts] Black Elite loaded:', document.fonts.check('700 16px "Black Elite"'));
+          console.log('[rl fonts] Genos loaded:', document.fonts.check('400 16px "Genos"'));
+        }).catch(function (e) {
+          console.error('[rl fonts] font load failed:', e);
+        });
+      }
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
@@ -709,14 +723,20 @@
       realCards.forEach(function (card, i) { wireCard(card, items[i]); });
       wireCard(cloneEnd, items[0]);
 
+      function jumpTo(card) {
+        carouselTrack.style.scrollSnapType = 'none';
+        scrollCarouselTo(card, false);
+        setTimeout(function () { carouselTrack.style.scrollSnapType = ''; }, 60);
+      }
+
       function onSettle() {
         var centered = findCenteredCarouselCard();
         if (!centered) return;
         if (centered === cloneStart) {
-          scrollCarouselTo(realCards[realCards.length - 1], false);
+          jumpTo(realCards[realCards.length - 1]);
           centered = realCards[realCards.length - 1];
         } else if (centered === cloneEnd) {
-          scrollCarouselTo(realCards[0], false);
+          jumpTo(realCards[0]);
           centered = realCards[0];
         }
         var code = centered.getAttribute('data-rl-char');
@@ -733,7 +753,7 @@
       requestAnimationFrame(function () {
         selectCarouselItem(items[0].code);
         setActiveCarouselCard(realCards[0]);
-        scrollCarouselTo(realCards[0], false);
+        jumpTo(realCards[0]);
       });
 
       function stepCarousel(dir) {
