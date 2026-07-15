@@ -14,6 +14,12 @@
   };
   var TIER_ORDER = ['easy', 'medium', 'hard'];
   var MIN_CUBE_SIZE = 24;
+  // Neither ice cubes nor the player's aim/firing position can enter the
+  // outer edges of the play field — otherwise a cube (especially one
+  // pushed by Rainbow Blizzard wind) can end up effectively untouchable
+  // if it's beyond where the player is allowed to aim. 0.08 = 8% inset on
+  // each side, the middle of the requested 5-10% range.
+  var PLAY_AREA_EDGE_INSET_RATIO = 0.08;
   // Rainbow Blizzard Mode only: max cumulative horizontal drift a cube can
   // pick up over a full top-to-bottom fall, as a fraction of stage width.
   var WIND_MAX_RATIO = { easy: 0.10, medium: 0.20, hard: 0.60 }; // doubled for Rainbow Blizzard Mode
@@ -385,8 +391,8 @@
     + '  <div class="rl-overlay" data-rl-screen="gameover" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="meltedThrough">Melted Through!</h2>'
-    + '      <p class="rl-final" data-i18n="iceCubesMelted">Ice cubes melted<b data-rl-final-score>0</b></p>'
-    + '      <p class="rl-final" data-i18n="accuracy">Accuracy<b data-rl-final-accuracy>0%</b></p>'
+    + '      <p class="rl-final" data-i18n-html="iceCubesMelted">Ice cubes melted<b data-rl-final-score>0</b></p>'
+    + '      <p class="rl-final" data-i18n-html="accuracy">Accuracy<b data-rl-final-accuracy>0%</b></p>'
     + '      <div data-rl-score-submit>'
     + '        <div class="rl-initials-row">'
     + '          <input type="text" maxlength="1" data-rl-initial="0" autocomplete="off" autocapitalize="characters">'
@@ -1787,9 +1793,16 @@
     }
 
     // ---------- spawning ----------
+    // Play-area x-bounds: neither a cube's center nor the player's aim can
+    // go past these, keeping a real margin at each screen edge (see
+    // PLAY_AREA_EDGE_INSET_RATIO above) so nothing ever ends up in an
+    // effectively untouchable strip along the sides. Computed fresh from
+    // the current W each call since the stage can resize.
+    function playAreaMinX() { return W * PLAY_AREA_EDGE_INSET_RATIO; }
+    function playAreaMaxX() { return W * (1 - PLAY_AREA_EDGE_INSET_RATIO); }
     function spawnCube(size) {
       var margin = size / 2 + 4;
-      var x = rand(margin, W - margin);
+      var x = rand(Math.max(margin, playAreaMinX()), Math.min(W - margin, playAreaMaxX()));
       var speed = currentDifficulty(S.elapsed).speed;
       S.cubes.push({ x: x, y: -size, size: size, speed: speed * rand(0.85, 1.18), rot: rand(-0.12, 0.12) });
     }
@@ -2058,7 +2071,7 @@
     function pointerXFromEvent(e) {
       var rect = stage.getBoundingClientRect();
       var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
-      return clamp(clientX - rect.left, 0, W);
+      return clamp(clientX - rect.left, playAreaMinX(), playAreaMaxX());
     }
     function onPointerMove(e) { if (!S || !S.running || S.paused) return; S.aimX = pointerXFromEvent(e); }
     function onPointerDown(e) {
@@ -2083,8 +2096,8 @@
       if (e.code === 'Escape') { togglePause(); return; }
       if (S.paused) return;
       if (e.code === 'Space') { S.firing = true; S.pendingFire = true; e.preventDefault(); }
-      else if (e.code === 'ArrowLeft') { S.aimX = clamp(S.aimX - 22, 0, W); }
-      else if (e.code === 'ArrowRight') { S.aimX = clamp(S.aimX + 22, 0, W); }
+      else if (e.code === 'ArrowLeft') { S.aimX = clamp(S.aimX - 22, playAreaMinX(), playAreaMaxX()); }
+      else if (e.code === 'ArrowRight') { S.aimX = clamp(S.aimX + 22, playAreaMinX(), playAreaMaxX()); }
     });
     window.addEventListener('keyup', function (e) { if (e.code === 'Space' && S) S.firing = false; });
 
@@ -2501,7 +2514,7 @@
         S.elapsed = (now - S.startedAt) / 1000 - S.pausedAccum;
 
         S.loonX = lerp(S.loonX, S.aimX, 0.28);
-        S.loonX = clamp(S.loonX, 0, W);
+        S.loonX = clamp(S.loonX, playAreaMinX(), playAreaMaxX());
 
         var arrived = Math.abs(S.loonX - S.aimX) < 3;
         if (S.pendingFire && arrived) { fire(now); S.pendingFire = false; }
@@ -2528,7 +2541,7 @@
         for (var i = S.cubes.length - 1; i >= 0; i--) {
           var c = S.cubes[i];
           c.y += c.speed * dt;
-          if (S.cfg.blizzard) c.x = clamp(c.x + windAt(c.y) * dt, c.size / 2, W - c.size / 2);
+          if (S.cfg.blizzard) c.x = clamp(c.x + windAt(c.y) * dt, Math.max(c.size / 2, playAreaMinX()), Math.min(W - c.size / 2, playAreaMaxX()));
           if (c.y - c.size / 2 > floorY) {
             S.cubes.splice(i, 1);
             spawnShatter(clamp(c.x, c.size, W - c.size), floorY, c.size);
