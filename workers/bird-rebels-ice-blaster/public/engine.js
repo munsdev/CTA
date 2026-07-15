@@ -89,20 +89,23 @@
       window.addEventListener(evt, unlock, { once: true, passive: true });
     });
 
+    var sfxGain = 1; // 0-1 master multiplier, controlled by the Settings slider (native only)
     function play(key) {
       var buf = buffers[key];
       if (!buf) { console.warn('[rl sound] "' + key + '" not ready yet (ctx.state=' + ctx.state + ')'); return; }
+      if (sfxGain <= 0) return;
       try {
         unlock();
         var src = ctx.createBufferSource();
         src.buffer = buf;
         var gain = ctx.createGain();
-        gain.gain.value = SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6;
+        gain.gain.value = (SOUND_VOLUME[key] != null ? SOUND_VOLUME[key] : 0.6) * sfxGain;
         src.connect(gain).connect(ctx.destination);
         src.start(0);
       } catch (e) { console.error('[rl sound] play() threw for "' + key + '":', e); }
     }
-    return { play: play, unlock: unlock };
+    function setVolume(v) { sfxGain = Math.max(0, Math.min(1, v)); }
+    return { play: play, unlock: unlock, setVolume: setVolume };
   }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -172,9 +175,15 @@
     + '<div class="rl-frame">'
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-screen-inner">'
-    + '      <button class="rl-info-btn" data-rl-info-btn type="button" aria-label="How to play">?</button>'
-    + '      <img class="rl-logo" data-rl-logo alt="Bird Rebels: Ice Blaster">'
-    + '      <h1 class="rl-h1">Bird Rebels: Ice Blaster</h1>'
+    + '      <div class="rl-topbar" data-rl-topbar>'
+    + '        <h1 class="rl-topbar-title">Ice Blaster</h1>'
+    + '        <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu">&#9776;</button>'
+    + '        <div class="rl-menu-popup" data-rl-menu-popup hidden>'
+    + '          <button type="button" class="rl-menu-item" data-rl-menu-help>Help</button>'
+    + '          <button type="button" class="rl-menu-item" data-rl-menu-settings>Settings</button>'
+    + '          <button type="button" class="rl-menu-item" data-rl-menu-credits>Credits</button>'
+    + '        </div>'
+    + '      </div>'
     + '      <p class="rl-sub">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <div class="rl-char-label-row rl-field-label">Select Your Rebel</div>'
     + '      <div class="rl-char-grid" data-rl-char-grid><div class="rl-loading">Loading roster…</div></div>'
@@ -295,8 +304,34 @@
     + '      <p class="rl-info-block">Ice cubes are falling — laser them down before they reach the bottom.</p>'
     + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
-    + '      <p class="rl-info-block"><b>Rainbow Mode</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
+    + '      <p class="rl-info-block"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-close-info>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-overlay" data-rl-screen="settings" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Settings</h2>'
+    + '      <div class="rl-slider-row">'
+    + '        <label for="rl-sfx-volume">Sound Effects</label>'
+    + '        <input type="range" id="rl-sfx-volume" data-rl-sfx-volume min="0" max="100" value="100">'
+    + '      </div>'
+    + '      <div class="rl-slider-row">'
+    + '        <label for="rl-music-volume">Music</label>'
+    + '        <input type="range" id="rl-music-volume" data-rl-music-volume min="0" max="100" value="100">'
+    + '      </div>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-settings>Back</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-overlay" data-rl-screen="credits" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Credits</h2>'
+    + '      <p class="rl-info-block">Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.</p>'
+    + '      <p class="rl-info-block">Original Rebel Loon artwork by Casey The American.</p>'
+    + '      <p class="rl-info-block"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
+    + '      <a class="rl-btn" href="https://birdrebels.art" target="_blank" rel="noopener">Support the Artist</a>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-credits>Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -375,9 +410,7 @@
     if (shopEnabled) {
       mount.classList.add('rl-native');
       var rainbowLabelEl = mount.querySelector('[data-rl-rainbow-label]');
-      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Mode';
-      var logoEl = mount.querySelector('[data-rl-logo]');
-      if (logoEl) logoEl.src = BASE + '/logo.png';
+      if (rainbowLabelEl) rainbowLabelEl.textContent = 'Rainbow Blizzard';
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
@@ -434,7 +467,9 @@
 
     var blizzardTheme = new Audio(SOUND_BASE + '/sounds/blizzard-theme.mp3');
     blizzardTheme.loop = true;
-    blizzardTheme.volume = 0.55;
+    var musicGain = 1; // 0-1 master multiplier, controlled by the Settings slider (native only)
+    function applyMusicVolume() { blizzardTheme.volume = 0.55 * musicGain; }
+    applyMusicVolume();
     blizzardTheme.preload = 'auto';
     function stopBlizzardTheme() { try { blizzardTheme.pause(); blizzardTheme.currentTime = 0; } catch (e) {} }
 
@@ -448,6 +483,8 @@
       screens.leaderboard.hidden = true;
       if (screens.shop) screens.shop.hidden = true;
       if (screens.info) screens.info.hidden = true;
+      if (screens.settings) screens.settings.hidden = true;
+      if (screens.credits) screens.credits.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
@@ -458,6 +495,10 @@
       else if (name === 'shop-close') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'info-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.info) screens.info.hidden = false; }
       else if (name === 'info-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'settings-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
+      else if (name === 'settings-close') { screens.start.hidden = false; screens.game.hidden = true; }
+      else if (name === 'credits-from-start') { screens.start.hidden = false; screens.game.hidden = true; if (screens.credits) screens.credits.hidden = false; }
+      else if (name === 'credits-close') { screens.start.hidden = false; screens.game.hidden = true; }
     }
 
     // ---------- character roster (live from the API) ----------
@@ -803,10 +844,62 @@
     if (shopEnabled) {
       var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
       if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); closeShopConfirm(); pendingPurchase = null; showScreen('shop-close'); });
-      var infoBtn = mount.querySelector('[data-rl-info-btn]');
+
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
-      if (infoBtn) infoBtn.addEventListener('click', function () { showScreen('info-from-start'); });
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
+      var closeSettingsBtn = mount.querySelector('[data-rl-close-settings]');
+      if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', function () { showScreen('settings-close'); });
+      var closeCreditsBtn = mount.querySelector('[data-rl-close-credits]');
+      if (closeCreditsBtn) closeCreditsBtn.addEventListener('click', function () { showScreen('credits-close'); });
+
+      // ---- Top bar menu: Help / Settings / Credits ----
+      var menuBtn = mount.querySelector('[data-rl-menu-btn]');
+      var menuPopup = mount.querySelector('[data-rl-menu-popup]');
+      var menuHelpBtn = mount.querySelector('[data-rl-menu-help]');
+      var menuSettingsBtn = mount.querySelector('[data-rl-menu-settings]');
+      var menuCreditsBtn = mount.querySelector('[data-rl-menu-credits]');
+      if (menuBtn) {
+        menuBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (menuPopup) menuPopup.hidden = !menuPopup.hidden;
+        });
+      }
+      document.addEventListener('click', function () { if (menuPopup) menuPopup.hidden = true; });
+      if (menuHelpBtn) menuHelpBtn.addEventListener('click', function () { menuPopup.hidden = true; showScreen('info-from-start'); });
+      if (menuSettingsBtn) menuSettingsBtn.addEventListener('click', function () { menuPopup.hidden = true; showScreen('settings-from-start'); });
+      if (menuCreditsBtn) menuCreditsBtn.addEventListener('click', function () { menuPopup.hidden = true; showScreen('credits-from-start'); });
+
+      // ---- Settings: SFX/Music volume, persisted ----
+      var sfxSlider = mount.querySelector('[data-rl-sfx-volume]');
+      var musicSlider = mount.querySelector('[data-rl-music-volume]');
+      var VOLUME_KEY = 'rl_volume_v1';
+      function loadVolumePrefs() {
+        try { return JSON.parse(localStorage.getItem(VOLUME_KEY) || '{}'); } catch (e) { return {}; }
+      }
+      function saveVolumePrefs(prefs) {
+        try { localStorage.setItem(VOLUME_KEY, JSON.stringify(prefs)); } catch (e) {}
+      }
+      var volumePrefs = loadVolumePrefs();
+      var initialSfx = volumePrefs.sfx != null ? volumePrefs.sfx : 100;
+      var initialMusic = volumePrefs.music != null ? volumePrefs.music : 100;
+      if (sfxSlider) sfxSlider.value = initialSfx;
+      if (musicSlider) musicSlider.value = initialMusic;
+      soundPlayer.setVolume(initialSfx / 100);
+      musicGain = initialMusic / 100;
+      applyMusicVolume();
+      if (sfxSlider) {
+        sfxSlider.addEventListener('input', function () {
+          soundPlayer.setVolume(sfxSlider.value / 100);
+          var prefs = loadVolumePrefs(); prefs.sfx = Number(sfxSlider.value); saveVolumePrefs(prefs);
+        });
+      }
+      if (musicSlider) {
+        musicSlider.addEventListener('input', function () {
+          musicGain = musicSlider.value / 100;
+          applyMusicVolume();
+          var prefs = loadVolumePrefs(); prefs.music = Number(musicSlider.value); saveVolumePrefs(prefs);
+        });
+      }
     }
 
     // ---- Claim a Code ----
