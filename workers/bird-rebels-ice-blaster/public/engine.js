@@ -294,6 +294,7 @@
     + '        </select>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-lb-load-more hidden>Load More</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-leaderboard>Back</button>'
     + '    </div>'
     + '  </div>'
@@ -1177,24 +1178,41 @@
       else copy.sort(function (a, b) { return b.score - a.score; });
       return copy;
     }
+    var LB_PAGE_SIZE = 20;
+    var lbVisible = LB_PAGE_SIZE;
+
     function loadLeaderboard(tier, set, container, noteEl) {
       container.innerHTML = '<div class="rl-loading">Loading…</div>';
       if (noteEl) noteEl.textContent = SET_LABELS[set] || SET_LABELS.normal;
+      lbVisible = LB_PAGE_SIZE;
       fetch(BASE + '/api/leaderboard?tier=' + encodeURIComponent(boardKey(tier, set)))
         .then(function (r) { return r.json(); })
-        .then(function (arr) {
-          lastBoardArr = Array.isArray(arr) ? arr : [];
-          renderBoard(container, sortBoard(lastBoardArr, lbSort));
+        .then(function (data) {
+          // Server returns {rows, total}; fetched with no limit param, rows
+          // is every stored entry for this tier (up to 1000). We keep the
+          // full array client-side rather than fetching page-by-page,
+          // because the sort dropdown (Accuracy/Name/Date) needs to sort
+          // across ALL rows, not just whatever page happened to be
+          // requested — sorting a partial page would silently hide
+          // higher-ranked rows outside that page.
+          lastBoardArr = (data && Array.isArray(data.rows)) ? data.rows : [];
+          renderBoardPage(container, sortBoard(lastBoardArr, lbSort));
         })
         .catch(function () { container.innerHTML = '<div class="rl-loading">Couldn\'t load the leaderboard.</div>'; });
     }
-    function renderBoard(container, arr, highlightTs) {
+    // visibleCount is optional — omitted (or null), every row in arr is
+    // rendered, which is what the post-game inline mini-board wants.
+    // Passed, only the first N rows render and the function returns
+    // whether more rows exist beyond that, so the full leaderboard screen
+    // can show/hide its Load More button accordingly.
+    function renderBoard(container, arr, highlightTs, visibleCount) {
       if (!arr || !arr.length) {
         container.innerHTML = '<div class="rl-board-empty">No scores yet — be the first.</div>';
-        return;
+        return false;
       }
+      var shown = (visibleCount == null) ? arr : arr.slice(0, visibleCount);
       var html = '';
-      arr.forEach(function (row, i) {
+      shown.forEach(function (row, i) {
         var mine = highlightTs && row.ts === highlightTs;
         var accPct = Math.round((row.accuracy || 0) * 100);
         // Theme this row by the character the player used that run, same
@@ -1212,6 +1230,17 @@
           + '</div>';
       });
       container.innerHTML = html;
+      return shown.length < arr.length;
+    }
+    // Renders the current page (lbVisible rows) into the full leaderboard
+    // screen specifically, and shows/hides the Load More button based on
+    // whether more rows remain. Kept separate from renderBoard itself so
+    // the post-game inline mini-board (which calls renderBoard directly,
+    // unpaginated) is completely unaffected by this.
+    function renderBoardPage(container, arr, highlightTs) {
+      var hasMore = renderBoard(container, arr, highlightTs, lbVisible);
+      var loadMoreBtn = mount.querySelector('[data-rl-lb-load-more]');
+      if (loadMoreBtn) loadMoreBtn.hidden = !hasMore;
     }
 
     mount.querySelector('[data-rl-open-leaderboard]').addEventListener('click', function () {
@@ -1231,8 +1260,18 @@
     });
     mount.querySelector('[data-rl-lb-sort]').addEventListener('change', function () {
       lbSort = this.value;
-      renderBoard(mount.querySelector('[data-rl-board-full]'), sortBoard(lastBoardArr, lbSort));
+      // Re-sorting keeps whatever page depth was already revealed (doesn't
+      // reset to 20) — the person may have already clicked Load More a few
+      // times and re-sorting shouldn't punish that by collapsing it back down.
+      renderBoardPage(mount.querySelector('[data-rl-board-full]'), sortBoard(lastBoardArr, lbSort));
     });
+    var lbLoadMoreBtn = mount.querySelector('[data-rl-lb-load-more]');
+    if (lbLoadMoreBtn) {
+      lbLoadMoreBtn.addEventListener('click', function () {
+        lbVisible += LB_PAGE_SIZE;
+        renderBoardPage(mount.querySelector('[data-rl-board-full]'), sortBoard(lastBoardArr, lbSort));
+      });
+    }
 
     // ---------- game elements ----------
     var stageOuter = mount.querySelector('[data-rl-stage-outer]');
