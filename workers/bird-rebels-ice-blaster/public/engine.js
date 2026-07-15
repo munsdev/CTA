@@ -881,12 +881,18 @@
       carouselTrack.querySelectorAll('.rl-carousel-card').forEach(function (card) {
         var r = card.getBoundingClientRect();
         var cardCenter = r.left + r.width / 2;
-        var dist = Math.min(Math.abs(cardCenter - trackCenter), CAROUSEL_FALLOFF_PX);
+        var realDist = Math.abs(cardCenter - trackCenter);
+        var dist = Math.min(realDist, CAROUSEL_FALLOFF_PX);
         var t = 1 - dist / CAROUSEL_FALLOFF_PX; // 1 at dead-center, 0 at/beyond falloff
         var scale = CAROUSEL_MIN_SCALE + (CAROUSEL_MAX_SCALE - CAROUSEL_MIN_SCALE) * t;
         var opacity = CAROUSEL_MIN_OPACITY + (CAROUSEL_MAX_OPACITY - CAROUSEL_MIN_OPACITY) * t;
         card.style.transform = 'scale(' + scale.toFixed(3) + ')';
         card.style.opacity = opacity.toFixed(3);
+        // Closer to center = higher z-index, so the enlarged active card
+        // always paints above its neighbors instead of DOM order deciding
+        // paint order (which was letting a later-in-DOM neighbor visually
+        // cut into the larger active card).
+        card.style.zIndex = String(Math.max(1, 100 - Math.round(realDist)));
       });
     }
 
