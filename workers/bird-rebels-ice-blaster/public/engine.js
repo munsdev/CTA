@@ -294,7 +294,7 @@
     + '        </select>'
     + '      </div>'
     + '      <div class="rl-board" data-rl-board-full><div class="rl-loading">Loading…</div></div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-leaderboard>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-leaderboard>Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -305,7 +305,7 @@
     + '      <p class="rl-info-block">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <p class="rl-info-block"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
     + '      <p class="rl-info-block"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-info>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-info>Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -320,7 +320,7 @@
     + '        <label for="rl-music-volume">Music</label>'
     + '        <input type="range" id="rl-music-volume" data-rl-music-volume min="0" max="100" value="100">'
     + '      </div>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-settings>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings>Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -331,7 +331,7 @@
     + '      <p class="rl-info-block">Original Rebel Loon artwork by Casey The American.</p>'
     + '      <p class="rl-info-block"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
     + '      <a class="rl-btn" href="https://birdrebels.art" target="_blank" rel="noopener">Support the Artist</a>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-credits>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-credits>Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -341,7 +341,7 @@
     + '      <p class="rl-sub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-claim-code>Claim a Code</button>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-close-shop>Back</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-shop>Back</button>'
     + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
     + '        <div class="rl-shop-detail-panel">'
     + '          <img data-rl-shop-detail-img alt="">'
@@ -349,7 +349,7 @@
     + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
     + '          <button class="rl-btn" data-rl-shop-detail-buy>Purchase</button>'
     + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-claim-code>Claim a Code Instead</button>'
-    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-back>Back</button>'
+    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-detail-back>Back</button>'
     + '        </div>'
     + '      </div>'
     + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
