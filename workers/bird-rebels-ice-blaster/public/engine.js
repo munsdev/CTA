@@ -329,7 +329,7 @@
     + '      <p class="rl-info-block">Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.</p>'
     + '      <p class="rl-info-block">Original Rebel Loon artwork by Casey The American.</p>'
     + '      <p class="rl-info-block"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
-    + '      <a class="rl-btn" href="https://birdrebels.art" target="_blank" rel="noopener">Support the Artist</a>'
+    + '      <a class="rl-btn rl-btn-ghost" href="https://birdrebels.art" target="_blank" rel="noopener">Support the Artist</a>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-credits>Back</button>'
     + '    </div>'
     + '  </div>'
@@ -355,7 +355,7 @@
     + '        <div class="rl-shop-confirm-panel">'
     + '          <p data-rl-shop-confirm-text></p>'
     + '          <button class="rl-btn" data-rl-shop-confirm-yes>Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-confirm-no>Cancel</button>'
+    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-confirm-no>Cancel</button>'
     + '        </div>'
     + '      </div>'
     + '    </div>'
@@ -377,14 +377,14 @@
     + '      <div data-rl-claim-entry>'
     + '        <input type="text" class="rl-code-input" data-rl-claim-input placeholder="ENTER CODE" maxlength="24">'
     + '        <button class="rl-btn" data-rl-claim-submit>Submit</button>'
-    + '        <button class="rl-btn rl-btn-ghost" data-rl-claim-cancel>Cancel</button>'
+    + '        <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-claim-cancel>Cancel</button>'
     + '        <p class="rl-error" data-rl-claim-error></p>'
     + '      </div>'
     + '      <div data-rl-claim-picker hidden>'
     + '        <p>Pick one:</p>'
     + '        <div class="rl-char-grid" data-rl-claim-picker-grid></div>'
     + '        <button class="rl-btn" data-rl-claim-picker-confirm disabled>Confirm</button>'
-    + '        <button class="rl-btn rl-btn-ghost" data-rl-claim-picker-cancel>Cancel</button>'
+    + '        <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-claim-picker-cancel>Cancel</button>'
     + '      </div>'
     + '    </div>'
     + '  </div>'
@@ -824,10 +824,15 @@
       carouselTrack.addEventListener('scroll', function () {
         startCarouselRaf();
         clearTimeout(carouselSettleTimer);
+        // Was 120ms — that fixed wait before even checking whether the
+        // clone-wraparound jump was needed was the actual source of the
+        // "takes too long" lag at the carousel ends (the jump itself is
+        // instant, behavior:'auto'). 50ms still reliably distinguishes
+        // "still scrolling" from "stopped" without the noticeable pause.
         carouselSettleTimer = setTimeout(function () {
           stopCarouselRaf();
           onSettle();
-        }, 120);
+        }, 50);
       }, { passive: true });
 
       // Land centered on OG (real index 0) to start.
