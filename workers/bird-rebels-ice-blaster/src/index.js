@@ -6,6 +6,7 @@
 //                                                  ./public via the [assets]
 //                                                  binding (see wrangler.toml)
 //   GET  /api/characters                       -> character roster from D1
+//   GET  /api/scenes                           -> scene roster from D1 (Standard/Rainbow Blizzard, more later)
 //   GET  /characters/:filename                  -> proxies the PNG from R2
 //   GET  /api/leaderboard?tier=easy|medium|hard&limit=20 -> {rows, total} for that tier, up to 1000 stored
 //   POST /api/leaderboard  {initials,tier,score} -> submit a score
@@ -110,6 +111,44 @@ async function getCharacters(url, env) {
     visible: !!r.visible,
   }));
   return json(chars);
+}
+
+async function getScenes(url, env) {
+  const device = url.searchParams.get('device');
+  let ownedCodes = [];
+  if (device) {
+    const { results } = await env.CHARACTERS_DB.prepare(
+      "SELECT item_code FROM entitlements WHERE device_id = ? AND item_type = 'scene'"
+    ).bind(device).all();
+    ownedCodes = results.map((r) => r.item_code);
+  }
+  // Same visibility rule as characters: a hidden/special scene (visible=0,
+  // only obtainable via its own coupon) still needs to appear once a
+  // device actually owns it, or there'd be no way to ever select it.
+  const placeholders = ownedCodes.map(() => '?').join(',');
+  const sql = ownedCodes.length
+    ? `SELECT code, label, sort_order, primary_color, secondary_color, accent_color, visible, auto_unlock, price_cents FROM scenes WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
+    : 'SELECT code, label, sort_order, primary_color, secondary_color, accent_color, visible, auto_unlock, price_cents FROM scenes WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
+  const stmt = ownedCodes.length
+    ? env.CHARACTERS_DB.prepare(sql).bind(...ownedCodes)
+    : env.CHARACTERS_DB.prepare(sql);
+  const { results } = await stmt.all();
+  const scenes = results.map((r) => ({
+    code: r.code,
+    label: r.label,
+    primaryColor: r.primary_color || null,
+    secondaryColor: r.secondary_color || null,
+    accentColor: r.accent_color || null,
+    autoUnlock: !!r.auto_unlock,
+    priceCents: r.price_cents || 0,
+    visible: !!r.visible,
+    // A scene is selectable right now if it's free-by-default OR the
+    // requesting device already owns it. The client still needs this
+    // computed server-side (not just autoUnlock) so a purchased scene
+    // unlocks correctly without trusting the client's own state.
+    unlocked: !!r.auto_unlock || ownedCodes.indexOf(r.code) !== -1,
+  }));
+  return json(scenes);
 }
 
 async function getCharacterImage(pathname, env) {
@@ -364,6 +403,9 @@ export default {
 
     if (path === '/api/characters' && request.method === 'GET') {
       return getCharacters(url, env);
+    }
+    if (path === '/api/scenes' && request.method === 'GET') {
+      return getScenes(url, env);
     }
     if (path.startsWith('/characters/') && request.method === 'GET') {
       return getCharacterImage(path, env);
