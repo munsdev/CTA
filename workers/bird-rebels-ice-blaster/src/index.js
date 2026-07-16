@@ -10,6 +10,11 @@
 //   GET  /characters/:filename                  -> proxies the PNG from R2
 //   GET  /api/leaderboard?tier=easy|medium|hard&limit=20 -> {rows, total} for that tier, up to 1000 stored
 //   POST /api/leaderboard  {initials,tier,score} -> submit a score
+//   POST /api/purchases/verify  {device,itemType,itemCode,productId,purchaseToken}
+//        -> real Play Billing path: verifies purchaseToken against Google's
+//           Play Developer API before granting an entitlement. Requires
+//           GOOGLE_SERVICE_ACCOUNT_JSON (a service account key with the
+//           androidpublisher scope) set as a Worker secret.
 //
 // Adding a new state bird later is just: upload STATE.png to the R2 bucket,
 // then INSERT a row into the `characters` table (code/label/filename/
@@ -239,6 +244,120 @@ async function getEntitlements(url, env) {
   return json(results.map((r) => ({ itemType: r.item_type, itemCode: r.item_code })));
 }
 
+// ---------- Google Play purchase verification ----------
+// Runs entirely on Web Crypto (crypto.subtle) — no npm dependency needed,
+// since Cloudflare Workers don't support Node's built-in `crypto` module.
+// This signs a service-account JWT, trades it for a short-lived OAuth
+// access token, then calls the Google Play Developer API to confirm a
+// purchase token is real. A purchaseToken handed up by the client can't be
+// trusted on its own (it's just a string — a modified client could send a
+// fabricated one), so this server-side round trip to Google is the actual
+// security boundary before any entitlement gets granted for a real charge.
+
+function base64UrlEncode(bytes) {
+  let binary = '';
+  const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function base64UrlEncodeString(str) {
+  return base64UrlEncode(new TextEncoder().encode(str));
+}
+// Google's service-account JSON stores the private key as PEM (base64,
+// wrapped in -----BEGIN/END PRIVATE KEY-----). crypto.subtle.importKey
+// wants the raw DER bytes, not the PEM text — strip the header/footer and
+// whitespace, then base64-decode what's left.
+function pemToDer(pem) {
+  const stripped = pem.replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s+/g, '');
+  const binary = atob(stripped);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+var cachedGoogleToken = null; // { accessToken, expiresAt } — module-scoped so it can survive across requests within the same Worker isolate
+async function getGoogleAccessToken(env) {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedGoogleToken && cachedGoogleToken.expiresAt > now + 60) return cachedGoogleToken.accessToken;
+
+  const credentials = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_JSON);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const claims = {
+    iss: credentials.client_email,
+    scope: 'https://www.googleapis.com/auth/androidpublisher',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  };
+  const unsigned = base64UrlEncodeString(JSON.stringify(header)) + '.' + base64UrlEncodeString(JSON.stringify(claims));
+
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToDer(credentials.private_key),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+  const jwt = unsigned + '.' + base64UrlEncode(signature);
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=' + encodeURIComponent(jwt),
+  });
+  if (!tokenRes.ok) throw new Error('Google OAuth token exchange failed: ' + (await tokenRes.text()));
+  const tokenData = await tokenRes.json();
+  cachedGoogleToken = { accessToken: tokenData.access_token, expiresAt: now + (tokenData.expires_in || 3600) };
+  return cachedGoogleToken.accessToken;
+}
+
+// Returns true only if Google confirms this exact purchase token is real,
+// paid for the expected product, and in the PURCHASED state (0). Anything
+// else — wrong product, pending payment, cancelled/refunded (1), or any
+// network/auth failure — returns false, since the only safe default here
+// is to NOT grant the entitlement.
+async function verifyGooglePlayPurchase(env, productId, purchaseToken) {
+  const packageName = env.ANDROID_PACKAGE_NAME || 'com.caseytheamerican.iceblaster';
+  const accessToken = await getGoogleAccessToken(env);
+  const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+  if (!res.ok) return false;
+  const data = await res.json();
+  // purchaseState: 0 = purchased, 1 = cancelled, 2 = pending
+  return data.purchaseState === 0;
+}
+
+async function verifyAndGrantPurchase(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
+  const device = String((body && body.device) || '');
+  const itemType = String((body && body.itemType) || '');
+  const itemCode = String((body && body.itemCode) || '');
+  const productId = String((body && body.productId) || '');
+  const purchaseToken = String((body && body.purchaseToken) || '');
+  if (!device || !itemType || !itemCode || !productId || !purchaseToken) {
+    return json({ error: 'missing device, itemType, itemCode, productId, or purchaseToken' }, 400);
+  }
+
+  let verified = false;
+  try {
+    verified = await verifyGooglePlayPurchase(env, productId, purchaseToken);
+  } catch (e) {
+    // Network/auth failure talking to Google is NOT the same as a
+    // confirmed-invalid purchase — surface a distinct error so the client
+    // can retry rather than treating this like a rejected purchase.
+    return json({ ok: false, error: 'verification_unavailable' }, 502);
+  }
+  if (!verified) return json({ ok: false, error: 'purchase_not_verified' }, 402);
+
+  await env.CHARACTERS_DB.prepare(
+    'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, created_at) VALUES (?, ?, ?, ?, ?)'
+  ).bind(device, itemType, itemCode, 'play_purchase', Date.now()).run();
+
+  return json({ ok: true });
+}
+
 // Placeholder purchase — mimics a real IAP flow (there's a confirm step in
 // the UI) but doesn't actually charge anything yet. Swap this for real Play
 // Billing server-side receipt validation later; the entitlements table and
@@ -421,6 +540,9 @@ export default {
     }
     if (path === '/api/entitlements/grant' && request.method === 'POST') {
       return grantEntitlement(request, env);
+    }
+    if (path === '/api/purchases/verify' && request.method === 'POST') {
+      return verifyAndGrantPurchase(request, env);
     }
     if (path === '/api/entitlements/redeem' && request.method === 'POST') {
       return redeemCoupon(request, env);
