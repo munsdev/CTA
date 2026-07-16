@@ -349,6 +349,7 @@
     + '          </button>'
     + '        </div>'
     + '        <button class="rl-btn" data-rl-start data-i18n="startGame">Start Game</button>'
+    + '        <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard data-i18n="leaderboard">Leaderboard</button>'
     + '        <p class="rl-error" data-rl-start-error></p>'
     + '      </div>'
     + '    </div>'
@@ -563,6 +564,7 @@
     + '  </div>'
 
     + '  <div class="rl-toast" data-rl-toast></div>'
+    + '  <div class="rl-bottombar" data-rl-bottombar></div>'
     + '</div>';
 
   function boot(mount) {
@@ -608,6 +610,13 @@
     }
     var FLOCK_KEY = 'rl_flock_v1';
     var OG_CODE = 'OG';
+    var LAST_CHAR_KEY = 'rl_last_char_v1';
+    function loadLastCharPref() {
+      try { return localStorage.getItem(LAST_CHAR_KEY) || null; } catch (e) { return null; }
+    }
+    function saveLastCharPref(code) {
+      try { localStorage.setItem(LAST_CHAR_KEY, code); } catch (e) {}
+    }
     var DEVICE_KEY = 'rl_device_id';
     function getDeviceId() {
       try {
@@ -719,6 +728,7 @@
       else if (name === 'settings-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
       else if (name === 'settings-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
       else if (name === 'leaderboard-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
+      else if (name === 'leaderboard-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
     }
 
@@ -801,9 +811,10 @@
 
       // ---- native: build the carousel instead of the char-grid ----
       var og = rosterByCode(OG_CODE) || roster[0];
+      var lastChar = loadLastCharPref();
       var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || rosterByCode(selectedChar)))
         ? selectedChar
-        : og.code;
+        : ((lastChar && (lastChar === RANDOM_CODE || rosterByCode(lastChar))) ? lastChar : og.code);
       selectedChar = wantSelected;
       updateMenuBg(wantSelected);
       renderCarousel();
@@ -956,6 +967,7 @@
     function selectCarouselItem(code) {
       selectedChar = code;
       updateMenuBg(code);
+      saveLastCharPref(code);
     }
 
     function renderCarousel() {
@@ -1071,13 +1083,21 @@
         }, 50);
       }, { passive: true });
 
-      // Land centered on OG (real index 0) to start.
+      // Land centered on the resolved selection (selectedChar was already
+      // set above — either the last-selected rebel from a previous
+      // session, or OG as the final fallback) instead of always hardcoding
+      // OG/index 0, which ignored that resolution entirely.
       requestAnimationFrame(function () {
-        selectCarouselItem(items[0].code);
-        setActiveCarouselCard(realCards[0]);
-        jumpTo(realCards[0]);
-        // One-off scale pass so OG starts at full size instead of sitting
-        // at resting-small scale until the first scroll/swipe happens.
+        var startCard = null;
+        for (var si = 0; si < realCards.length; si++) {
+          if (realCards[si].getAttribute('data-rl-char') === selectedChar) { startCard = realCards[si]; break; }
+        }
+        if (!startCard) startCard = realCards[0];
+        selectCarouselItem(startCard.getAttribute('data-rl-char'));
+        setActiveCarouselCard(startCard);
+        jumpTo(startCard);
+        // One-off scale pass so the starting card is at full size instead
+        // of sitting at resting-small scale until the first scroll/swipe.
         updateCarouselCardScales();
       });
 
@@ -1409,6 +1429,16 @@
           showScreen('leaderboard-from-menu');
         });
       }
+      var openLeaderboardBtn = mount.querySelector('[data-rl-open-leaderboard]');
+      if (openLeaderboardBtn) {
+        openLeaderboardBtn.addEventListener('click', function () {
+          lbTier = DEFAULT_TIER;
+          lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
+          mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
+          loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
+          showScreen('leaderboard-from-start');
+        });
+      }
 
       // ---- Settings: SFX/Music volume, persisted ----
       var sfxSlider = mount.querySelector('[data-rl-sfx-volume]');
@@ -1537,7 +1567,11 @@
     }
     function grantedToast(granted) {
       var count = (granted || []).length;
-      toast(count > 1 ? count + ' items unlocked!' : (granted[0] ? granted[0].itemCode + ' unlocked!' : 'Unlocked!'));
+      if (count > 1) { toast(count + ' rebels unlocked!'); return; }
+      var g = granted && granted[0];
+      if (!g) { toast('Unlocked!'); return; }
+      var ch = g.itemType === 'rebel' ? rosterByCode(g.itemCode) : null;
+      toast((ch ? ch.label : g.itemCode) + ' unlocked!');
     }
     function applyGranted(granted) {
       var needsRosterRefresh = false;
@@ -1611,6 +1645,7 @@
               grantedToast(data.granted);
               applyGranted(data.granted);
               closeClaimModal();
+              showScreen('shop-close');
             }
           })
           .catch(function () { if (claimError) claimError.textContent = 'Couldn\'t reach the server — try again.'; });
@@ -1629,6 +1664,7 @@
               grantedToast(res.granted);
               applyGranted(res.granted);
               closeClaimModal();
+              showScreen('shop-close');
             } else {
               if (claimError) claimError.textContent = (res && res.error) || 'That didn\'t work — try again.';
             }
