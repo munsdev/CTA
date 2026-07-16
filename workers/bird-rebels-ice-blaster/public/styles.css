@@ -319,11 +319,13 @@
   display:flex; align-items:center; justify-content:center; flex:none;
 }
 
-/* Empty bottom bar, always present regardless of which screen is showing
-   (unlike the topbar, which is setup-screen-only) — keeps the rebel
-   carousel and the bottom of the play area (where ice lands) clear of the
-   native Android gesture/button bar. Matches the topbar's texture/z-index
-   treatment. */
+/* Empty bottom bar, visible only during actual gameplay (toggled via JS in
+   showScreen() based on whether the game screen is showing) — keeps where
+   ice lands clear of the native Android gesture/button bar. Everywhere
+   else (home/menu screens) just gets the safety padding reserved for this
+   bar's height (see .rl-native .rl-frame) without the bar itself showing,
+   so the background shows through instead of an empty textured strip
+   sitting over nothing. Matches the topbar's texture/z-index treatment. */
 .rl-bottombar{
   position:absolute; left:50%; bottom:0; transform:translateX(-50%);
   width:100vw; height:32px;
