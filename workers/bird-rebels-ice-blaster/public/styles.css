@@ -101,6 +101,11 @@
   background:rgba(255,255,255,.03); color:#fff; border-color:var(--rl-laser);
 }
 .rl-btn:disabled{ opacity:.55; cursor:default; }
+/* Visually matches :disabled but the button stays fully clickable — used
+   for purchase/coupon buttons when not signed in, where a tap should
+   still prompt sign-in rather than do nothing (a truly disabled button
+   wouldn't fire its click event at all). */
+.rl-btn.rl-btn-gray{ opacity:.55; }
 .rl-btn + .rl-btn{ margin-top:10px; }
 
 .rl-loading{ text-align:center; color:var(--rl-dim); font-size:12.5px; padding:20px 0; }
