@@ -205,6 +205,11 @@
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-bg-top),var(--rl-bg-bottom));
   background-size:220px 220px, cover;
   background-blend-mode:soft-light, normal;
+  /* The bottom bar is position:absolute (out of normal flow, same
+     technique as the topbar) so it doesn't push content — this reserves
+     the space it actually occupies, so screens correctly stop short of it
+     instead of their bottom content being covered. */
+  padding-bottom:calc(32px + env(safe-area-inset-bottom));
 }
 /* Setup screen only: solid black instead of the themed navy gradient, to
    match the site (birdrebels.art uses near-black, not blue). Higher
@@ -307,6 +312,22 @@
   appearance:none; cursor:pointer; background:transparent; border:none;
   color:#fff; font-size:28px; line-height:1; width:44px; height:44px;
   display:flex; align-items:center; justify-content:center; flex:none;
+}
+
+/* Empty bottom bar, always present regardless of which screen is showing
+   (unlike the topbar, which is setup-screen-only) — keeps the rebel
+   carousel and the bottom of the play area (where ice lands) clear of the
+   native Android gesture/button bar. Matches the topbar's texture/z-index
+   treatment. */
+.rl-bottombar{
+  position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:100vw; height:32px;
+  background-color:#0a0a0a;
+  background-image:url('textures/knobs.png');
+  background-repeat:repeat;
+  border-top:1px solid rgba(255,255,255,.08);
+  z-index:20;
+  padding-bottom:env(safe-area-inset-bottom);
 }
 
 .rl-slider-row{ margin:0 0 20px; }
@@ -430,7 +451,7 @@
 
 /* Rebel Shop item detail card — large image + Purchase, sits above the shop grid */
 .rl-shop-detail{
-  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:25; display:flex; align-items:center; justify-content:center;
   padding:24px; background:rgba(5,9,15,.85);
 }
 .rl-shop-detail-panel{
@@ -505,7 +526,12 @@
   position:absolute; top:14px; left:50%; transform:translateX(-50%);
   background:#0e2233; color:#9de6ff; font-family:var(--rl-font-display); font-weight:800;
   font-size:16px; letter-spacing:.03em; text-transform:uppercase; padding:12px 22px; border-radius:24px;
-  z-index:6; box-shadow:0 4px 18px rgba(0,0,0,.45), 0 0 16px rgba(157,230,255,.5);
+  /* Was z-index:6 — well below the topbar/bottombar (z-index:20), so a
+     toast fired while either bar was visible rendered behind it instead
+     of on top. This is the actual cause of the "toast behind navbar"
+     report — not a general z-index audit finding elsewhere, just this one
+     concrete mismatch. */
+  z-index:30; box-shadow:0 4px 18px rgba(0,0,0,.45), 0 0 16px rgba(157,230,255,.5);
   border:1.5px solid rgba(157,230,255,.55); pointer-events:none; text-align:center; max-width:88%;
   opacity:0; transition:opacity .25s ease;
 }
@@ -603,7 +629,7 @@
 
 /* ---------- rebel shop purchase confirm (native only, harmless if unused) ---------- */
 .rl-shop-confirm{
-  position:fixed; inset:0; z-index:6; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:25; display:flex; align-items:center; justify-content:center;
   padding:24px; background:rgba(5,9,15,.72);
 }
 .rl-shop-confirm-panel{
@@ -614,7 +640,7 @@
 
 /* ---------- claim-a-code modal (native only, harmless if unused) ---------- */
 .rl-unlock-modal{
-  position:fixed; inset:0; z-index:7; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:26; display:flex; align-items:center; justify-content:center;
   padding:24px; background:rgba(5,9,15,.78);
 }
 .rl-unlock-panel{
