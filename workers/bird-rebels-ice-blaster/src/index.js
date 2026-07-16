@@ -419,6 +419,21 @@ async function verifyGooglePlayPurchase(env, productId, purchaseToken) {
   return data.purchaseState === 0;
 }
 
+// Entitlements (purchases, coupons, any grant) now require a real, signed-in
+// Google identity — a random local device ID is no longer sufficient on its
+// own. Every identity that's ever gone through real verification (see
+// signInWithGoogle above) is prefixed 'goog_', so checking for that prefix
+// is a simple, reliable way to enforce "must be signed in" here. This is a
+// policy gate, not where the actual security check happens — that already
+// happened once, server-side, at the moment the 'goog_' ID was first
+// issued by /api/auth/google.
+function requireSignedIn(device) {
+  if (!device || device.indexOf('goog_') !== 0) {
+    return json({ ok: false, error: 'sign_in_required' }, 401);
+  }
+  return null;
+}
+
 async function verifyAndGrantPurchase(request, env) {
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
@@ -430,6 +445,8 @@ async function verifyAndGrantPurchase(request, env) {
   if (!device || !itemType || !itemCode || !productId || !purchaseToken) {
     return json({ error: 'missing device, itemType, itemCode, productId, or purchaseToken' }, 400);
   }
+  const signInError = requireSignedIn(device);
+  if (signInError) return signInError;
 
   let verified = false;
   try {
@@ -460,6 +477,8 @@ async function grantEntitlement(request, env) {
   const itemType = String((body && body.itemType) || '');
   const itemCode = String((body && body.itemCode) || '');
   if (!device || !itemType || !itemCode) return json({ error: 'missing device, itemType, or itemCode' }, 400);
+  const signInError = requireSignedIn(device);
+  if (signInError) return signInError;
 
   await env.CHARACTERS_DB.prepare(
     'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, created_at) VALUES (?, ?, ?, ?, ?)'
@@ -525,6 +544,8 @@ async function redeemCoupon(request, env) {
   const device = String((body && body.device) || '');
   const code = String((body && body.code) || '').trim().toUpperCase();
   if (!device || !code) return json({ error: 'missing device or code' }, 400);
+  const signInError = requireSignedIn(device);
+  if (signInError) return signInError;
 
   const { coupon, error } = await loadValidCoupon(code, device, env);
   if (error) return error;
@@ -577,6 +598,8 @@ async function redeemCouponChoice(request, env) {
   const code = String((body && body.code) || '').trim().toUpperCase();
   const itemCode = String((body && body.itemCode) || '');
   if (!device || !code || !itemCode) return json({ error: 'missing device, code, or itemCode' }, 400);
+  const signInError = requireSignedIn(device);
+  if (signInError) return signInError;
 
   const { coupon, error } = await loadValidCoupon(code, device, env);
   if (error) return error;
