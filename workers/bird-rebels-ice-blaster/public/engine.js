@@ -1645,11 +1645,12 @@
       }
 
       function doGoogleSignIn(silent) {
-        if (!GoogleSignIn) return Promise.resolve(false);
+        if (!GoogleSignIn) { console.log('[signin] GoogleSignIn plugin not found on window.Capacitor.Plugins'); return Promise.resolve(false); }
         return GoogleSignIn.initialize({ clientId: GOOGLE_SIGNIN_CLIENT_ID })
           .then(function () { return GoogleSignIn.signIn(); })
           .then(function (result) {
-            if (!result || !result.idToken) return false;
+            console.log('[signin] signIn() result:', JSON.stringify(result));
+            if (!result || !result.idToken) { console.log('[signin] no idToken in result — stopping here'); return false; }
             // Never trust the client-side idToken/userId directly — the
             // Worker verifies the token's signature against Google before
             // this identity is actually used for anything.
@@ -1657,8 +1658,13 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ idToken: result.idToken })
             })
-              .then(function (r) { if (!r.ok) throw new Error('verify failed'); return r.json(); })
+              .then(function (r) {
+                console.log('[signin] /api/auth/google status:', r.status);
+                if (!r.ok) return r.text().then(function (t) { console.log('[signin] error body:', t); throw new Error('verify failed'); });
+                return r.json();
+              })
               .then(function (data) {
+                console.log('[signin] verify response:', JSON.stringify(data));
                 if (!data || !data.ok) return false;
                 DEVICE_ID = data.userId;
                 saveSignedInIdentity(data.userId, result.email || null);
@@ -1666,7 +1672,7 @@
                 return true;
               });
           })
-          .catch(function () { return false; });
+          .catch(function (err) { console.log('[signin] caught error:', err && err.message); return false; });
       }
 
       if (signInBtn) {
