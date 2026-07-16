@@ -56,7 +56,7 @@
       creditsArt: 'Original Rebel Loon artwork by Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
       supportArtist: 'Support the Artist',
-      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration',
+      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — purchases are only saved on this device.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
       claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel', restorePurchases: 'Restore Purchases',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
@@ -88,7 +88,7 @@
       creditsArt: 'Original Rebel-Loon-Artwork von Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
       supportArtist: 'Den Künstler unterstützen',
-      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration',
+      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — Käufe werden nur auf diesem Gerät gespeichert.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
       claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen', restorePurchases: 'Käufe wiederherstellen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
@@ -120,7 +120,7 @@
       creditsArt: 'Illustration originale de Rebel Loon par Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
       supportArtist: 'Soutenir l\'artiste',
-      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration',
+      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — les achats ne sont enregistrés que sur cet appareil.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
       claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler', restorePurchases: 'Restaurer les achats',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
@@ -152,7 +152,7 @@
       creditsArt: 'Arte original de Rebel Loon por Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
       supportArtist: 'Apoya al artista',
-      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración',
+      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — las compras solo se guardan en este dispositivo.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
       claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar', restorePurchases: 'Restaurar compras',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
@@ -473,6 +473,10 @@
     + '        <input type="checkbox" id="rl-vibration-toggle" data-rl-vibration checked>'
     + '        <label for="rl-vibration-toggle" data-i18n="vibration">Vibration</label>'
     + '      </div>'
+    + '      <div class="rl-field-label" style="margin:18px 0 8px;" data-i18n="account">Account</div>'
+    + '      <p class="rl-info-block" style="margin-bottom:10px;" data-rl-account-status data-i18n="notSignedIn">Not signed in — purchases are only saved on this device.</p>'
+    + '      <button type="button" class="rl-btn" data-rl-signin-btn data-i18n="signInGoogle">Sign in with Google</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-signout-btn hidden data-i18n="signOut">Sign Out</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
@@ -625,7 +629,31 @@
         return id;
       } catch (e) { return 'dev_nostorage'; }
     }
-    var DEVICE_ID = shopEnabled ? getDeviceId() : null;
+    // Once signed in with Google, DEVICE_ID gets reassigned to the
+    // server-verified account identity (see signInWithGoogle below) — this
+    // is what actually ties purchases/entitlements to the person's Google
+    // account instead of just this one device. Cached locally so it
+    // doesn't need re-verifying the ID token every boot; the Worker
+    // already validated it once at sign-in time, and this is just a
+    // lookup key from then on, not a live credential.
+    var GOOGLE_USER_KEY = 'rl_google_user_v1';
+    var GOOGLE_EMAIL_KEY = 'rl_google_email_v1';
+    function loadSignedInUserId() {
+      try { return localStorage.getItem(GOOGLE_USER_KEY) || null; } catch (e) { return null; }
+    }
+    function saveSignedInIdentity(userId, email) {
+      try {
+        localStorage.setItem(GOOGLE_USER_KEY, userId);
+        if (email) localStorage.setItem(GOOGLE_EMAIL_KEY, email);
+      } catch (e) {}
+    }
+    function loadSignedInEmail() {
+      try { return localStorage.getItem(GOOGLE_EMAIL_KEY) || null; } catch (e) { return null; }
+    }
+    function clearSignedInIdentity() {
+      try { localStorage.removeItem(GOOGLE_USER_KEY); localStorage.removeItem(GOOGLE_EMAIL_KEY); } catch (e) {}
+    }
+    var DEVICE_ID = shopEnabled ? (loadSignedInUserId() || getDeviceId()) : null;
     var couponRebels = []; // rebel codes granted via coupon redemption (D1), separate from the local shop flock
     function loadCouponEntitlements() {
       if (!DEVICE_ID) return Promise.resolve();
@@ -1335,6 +1363,44 @@
       });
     }
 
+    // Re-verifies every Play purchase owned by whatever Google account is
+    // currently active on the device against the Worker, re-granting each
+    // one under the CURRENT DEVICE_ID. Returns a promise resolving to the
+    // number of purchases actually restored. Callable from the Shop's
+    // Restore Purchases button, or automatically right after a fresh
+    // sign-in — same underlying operation either way.
+    function restoreGooglePlayPurchases() {
+      var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
+      if (!NativePurchases) return Promise.resolve(0);
+      return NativePurchases.getPurchases({ productType: 'inapp' })
+        .then(function (result) {
+          var purchases = (result && result.purchases) || [];
+          var verifyOne = function (p) {
+            // Android-only fields per the plugin's docs — skip anything
+            // that isn't a confirmed, acknowledged real purchase.
+            if (p.purchaseState !== '1') return Promise.resolve(false);
+            var code = null;
+            if (p.productIdentifier && p.productIdentifier.indexOf('bird_') === 0) {
+              code = p.productIdentifier.slice('bird_'.length).toUpperCase();
+            }
+            if (!code || !p.purchaseToken) return Promise.resolve(false);
+            return fetch(BASE + '/api/purchases/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                device: DEVICE_ID, itemType: 'rebel', itemCode: code,
+                productId: p.productIdentifier, purchaseToken: p.purchaseToken
+              })
+            })
+              .then(function (r) { if (r.ok) { addToFlock(code); return true; } return false; })
+              .catch(function () { return false; });
+          };
+          return Promise.all(purchases.map(verifyOne));
+        })
+        .then(function (results) { return results.filter(Boolean).length; })
+        .catch(function () { return 0; });
+    }
+
     var restoreBtn = mount.querySelector('[data-rl-shop-restore]');
     if (restoreBtn) {
       restoreBtn.addEventListener('click', function () {
@@ -1346,38 +1412,8 @@
         restoreBtn.disabled = true;
         var originalLabel = restoreBtn.textContent;
         restoreBtn.textContent = 'Restoring…';
-        NativePurchases.getPurchases({ productType: 'inapp' })
-          .then(function (result) {
-            var purchases = (result && result.purchases) || [];
-            // Re-verify each owned purchase against the Worker so it gets
-            // re-granted under the CURRENT device ID — this is what
-            // actually survives a data clear/reinstall, since Google's own
-            // purchase record doesn't depend on this device's localStorage
-            // at all, unlike the device ID itself.
-            var verifyOne = function (p) {
-              // Android-only fields per the plugin's docs — skip anything
-              // that isn't a confirmed, acknowledged real purchase.
-              if (p.purchaseState !== '1') return Promise.resolve(false);
-              var code = null;
-              if (p.productIdentifier && p.productIdentifier.indexOf('bird_') === 0) {
-                code = p.productIdentifier.slice('bird_'.length).toUpperCase();
-              }
-              if (!code || !p.purchaseToken) return Promise.resolve(false);
-              return fetch(BASE + '/api/purchases/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  device: DEVICE_ID, itemType: 'rebel', itemCode: code,
-                  productId: p.productIdentifier, purchaseToken: p.purchaseToken
-                })
-              })
-                .then(function (r) { if (r.ok) { addToFlock(code); return true; } return false; })
-                .catch(function () { return false; });
-            };
-            return Promise.all(purchases.map(verifyOne));
-          })
-          .then(function (results) {
-            var restoredCount = results.filter(Boolean).length;
+        restoreGooglePlayPurchases()
+          .then(function (restoredCount) {
             renderCharGrid();
             toast(restoredCount > 0 ? restoredCount + ' rebel(s) restored!' : 'No previous purchases found.');
           })
@@ -1522,6 +1558,94 @@
           vibrationEnabled = vibrationToggle.checked;
           saveVibrationPref(vibrationEnabled);
         });
+      }
+
+      // ---- Account: Google Sign-In ----
+      var accountStatusEl = mount.querySelector('[data-rl-account-status]');
+      var signInBtn = mount.querySelector('[data-rl-signin-btn]');
+      var signOutBtn = mount.querySelector('[data-rl-signout-btn]');
+      var GoogleSignIn = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleSignIn;
+      // Real web client ID from Google Cloud Console — required by the
+      // plugin on every platform, even Android (see its own docs on why).
+      var GOOGLE_SIGNIN_CLIENT_ID = 'REPLACE_WITH_WEB_CLIENT_ID.apps.googleusercontent.com';
+
+      function refreshAccountUi() {
+        var signedIn = !!loadSignedInUserId();
+        var email = loadSignedInEmail();
+        if (accountStatusEl) {
+          if (signedIn) {
+            accountStatusEl.removeAttribute('data-i18n');
+            accountStatusEl.textContent = email ? email : 'Signed in';
+          } else {
+            accountStatusEl.setAttribute('data-i18n', 'notSignedIn');
+            accountStatusEl.textContent = t('notSignedIn', currentLang);
+          }
+        }
+        if (signInBtn) signInBtn.hidden = signedIn;
+        if (signOutBtn) signOutBtn.hidden = !signedIn;
+      }
+      refreshAccountUi();
+
+      function doGoogleSignIn(silent) {
+        if (!GoogleSignIn) return Promise.resolve(false);
+        return GoogleSignIn.initialize({ clientId: GOOGLE_SIGNIN_CLIENT_ID })
+          .then(function () { return GoogleSignIn.signIn(); })
+          .then(function (result) {
+            if (!result || !result.idToken) return false;
+            // Never trust the client-side idToken/userId directly — the
+            // Worker verifies the token's signature against Google before
+            // this identity is actually used for anything.
+            return fetch(BASE + '/api/auth/google', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken: result.idToken })
+            })
+              .then(function (r) { if (!r.ok) throw new Error('verify failed'); return r.json(); })
+              .then(function (data) {
+                if (!data || !data.ok) return false;
+                DEVICE_ID = data.userId;
+                saveSignedInIdentity(data.userId, result.email || null);
+                refreshAccountUi();
+                return true;
+              });
+          })
+          .catch(function () { return false; });
+      }
+
+      if (signInBtn) {
+        signInBtn.addEventListener('click', function () {
+          signInBtn.disabled = true;
+          doGoogleSignIn(false).then(function (ok) {
+            signInBtn.disabled = false;
+            if (ok) {
+              toast('Signed in!');
+              // Pull in anything already purchased on this Google account
+              // (e.g. from a previous install) now that DEVICE_ID points
+              // at the real account identity — reuses the same restore
+              // flow as the Shop's own Restore Purchases button.
+              restoreGooglePlayPurchases();
+            } else {
+              toast('Sign-in didn\'t complete — try again.');
+            }
+          });
+        });
+      }
+      if (signOutBtn) {
+        signOutBtn.addEventListener('click', function () {
+          clearSignedInIdentity();
+          DEVICE_ID = getDeviceId();
+          if (GoogleSignIn && GoogleSignIn.signOut) { try { GoogleSignIn.signOut(); } catch (e) {} }
+          refreshAccountUi();
+          toast('Signed out.');
+        });
+      }
+      // Attempt a quiet sign-in on boot — Credential Manager can return an
+      // already-authorized account with no visible UI if the user has
+      // signed into this (or another) app with the same Google account
+      // before and hasn't declined. If it can't do this silently, it just
+      // does nothing here rather than forcing a prompt — the Settings
+      // button is always there for an explicit sign-in.
+      if (!loadSignedInUserId() && GoogleSignIn) {
+        doGoogleSignIn(true).then(function (ok) { if (ok) refreshAccountUi(); });
       }
     }
 
