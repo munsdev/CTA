@@ -58,7 +58,7 @@
       supportArtist: 'Support the Artist',
       settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
-      claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel',
+      claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel', restorePurchases: 'Restore Purchases',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
@@ -90,7 +90,7 @@
       supportArtist: 'Den Künstler unterstützen',
       settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
-      claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen',
+      claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen', restorePurchases: 'Käufe wiederherstellen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
@@ -122,7 +122,7 @@
       supportArtist: 'Soutenir l\'artiste',
       settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
-      claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler',
+      claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler', restorePurchases: 'Restaurer les achats',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
@@ -154,7 +154,7 @@
       supportArtist: 'Apoya al artista',
       settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
-      claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar',
+      claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar', restorePurchases: 'Restaurar compras',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
@@ -482,6 +482,7 @@
     + '      <p class="rl-sub" data-i18n="rebelShopSub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-claim-code data-i18n="claimCode">Claim a Code</button>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-restore data-i18n="restorePurchases">Restore Purchases</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-shop data-i18n="back">Back</button>'
     + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
     + '        <div class="rl-shop-detail-panel">'
@@ -1243,31 +1244,53 @@
     function closeShopConfirm() {
       if (shopConfirmEl) shopConfirmEl.hidden = true;
     }
+    // Play Billing product IDs follow this pattern — must match exactly
+    // what's registered as in-app products in Play Console, or
+    // getProduct()/purchaseProduct() will fail to find them.
+    function playProductIdForRebel(code) { return 'bird_' + code.toLowerCase(); }
+
     if (shopConfirmYes) {
       shopConfirmYes.addEventListener('click', function () {
         if (!pendingPurchase) return;
         var ch = pendingPurchase;
-        // TODO(play-billing): this is still the free placeholder flow —
-        // grantEntitlement() on the Worker side writes the entitlements row
-        // unconditionally with no real payment involved yet. When real Play
-        // Billing goes in, a purchase token from Play needs to be verified
-        // server-side BEFORE this grant call, but the grant call itself and
-        // everything downstream of it (getFlock, ownedRebelCodes, the
-        // carousel) doesn't need to change.
+        var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
+        if (!NativePurchases) {
+          toast('Purchases aren\'t available on this device.');
+          return;
+        }
         shopConfirmYes.disabled = true;
         shopConfirmYes.textContent = 'Purchasing…';
-        fetch(BASE + '/api/entitlements/grant', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device: DEVICE_ID, itemType: 'rebel', itemCode: ch.code })
-        })
-          .then(function (r) { if (!r.ok) throw new Error('grant failed'); return r.json(); })
+        var productId = playProductIdForRebel(ch.code);
+        NativePurchases.purchaseProduct({ productIdentifier: productId, productType: 'inapp', quantity: 1 })
+          .then(function (result) {
+            // Android-only field per the plugin's own docs — this is the
+            // actual proof of purchase, sent to the Worker for real
+            // verification against Google's API. Never trust it locally;
+            // a modified client could fabricate this string.
+            if (!result || !result.purchaseToken) throw new Error('no purchase token returned');
+            return fetch(BASE + '/api/purchases/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                device: DEVICE_ID, itemType: 'rebel', itemCode: ch.code,
+                productId: productId, purchaseToken: result.purchaseToken
+              })
+            });
+          })
+          .then(function (r) {
+            if (!r.ok) {
+              // 402 from the Worker means Google itself said this purchase
+              // didn't check out (not just a network hiccup) — treat that
+              // as a real failure, not a retry-and-hope case.
+              throw new Error(r.status === 402 ? 'purchase_not_verified' : 'verify_request_failed');
+            }
+            return r.json();
+          })
           .then(function () {
-            // Server is now the source of truth for this purchase, but we
-            // still union it into the local flock immediately so the UI
-            // updates without waiting on a fresh /api/entitlements fetch —
-            // couponRebels (server-confirmed) will independently reflect it
-            // too the next time loadCouponEntitlements() runs.
+            // Server has now independently confirmed this purchase with
+            // Google and recorded it — union it into the local flock
+            // immediately so the UI updates without waiting on a fresh
+            // /api/entitlements fetch.
             addToFlock(ch.code);
             toast(ch.label + ' added to your flock!');
             selectedChar = ch.code;
@@ -1276,14 +1299,14 @@
             renderCharGrid();
             showScreen('shop-close');
           })
-          .catch(function () {
-            // Do NOT fake success here — if the grant call fails, the
-            // purchase genuinely didn't happen server-side, so the bird
-            // must not appear unlocked. Once Play Billing is wired in,
-            // a failure here means "charged but not recorded," which is
-            // exactly the case that needs a retry path, not a silent
-            // local-only unlock papering over it.
-            toast('Purchase failed — check your connection and try again.');
+          .catch(function (err) {
+            // A user backing out of the Play purchase sheet isn't an error
+            // worth alarming them about — just quietly reset the button.
+            var msg = (err && err.message) || '';
+            var userCancelled = /cancel/i.test(msg);
+            if (!userCancelled) {
+              toast('Purchase failed — check your connection and try again.');
+            }
           })
           .finally(function () {
             shopConfirmYes.disabled = false;
@@ -1291,6 +1314,63 @@
           });
       });
     }
+
+    var restoreBtn = mount.querySelector('[data-rl-shop-restore]');
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', function () {
+        var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
+        if (!NativePurchases) {
+          toast('Purchases aren\'t available on this device.');
+          return;
+        }
+        restoreBtn.disabled = true;
+        var originalLabel = restoreBtn.textContent;
+        restoreBtn.textContent = 'Restoring…';
+        NativePurchases.getPurchases({ productType: 'inapp' })
+          .then(function (result) {
+            var purchases = (result && result.purchases) || [];
+            // Re-verify each owned purchase against the Worker so it gets
+            // re-granted under the CURRENT device ID — this is what
+            // actually survives a data clear/reinstall, since Google's own
+            // purchase record doesn't depend on this device's localStorage
+            // at all, unlike the device ID itself.
+            var verifyOne = function (p) {
+              // Android-only fields per the plugin's docs — skip anything
+              // that isn't a confirmed, acknowledged real purchase.
+              if (p.purchaseState !== 'PURCHASED' && p.purchaseState !== '1') return Promise.resolve(false);
+              var code = null;
+              if (p.productIdentifier && p.productIdentifier.indexOf('bird_') === 0) {
+                code = p.productIdentifier.slice('bird_'.length).toUpperCase();
+              }
+              if (!code || !p.purchaseToken) return Promise.resolve(false);
+              return fetch(BASE + '/api/purchases/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  device: DEVICE_ID, itemType: 'rebel', itemCode: code,
+                  productId: p.productIdentifier, purchaseToken: p.purchaseToken
+                })
+              })
+                .then(function (r) { if (r.ok) { addToFlock(code); return true; } return false; })
+                .catch(function () { return false; });
+            };
+            return Promise.all(purchases.map(verifyOne));
+          })
+          .then(function (results) {
+            var restoredCount = results.filter(Boolean).length;
+            renderCharGrid();
+            toast(restoredCount > 0 ? restoredCount + ' rebel(s) restored!' : 'No previous purchases found.');
+          })
+          .catch(function () {
+            toast('Restore failed — check your connection and try again.');
+          })
+          .finally(function () {
+            restoreBtn.disabled = false;
+            restoreBtn.textContent = originalLabel;
+          });
+      });
+    }
+
     if (shopConfirmNo) {
       shopConfirmNo.addEventListener('click', function () {
         // Cancel drops back to the detail card rather than closing everything,
