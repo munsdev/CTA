@@ -1247,13 +1247,48 @@
       shopConfirmYes.addEventListener('click', function () {
         if (!pendingPurchase) return;
         var ch = pendingPurchase;
-        addToFlock(ch.code);
-        toast(ch.label + ' added to your flock!');
-        selectedChar = ch.code;
-        pendingPurchase = null;
-        closeShopConfirm();
-        renderCharGrid();
-        showScreen('shop-close');
+        // TODO(play-billing): this is still the free placeholder flow —
+        // grantEntitlement() on the Worker side writes the entitlements row
+        // unconditionally with no real payment involved yet. When real Play
+        // Billing goes in, a purchase token from Play needs to be verified
+        // server-side BEFORE this grant call, but the grant call itself and
+        // everything downstream of it (getFlock, ownedRebelCodes, the
+        // carousel) doesn't need to change.
+        shopConfirmYes.disabled = true;
+        shopConfirmYes.textContent = 'Purchasing…';
+        fetch(BASE + '/api/entitlements/grant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device: DEVICE_ID, itemType: 'rebel', itemCode: ch.code })
+        })
+          .then(function (r) { if (!r.ok) throw new Error('grant failed'); return r.json(); })
+          .then(function () {
+            // Server is now the source of truth for this purchase, but we
+            // still union it into the local flock immediately so the UI
+            // updates without waiting on a fresh /api/entitlements fetch —
+            // couponRebels (server-confirmed) will independently reflect it
+            // too the next time loadCouponEntitlements() runs.
+            addToFlock(ch.code);
+            toast(ch.label + ' added to your flock!');
+            selectedChar = ch.code;
+            pendingPurchase = null;
+            closeShopConfirm();
+            renderCharGrid();
+            showScreen('shop-close');
+          })
+          .catch(function () {
+            // Do NOT fake success here — if the grant call fails, the
+            // purchase genuinely didn't happen server-side, so the bird
+            // must not appear unlocked. Once Play Billing is wired in,
+            // a failure here means "charged but not recorded," which is
+            // exactly the case that needs a retry path, not a silent
+            // local-only unlock papering over it.
+            toast('Purchase failed — check your connection and try again.');
+          })
+          .finally(function () {
+            shopConfirmYes.disabled = false;
+            shopConfirmYes.textContent = 'Purchase';
+          });
       });
     }
     if (shopConfirmNo) {
