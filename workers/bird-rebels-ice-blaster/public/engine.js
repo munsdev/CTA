@@ -1607,7 +1607,7 @@
       var GoogleSignIn = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleSignIn;
       // Real web client ID from Google Cloud Console — required by the
       // plugin on every platform, even Android (see its own docs on why).
-      var GOOGLE_SIGNIN_CLIENT_ID = 'REPLACE_WITH_WEB_CLIENT_ID.apps.googleusercontent.com';
+      var GOOGLE_SIGNIN_CLIENT_ID = '1080299084827-jkc5h2gnn2v76q0gn1fvnvn20eec6bbv.apps.googleusercontent.com';
 
       function refreshAccountUi() {
         var signedIn = !!loadSignedInUserId();
