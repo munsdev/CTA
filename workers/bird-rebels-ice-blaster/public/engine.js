@@ -1337,7 +1337,7 @@
             var verifyOne = function (p) {
               // Android-only fields per the plugin's docs — skip anything
               // that isn't a confirmed, acknowledged real purchase.
-              if (p.purchaseState !== 'PURCHASED' && p.purchaseState !== '1') return Promise.resolve(false);
+              if (p.purchaseState !== '1') return Promise.resolve(false);
               var code = null;
               if (p.productIdentifier && p.productIdentifier.indexOf('bird_') === 0) {
                 code = p.productIdentifier.slice('bird_'.length).toUpperCase();
