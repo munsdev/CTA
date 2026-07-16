@@ -542,6 +542,7 @@
     + '  <div class="rl-overlay" data-rl-screen="menu" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="menu">Menu</h2>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signin data-i18n="signInGoogle" hidden>Sign in with Google</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-about data-i18n="about">About</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
@@ -737,6 +738,12 @@
     mount.querySelectorAll('[data-rl-screen]').forEach(function (e) {
       screens[e.getAttribute('data-rl-screen')] = e;
     });
+    var bottomBarEl = mount.querySelector('[data-rl-bottombar]');
+    // App boots straight onto the setup screen via markup defaults — no
+    // showScreen() call fires on initial load, so the bar's starting state
+    // needs setting explicitly here rather than relying on the first
+    // in-game transition to hide it.
+    if (bottomBarEl) bottomBarEl.hidden = true;
     var infoReturnScreen = 'start'; // which screen Help/Settings/Leaderboard should return to on close
     function showScreen(name) {
       screens.pause.hidden = true;
@@ -767,6 +774,12 @@
       else if (name === 'leaderboard-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
+      // Bottom bar (the visible textured strip) only shows during actual
+      // gameplay — everywhere else just gets the safety padding reserved
+      // for it (see .rl-native .rl-frame), so the background still shows
+      // through on the home/menu screens instead of a bar sitting there
+      // with nothing behind it.
+      if (bottomBarEl) bottomBarEl.hidden = screens.game.hidden;
     }
 
     // ---------- character roster (live from the API) ----------
@@ -1590,6 +1603,7 @@
       var accountStatusEl = mount.querySelector('[data-rl-account-status]');
       var signInBtn = mount.querySelector('[data-rl-signin-btn]');
       var signOutBtn = mount.querySelector('[data-rl-signout-btn]');
+      var menuSignInBtn = mount.querySelector('[data-rl-menu-signin]');
       var GoogleSignIn = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleSignIn;
       // Real web client ID from Google Cloud Console — required by the
       // plugin on every platform, even Android (see its own docs on why).
@@ -1609,8 +1623,26 @@
         }
         if (signInBtn) signInBtn.hidden = signedIn;
         if (signOutBtn) signOutBtn.hidden = !signedIn;
+        // Top-level menu button: only shown when NOT signed in, per
+        // instruction — once signed in, Account status/Sign Out lives in
+        // Settings instead, so the menu doesn't show two redundant entries.
+        if (menuSignInBtn) menuSignInBtn.hidden = signedIn;
       }
       refreshAccountUi();
+      if (menuSignInBtn) {
+        menuSignInBtn.addEventListener('click', function () {
+          menuSignInBtn.disabled = true;
+          doGoogleSignIn(false).then(function (ok) {
+            menuSignInBtn.disabled = false;
+            if (ok) {
+              toast('Signed in!');
+              restoreGooglePlayPurchases();
+            } else {
+              toast('Sign-in didn\'t complete — try again.');
+            }
+          });
+        });
+      }
 
       function doGoogleSignIn(silent) {
         if (!GoogleSignIn) return Promise.resolve(false);
