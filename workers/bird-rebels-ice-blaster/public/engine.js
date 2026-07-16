@@ -653,6 +653,15 @@
     function clearSignedInIdentity() {
       try { localStorage.removeItem(GOOGLE_USER_KEY); localStorage.removeItem(GOOGLE_EMAIL_KEY); } catch (e) {}
     }
+    // Single source of truth for "does this device currently have a real,
+    // signed-in Google identity" — used to gray out purchase/coupon
+    // buttons and gate the same actions client-side that the Worker
+    // already enforces server-side (requireSignedIn there is the actual
+    // security boundary; this is just so the UI doesn't let someone tap a
+    // button that's guaranteed to fail).
+    function isSignedIn() {
+      return DEVICE_ID != null && DEVICE_ID.indexOf('goog_') === 0;
+    }
     var DEVICE_ID = shopEnabled ? (loadSignedInUserId() || getDeviceId()) : null;
     var couponRebels = []; // rebel codes granted via coupon redemption (D1), separate from the local shop flock
     function loadCouponEntitlements() {
@@ -1144,6 +1153,10 @@
 
     function renderShopGrid() {
       if (!shopGrid) return;
+      // Visually reflects sign-in status every time the Shop screen
+      // renders — grayed out but still tappable (prompts sign-in on tap,
+      // handled inside openClaimModal itself).
+      if (claimShopBtn) claimShopBtn.classList.toggle('rl-btn-gray', !isSignedIn());
       var owned = ownedRebelCodes();
       var available = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1; });
       if (!available.length) {
@@ -1270,6 +1283,11 @@
       shopDetailImg.alt = ch.label;
       shopDetailName.textContent = ch.label;
       shopDetailEl.hidden = false;
+      // Same gray-out treatment as the Shop grid's Claim button — reflects
+      // sign-in status, stays clickable so a tap still routes to sign-in.
+      var signedIn = isSignedIn();
+      if (shopDetailBuy) shopDetailBuy.classList.toggle('rl-btn-gray', !signedIn);
+      if (claimDetailBtn) claimDetailBtn.classList.toggle('rl-btn-gray', !signedIn);
     }
     function closeShopDetail() {
       if (shopDetailEl) shopDetailEl.hidden = true;
@@ -1278,6 +1296,7 @@
     if (shopDetailBuy) {
       shopDetailBuy.addEventListener('click', function () {
         if (!pendingPurchase) return;
+        if (!isSignedIn()) { promptSignIn(); return; }
         openShopConfirm(pendingPurchase);
       });
     }
@@ -1288,6 +1307,12 @@
       shopConfirmText.textContent = 'Purchase ' + ch.label + ' for $0.00 and add it to your flock?';
       closeShopDetail();
       shopConfirmEl.hidden = false;
+      // Visually grayed out when not signed in, but NOT the native
+      // disabled attribute — a truly disabled button doesn't fire click
+      // events at all, which would silently swallow the tap instead of
+      // prompting sign-in as instructed ("if they click it, it asks to
+      // sign them in"). rl-btn-gray is styling-only.
+      if (shopConfirmYes) shopConfirmYes.classList.toggle('rl-btn-gray', !isSignedIn());
     }
     function closeShopConfirm() {
       if (shopConfirmEl) shopConfirmEl.hidden = true;
@@ -1300,6 +1325,7 @@
     if (shopConfirmYes) {
       shopConfirmYes.addEventListener('click', function () {
         if (!pendingPurchase) return;
+        if (!isSignedIn()) { promptSignIn(); return; }
         var ch = pendingPurchase;
         var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
         if (!NativePurchases) {
@@ -1649,6 +1675,17 @@
       }
     }
 
+    // Routes a tap on a disabled (not-signed-in) purchase/coupon button to
+    // Settings, where the real Sign In button lives — rather than directly
+    // triggering the sign-in flow from here, since doGoogleSignIn is
+    // scoped inside the shopEnabled block above and this needs to be
+    // callable from the Claim-a-Code wiring right below, which is
+    // unconditional/outside that scope.
+    function promptSignIn() {
+      toast('Sign in with Google to unlock rebels.');
+      showScreen('settings-from-menu');
+    }
+
     // ---- Claim a Code ----
     // Unconditional (not gated by shopEnabled) so it's safely callable from
     // both the main-screen button and the shop's purchase-detail card. The
@@ -1677,6 +1714,7 @@
     var pendingPickItemCode = null;
 
     function openClaimModal() {
+      if (!isSignedIn()) { promptSignIn(); return; }
       if (!claimModal) return;
       if (claimInput) claimInput.value = '';
       if (claimError) claimError.textContent = '';
