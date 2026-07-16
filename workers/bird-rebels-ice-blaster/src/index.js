@@ -15,6 +15,14 @@
 //           Play Developer API before granting an entitlement. Requires
 //           GOOGLE_SERVICE_ACCOUNT_JSON (a service account key with the
 //           androidpublisher scope) set as a Worker secret.
+//   POST /api/auth/google  {idToken} -> verifies a Google Sign-In ID token
+//        server-side (signature, audience, issuer, expiry) and returns a
+//        stable per-account identity ('goog_' + the token's sub claim).
+//        Requires GOOGLE_SIGNIN_CLIENT_ID (the OAuth web client ID from
+//        Google Cloud Console) set as a Worker secret/var. The returned ID
+//        is meant to replace the client's local device_id going forward —
+//        no schema change needed, since entitlements.device_id is a plain
+//        TEXT column with no format requirement.
 //
 // Adding a new state bird later is just: upload STATE.png to the R2 bucket,
 // then INSERT a row into the `characters` table (code/label/filename/
@@ -116,6 +124,89 @@ async function getCharacters(url, env) {
     visible: !!r.visible,
   }));
   return json(chars);
+}
+
+// ---------- Google Sign-In verification ----------
+// Same reasoning as the Play Billing verification below: a client can send
+// any string it wants as a "user ID", so the ID token itself has to be
+// checked against Google directly before trusting it for anything. Per
+// Google's own documented checklist (only the 'sub' claim is safe to use
+// as a stable identifier — never email, which can change).
+
+var cachedGoogleJwks = null; // { keys, fetchedAt } — cached across requests within the same Worker isolate
+async function getGoogleJwks() {
+  const now = Date.now();
+  if (cachedGoogleJwks && now - cachedGoogleJwks.fetchedAt < 3600000) return cachedGoogleJwks.keys;
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+  if (!res.ok) throw new Error('failed to fetch Google JWKS');
+  const data = await res.json();
+  cachedGoogleJwks = { keys: data.keys, fetchedAt: now };
+  return data.keys;
+}
+
+function base64UrlDecodeBytes(str) {
+  const padded = str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (str.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function base64UrlDecodeToString(str) {
+  return new TextDecoder().decode(base64UrlDecodeBytes(str));
+}
+
+// Returns the verified 'sub' claim (Google's stable per-account user ID) on
+// success, or null if the token fails any check — expired, wrong audience,
+// wrong issuer, bad signature, or any other problem talking to Google.
+async function verifyGoogleIdToken(env, idToken) {
+  try {
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return null;
+    const header = JSON.parse(base64UrlDecodeToString(parts[0]));
+    const payload = JSON.parse(base64UrlDecodeToString(parts[1]));
+    const signature = base64UrlDecodeBytes(parts[2]);
+    const signedData = new TextEncoder().encode(parts[0] + '.' + parts[1]);
+
+    const keys = await getGoogleJwks();
+    const jwk = keys.find((k) => k.kid === header.kid);
+    if (!jwk) return null;
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'jwk',
+      { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: 'RS256', ext: true },
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    const validSignature = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', cryptoKey, signature, signedData);
+    if (!validSignature) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (!payload.exp || payload.exp < now) return null;
+    if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') return null;
+    if (!env.GOOGLE_SIGNIN_CLIENT_ID || payload.aud !== env.GOOGLE_SIGNIN_CLIENT_ID) return null;
+    if (!payload.sub) return null;
+
+    return payload.sub;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function signInWithGoogle(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'malformed request body' }, 400); }
+  const idToken = String((body && body.idToken) || '');
+  if (!idToken) return json({ error: 'missing idToken' }, 400);
+
+  const sub = await verifyGoogleIdToken(env, idToken);
+  if (!sub) return json({ ok: false, error: 'token_not_verified' }, 401);
+
+  // The verified 'sub' becomes this account's identity going forward — the
+  // client swaps its local device_id for this value, and everything
+  // downstream (entitlements, leaderboard, etc.) keeps working unchanged
+  // since device_id is just a TEXT key with no format requirement.
+  return json({ ok: true, userId: 'goog_' + sub });
 }
 
 async function getScenes(url, env) {
@@ -543,6 +634,9 @@ export default {
     }
     if (path === '/api/purchases/verify' && request.method === 'POST') {
       return verifyAndGrantPurchase(request, env);
+    }
+    if (path === '/api/auth/google' && request.method === 'POST') {
+      return signInWithGoogle(request, env);
     }
     if (path === '/api/entitlements/redeem' && request.method === 'POST') {
       return redeemCoupon(request, env);
