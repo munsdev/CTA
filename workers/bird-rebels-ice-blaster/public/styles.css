@@ -153,12 +153,12 @@
 .rl-tier-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
 .rl-tier-btn{
   appearance:none; cursor:pointer; padding:11px 8px; border-radius:9px; text-align:center;
-  border:2px solid var(--rl-panel-line); background:rgba(255,255,255,.02); color:var(--rl-dim);
+  border:2px solid var(--rl-panel-line); background:rgba(255,255,255,.02); color:#fff;
   font-family:var(--rl-font-display); font-weight:800; letter-spacing:.03em; font-size:12.5px;
   text-transform:uppercase; transition:border-color .15s ease, background .15s ease, color .15s ease;
   -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
 }
-.rl-tier-btn.rl-selected{ border-color:var(--rl-accent); background:rgba(255,200,0,.1); color:var(--rl-accent); }
+.rl-tier-btn.rl-selected{ border-color:var(--rl-accent); background:rgba(255,200,0,.1); color:#fff; }
 .rl-tier-note{ font-size:11px; color:var(--rl-dim); margin:-8px 0 16px; line-height:1.45; text-align:center; }
 /* 2x2 instead of 4-across: some language names (Français, Español) are
    longer than Easy/Medium/Hard and would get cramped in a single row on a
@@ -184,15 +184,26 @@
   display:flex; align-items:center; justify-content:space-between; width:100%;
   appearance:none; cursor:pointer; padding:12px 14px;
   border:1.5px solid var(--tile-accent, var(--rl-accent)); border-radius:9px;
-  background:color-mix(in srgb, var(--tile-accent, var(--rl-accent)) 10%, transparent);
+  background:rgba(255,255,255,.02);
   font-family:var(--rl-font-body);
 }
 .rl-scene-btn-label{
-  font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--rl-dim);
+  font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#fff;
 }
 .rl-scene-btn-name{
   font-family:var(--rl-font-display); font-weight:800; font-size:15px;
-  color:var(--tile-accent, var(--rl-accent)); margin-left:8px;
+  color:#fff; margin-left:8px;
+}
+/* Rainbow Blizzard: gradient border instead of a solid accent color.
+   Double-background technique (one for the button's real fill, one for
+   the border ring) — this respects border-radius, unlike border-image,
+   which draws gradient borders as sharp-cornered regardless of the
+   element's actual corner radius. */
+.rl-scene-btn.rl-scene-btn-rainbow{
+  border:1.5px solid transparent;
+  background:
+    linear-gradient(rgba(255,255,255,.02), rgba(255,255,255,.02)) padding-box,
+    linear-gradient(90deg, #ff5f5f, #ffab5f, #ffe95f, #5fe08a, #5fb8ff, #9d7bff, #ff7be0) border-box;
 }
 
 /* Difficulty + Scene buttons side by side in one row, per instruction —
@@ -210,15 +221,17 @@
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-bg-top),var(--rl-bg-bottom));
   background-size:220px 220px, cover;
   background-blend-mode:soft-light, normal;
-}
-/* The bottom bar is position:absolute (out of normal flow, same technique
-   as the topbar) so it doesn't push content — this reserves the space it
-   actually occupies. Only applied when the bar is actually hidden
-   (data-rl-bar-hidden, toggled in showScreen() alongside the bar's own
-   visibility) — on the game screen, where the bar IS visible, no extra
-   padding is added on top of it, since that would double the spacing at
-   the bottom instead of the bar sitting flush. */
-.rl-native .rl-frame[data-rl-bar-hidden]{
+  /* The bottom bar is position:absolute (out of normal flow, same
+     technique as the topbar) so it doesn't push content — this reserves
+     the space it actually occupies. Applied UNCONDITIONALLY, on every
+     screen including gameplay: this represents physical space nothing
+     should render into, whether or not the bar's texture is currently
+     visible there. An earlier version of this rule only applied the
+     padding when the bar was hidden, on the theory that a visible bar
+     already "used" that space — but the bar is out of normal document
+     flow regardless, so without this padding the play area extends
+     straight underneath it, and the bar visually overlays the gameplay
+     instead of the stage correctly stopping above it. */
   padding-bottom:calc(32px + env(safe-area-inset-bottom));
 }
 /* Setup screen only: solid black instead of the themed navy gradient, to
