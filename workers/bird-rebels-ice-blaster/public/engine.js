@@ -24,6 +24,26 @@
   // pick up over a full top-to-bottom fall, as a fraction of stage width.
   var WIND_MAX_RATIO = { easy: 0.10, medium: 0.20, hard: 0.60 }; // doubled for Rainbow Blizzard Mode
   var DEFAULT_TIER = 'medium';
+  // Persistent, on-device developer log — captures sign-in/purchase events
+  // with timestamps directly in localStorage, viewable via a hidden
+  // Settings screen (tap the Settings heading 8 times). Exists because
+  // chrome://inspect/adb aren't practical for on-the-go phone-only
+  // testing. Ring-buffered to 200 entries so it can't grow unbounded.
+  var DEVLOG_KEY = 'rl_devlog_v1';
+  var DEVLOG_MAX_ENTRIES = 200;
+  function devLog(msg) {
+    try {
+      var entries = JSON.parse(localStorage.getItem(DEVLOG_KEY) || '[]');
+      if (!Array.isArray(entries)) entries = [];
+      entries.push(new Date().toISOString().slice(11, 19) + '  ' + msg);
+      if (entries.length > DEVLOG_MAX_ENTRIES) entries = entries.slice(entries.length - DEVLOG_MAX_ENTRIES);
+      localStorage.setItem(DEVLOG_KEY, JSON.stringify(entries));
+    } catch (e) {}
+    // Still logs to console too, for anyone who DOES have chrome://inspect
+    // available — this doesn't replace that, just adds a path that works
+    // without it.
+    try { console.log('[devlog] ' + msg); } catch (e) {}
+  }
   var MAX_LIVES = 5;
   var START_LIVES = 3;
 
@@ -453,7 +473,7 @@
 
     + '  <div class="rl-overlay" data-rl-screen="settings" hidden>'
     + '    <div class="rl-screen-inner">'
-    + '      <h2 data-i18n="settings">Settings</h2>'
+    + '      <h2 data-i18n="settings" data-rl-dev-tap>Settings</h2>'
     + '      <div class="rl-slider-row">'
     + '        <label for="rl-sfx-volume" data-i18n="soundEffects">Sound Effects</label>'
     + '        <input type="range" id="rl-sfx-volume" data-rl-sfx-volume min="0" max="100" value="100">'
@@ -539,6 +559,17 @@
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-menu data-i18n="back">Back</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-overlay" data-rl-screen="devlog" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2>Developer Log</h2>'
+    + '      <p class="rl-sub">Recent sign-in/purchase activity, most recent first. Nothing here is sent anywhere — it only exists on this screen.</p>'
+    + '      <pre class="rl-devlog-output" data-rl-devlog-output></pre>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-devlog-copy>Copy to Clipboard</button>'
+    + '      <button class="rl-btn rl-btn-ghost" data-rl-devlog-clear>Clear Log</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-devlog>Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -792,6 +823,8 @@
       else if (name === 'info-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
       else if (name === 'settings-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
       else if (name === 'settings-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
+      else if (name === 'devlog-from-settings') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = true; if (screens.devlog) screens.devlog.hidden = false; }
+      else if (name === 'devlog-close') { showScreen('settings-from-menu'); }
       else if (name === 'leaderboard-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
@@ -1413,8 +1446,10 @@
         shopDetailBuy.disabled = true;
         shopDetailBuy.textContent = 'Purchasing…';
         var productId = playProductIdForRebel(ch.code);
+        devLog('purchase: starting for ' + productId + ' (identity = ' + IDENTITY + ')');
         NativePurchases.purchaseProduct({ productIdentifier: productId, productType: 'inapp', quantity: 1 })
           .then(function (result) {
+            devLog('purchase: purchaseProduct returned, purchaseToken present = ' + !!(result && result.purchaseToken) + ', purchaseState = ' + ((result && result.purchaseState) || 'n/a'));
             // Android-only field per the plugin's own docs — this is the
             // actual proof of purchase, sent to the Worker for real
             // verification against Google's API. Never trust it locally;
@@ -1430,9 +1465,10 @@
             });
           })
           .then(function (r) {
+            devLog('purchase: /api/purchases/verify status = ' + r.status);
             if (!r.ok) {
               return r.text().then(function (bodyText) {
-                console.log('[purchase] error body:', bodyText);
+                devLog('purchase: error body = ' + bodyText);
                 // 402 from the Worker means Google itself said this
                 // purchase didn't check out (not just a network hiccup) —
                 // treat that as a real failure, not a retry-and-hope case.
@@ -1442,6 +1478,7 @@
             return r.json();
           })
           .then(function () {
+            devLog('purchase: verified and granted — ' + ch.code + ' added to flock');
             // Server has now independently confirmed this purchase with
             // Google and recorded it — union it into the local flock
             // immediately so the UI updates without waiting on a fresh
@@ -1455,7 +1492,7 @@
             showScreen('shop-close');
           })
           .catch(function (err) {
-            console.log('[purchase] caught error:', err && err.message);
+            devLog('purchase: caught error = ' + (err && err.message));
             // A user backing out of the Play purchase sheet isn't an error
             // worth alarming them about — just quietly reset the button.
             var msg = (err && err.message) || '';
@@ -1685,10 +1722,15 @@
       }
 
       function doGoogleSignIn() {
-        if (!GoogleSignIn) return Promise.resolve(false);
+        devLog('sign-in: starting');
+        if (!GoogleSignIn) { devLog('sign-in: GoogleSignIn plugin not found'); return Promise.resolve(false); }
         return GoogleSignIn.initialize({ clientId: GOOGLE_SIGNIN_CLIENT_ID })
-          .then(function () { return GoogleSignIn.signIn(); })
+          .then(function () {
+            devLog('sign-in: initialized, calling signIn()');
+            return GoogleSignIn.signIn();
+          })
           .then(function (result) {
+            devLog('sign-in: signIn() returned, idToken present = ' + !!(result && result.idToken) + ', email = ' + ((result && result.email) || 'none'));
             if (!result || !result.idToken) return false;
             // Never trust the client-side idToken/userId directly — the
             // Worker verifies the token's signature against Google before
@@ -1698,10 +1740,12 @@
               body: JSON.stringify({ idToken: result.idToken })
             })
               .then(function (r) {
-                if (!r.ok) return r.text().then(function (t) { console.log('[signin] error body:', t); throw new Error('verify failed'); });
+                devLog('sign-in: /api/auth/google status = ' + r.status);
+                if (!r.ok) return r.text().then(function (t) { devLog('sign-in: error body = ' + t); throw new Error('verify failed'); });
                 return r.json();
               })
               .then(function (data) {
+                devLog('sign-in: verify response ok = ' + !!(data && data.ok) + ', userId = ' + ((data && data.userId) || 'none'));
                 if (!data || !data.ok) return false;
                 IDENTITY = data.userId;
                 saveSignedInIdentity(data.userId, result.email || null);
@@ -1712,10 +1756,10 @@
                 // value, so coupon-granted birds would stay invisible
                 // until the app restarted without this. Re-run and
                 // re-render now that IDENTITY is correct.
-                return loadCouponEntitlements().then(function () { renderCharGrid(); return true; });
+                return loadCouponEntitlements().then(function () { devLog('sign-in: coupon entitlements re-fetched, complete'); renderCharGrid(); return true; });
               });
           })
-          .catch(function (err) { console.log('[signin] caught error:', err && err.message); return false; });
+          .catch(function (err) { devLog('sign-in: caught error = ' + (err && err.message)); return false; });
       }
       triggerGoogleSignIn = doGoogleSignIn;
 
@@ -1763,6 +1807,60 @@
         }
       });
     }
+
+    // ---- Hidden developer log (tap Settings heading 8x quickly) ----
+    var devTapEl = mount.querySelector('[data-rl-dev-tap]');
+    var devTapCount = 0;
+    var devTapLastAt = 0;
+    if (devTapEl) {
+      devTapEl.addEventListener('click', function () {
+        var now = Date.now();
+        // Resets if more than 2s passes between taps — requires genuinely
+        // quick, deliberate taps, not scattered accidental ones over time.
+        if (now - devTapLastAt > 2000) devTapCount = 0;
+        devTapLastAt = now;
+        devTapCount++;
+        if (devTapCount >= 8) {
+          devTapCount = 0;
+          renderDevLog();
+          showScreen('devlog-from-settings');
+        }
+      });
+    }
+    var devLogOutputEl = mount.querySelector('[data-rl-devlog-output]');
+    function renderDevLog() {
+      if (!devLogOutputEl) return;
+      var entries = [];
+      try { entries = JSON.parse(localStorage.getItem(DEVLOG_KEY) || '[]'); } catch (e) {}
+      if (!Array.isArray(entries) || !entries.length) {
+        devLogOutputEl.textContent = '(empty — nothing logged yet this install)';
+        return;
+      }
+      // Most recent first, matching "in the game that I can see" — no
+      // scrolling to the bottom needed to see what just happened.
+      devLogOutputEl.textContent = entries.slice().reverse().join('\n');
+    }
+    var devLogCopyBtn = mount.querySelector('[data-rl-devlog-copy]');
+    if (devLogCopyBtn) {
+      devLogCopyBtn.addEventListener('click', function () {
+        var text = devLogOutputEl ? devLogOutputEl.textContent : '';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { toast('Copied!'); }).catch(function () { toast('Couldn\'t copy — select the text manually.'); });
+        } else {
+          toast('Copy not available — select the text manually.');
+        }
+      });
+    }
+    var devLogClearBtn = mount.querySelector('[data-rl-devlog-clear]');
+    if (devLogClearBtn) {
+      devLogClearBtn.addEventListener('click', function () {
+        try { localStorage.removeItem(DEVLOG_KEY); } catch (e) {}
+        renderDevLog();
+        toast('Log cleared.');
+      });
+    }
+    var closeDevLogBtn = mount.querySelector('[data-rl-close-devlog]');
+    if (closeDevLogBtn) closeDevLogBtn.addEventListener('click', function () { showScreen('devlog-close'); });
 
     // ---- First-launch sign-in prompt ----
     var welcomeSignInModal = mount.querySelector('[data-rl-welcome-signin]');
