@@ -56,9 +56,9 @@
       creditsArt: 'Original Rebel Loon artwork by Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
       supportArtist: 'Support the Artist',
-      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out',
+      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out', notNow: 'Not Now', welcomeSignInTitle: 'Sign in with Google', welcomeSignInSub: 'Save your rebels to your account so they\'re never lost, even on a new device.',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
-      claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel',
+      claimCode: 'Claim a Code', purchase: 'Purchase', cancel: 'Cancel',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
@@ -88,9 +88,9 @@
       creditsArt: 'Original Rebel-Loon-Artwork von Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
       supportArtist: 'Den Künstler unterstützen',
-      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden',
+      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden', notNow: 'Nicht jetzt', welcomeSignInTitle: 'Mit Google anmelden', welcomeSignInSub: 'Speichere deine Rebellen in deinem Konto, damit sie nie verloren gehen — auch auf einem neuen Gerät nicht.',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
-      claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen',
+      claimCode: 'Code einlösen', purchase: 'Kaufen', cancel: 'Abbrechen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
@@ -120,9 +120,9 @@
       creditsArt: 'Illustration originale de Rebel Loon par Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
       supportArtist: 'Soutenir l\'artiste',
-      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter',
+      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter', notNow: 'Pas maintenant', welcomeSignInTitle: 'Se connecter avec Google', welcomeSignInSub: 'Enregistrez vos rebelles sur votre compte pour ne jamais les perdre, même sur un nouvel appareil.',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
-      claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler',
+      claimCode: 'Utiliser un code', purchase: 'Acheter', cancel: 'Annuler',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
@@ -152,9 +152,9 @@
       creditsArt: 'Arte original de Rebel Loon por Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
       supportArtist: 'Apoya al artista',
-      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión',
+      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión', notNow: 'Ahora no', welcomeSignInTitle: 'Iniciar sesión con Google', welcomeSignInSub: 'Guarda tus rebeldes en tu cuenta para que nunca se pierdan, incluso en un dispositivo nuevo.',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
-      claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar',
+      claimCode: 'Canjear un código', purchase: 'Comprar', cancel: 'Cancelar',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
@@ -492,9 +492,8 @@
     + '        <div class="rl-shop-detail-panel">'
     + '          <img data-rl-shop-detail-img alt="">'
     + '          <h3 data-rl-shop-detail-name></h3>'
-    + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>$0.00</div>'
+    + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>…</div>'
     + '          <button class="rl-btn" data-rl-shop-detail-buy data-i18n="purchase">Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost" data-rl-shop-detail-claim-code data-i18n="claimCodeInstead">Claim a Code Instead</button>'
     + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-detail-back data-i18n="back">Back</button>'
     + '        </div>'
     + '      </div>'
@@ -546,6 +545,15 @@
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-menu data-i18n="back">Back</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-unlock-modal" data-rl-welcome-signin hidden>'
+    + '    <div class="rl-unlock-panel">'
+    + '      <h3 data-i18n="welcomeSignInTitle">Sign in with Google</h3>'
+    + '      <p class="rl-sub" data-i18n="welcomeSignInSub">Save your rebels to your account so they\'re never lost, even on a new device.</p>'
+    + '      <button class="rl-btn" data-rl-welcome-signin-yes data-i18n="signInGoogle">Sign in with Google</button>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-welcome-signin-no data-i18n="notNow">Not Now</button>'
     + '    </div>'
     + '  </div>'
 
@@ -621,6 +629,17 @@
     function saveLastCharPref(code) {
       try { localStorage.setItem(LAST_CHAR_KEY, code); } catch (e) {}
     }
+    // Shown once, ever, on first launch — a real visible dialog (not a
+    // silent background attempt) offering sign-in with a clear Not Now
+    // option. Never shown again after the first time, regardless of
+    // whether the person signed in or dismissed it.
+    var WELCOME_SIGNIN_SHOWN_KEY = 'rl_welcome_signin_shown_v1';
+    function hasShownWelcomeSignIn() {
+      try { return localStorage.getItem(WELCOME_SIGNIN_SHOWN_KEY) === '1'; } catch (e) { return true; }
+    }
+    function markWelcomeSignInShown() {
+      try { localStorage.setItem(WELCOME_SIGNIN_SHOWN_KEY, '1'); } catch (e) {}
+    }
     // Fixed placeholder for the signed-out state — deliberately NOT a
     // randomly-generated per-install string. There's no such thing as a
     // meaningful "device identity" in this app anymore: entitlements are
@@ -663,6 +682,13 @@
       return IDENTITY != null && IDENTITY.indexOf('goog_') === 0;
     }
     var IDENTITY = shopEnabled ? (loadSignedInUserId() || GUEST_IDENTITY) : null;
+    // Forward declaration: assigned once inside the shopEnabled block below
+    // (where GoogleSignIn/GOOGLE_SIGNIN_CLIENT_ID/refreshAccountUi live) —
+    // lets code outside that block (promptSignIn, called from gated
+    // purchase/coupon buttons) trigger a real sign-in directly instead of
+    // only being able to navigate to wherever the Sign In button happens
+    // to live.
+    var triggerGoogleSignIn = function () { return Promise.resolve(false); };
     var couponRebels = []; // rebel codes granted via coupon redemption (D1), separate from the local shop flock
     function loadCouponEntitlements() {
       if (!IDENTITY) return Promise.resolve();
@@ -1299,7 +1325,30 @@
       // sign-in status, stays clickable so a tap still routes to sign-in.
       var signedIn = isSignedIn();
       if (shopDetailBuy) shopDetailBuy.classList.toggle('rl-btn-gray', !signedIn);
-      if (claimDetailBtn) claimDetailBtn.classList.toggle('rl-btn-gray', !signedIn);
+      // Real, Google-provided price — priceString is already formatted
+      // correctly for the user's own currency/region, so there's no
+      // manual per-region price list to maintain on our end. Previously
+      // this showed a hardcoded, fake "$0.00" placeholder that was never
+      // replaced with anything real.
+      var shopDetailPriceEl = mount.querySelector('[data-rl-shop-detail-price]');
+      if (shopDetailPriceEl) shopDetailPriceEl.textContent = '…';
+      var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
+      if (NativePurchases && NativePurchases.getProduct) {
+        NativePurchases.getProduct({ productIdentifier: playProductIdForRebel(ch.code), productType: 'inapp' })
+          .then(function (result) {
+            // Guard against the user backing out to the grid and opening a
+            // DIFFERENT card before this resolves — only apply the price
+            // if it's still the same rebel being shown.
+            if (pendingPurchase !== ch || !shopDetailPriceEl) return;
+            var price = result && result.product && result.product.priceString;
+            shopDetailPriceEl.textContent = price || '—';
+          })
+          .catch(function () {
+            if (pendingPurchase === ch && shopDetailPriceEl) shopDetailPriceEl.textContent = '—';
+          });
+      } else if (shopDetailPriceEl) {
+        shopDetailPriceEl.textContent = '—';
+      }
     }
     function closeShopDetail() {
       if (shopDetailEl) shopDetailEl.hidden = true;
@@ -1465,9 +1514,15 @@
       if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', function () { showScreen('settings-close'); });
 
       // ---- Setup screen: hamburger opens the full-screen megamenu
-      // (About [includes Credits], Settings, Leaderboard) ----
+      // (About [includes Credits], Settings, Leaderboard) — tapping it
+      // again while open closes it too, same as the Back button.
       var menuBtn = mount.querySelector('[data-rl-menu-btn]');
-      if (menuBtn) menuBtn.addEventListener('click', function () { showScreen('menu-from-start'); });
+      if (menuBtn) {
+        menuBtn.addEventListener('click', function () {
+          var isOpen = screens.menu && !screens.menu.hidden;
+          showScreen(isOpen ? 'menu-close' : 'menu-from-start');
+        });
+      }
       var closeMenuBtn = mount.querySelector('[data-rl-close-menu]');
       if (closeMenuBtn) closeMenuBtn.addEventListener('click', function () { showScreen('menu-close'); });
       var menuAboutBtn = mount.querySelector('[data-rl-menu-about]');
@@ -1646,11 +1701,18 @@
                 IDENTITY = data.userId;
                 saveSignedInIdentity(data.userId, result.email || null);
                 refreshAccountUi();
-                return true;
+                // IDENTITY just changed from the guest placeholder to the
+                // real signed-in identity — anything already fetched
+                // during boot (roster, coupon entitlements) used the OLD
+                // value, so coupon-granted birds would stay invisible
+                // until the app restarted without this. Re-run and
+                // re-render now that IDENTITY is correct.
+                return loadCouponEntitlements().then(function () { renderCharGrid(); return true; });
               });
           })
           .catch(function (err) { console.log('[signin] caught error:', err && err.message); return false; });
       }
+      triggerGoogleSignIn = doGoogleSignIn;
 
       if (signInBtn) {
         signInBtn.addEventListener('click', function () {
@@ -1681,16 +1743,46 @@
       }
     }
 
-    // Routes a tap on a disabled (not-signed-in) purchase/coupon button to
-    // Settings, where the real Sign In button lives — rather than directly
-    // triggering the sign-in flow from here, since doGoogleSignIn is
-    // scoped inside the shopEnabled block above and this needs to be
-    // callable from the Claim-a-Code wiring right below, which is
-    // unconditional/outside that scope.
+    // Triggers the real Google sign-in flow directly from wherever the
+    // user is (a gated purchase/coupon button), rather than navigating
+    // into the megamenu/Settings first just to reach a Sign In button —
+    // that's a confusing detour for something that should just be a
+    // single native prompt.
     function promptSignIn() {
-      toast('Sign in with Google to unlock rebels.');
-      showScreen('settings-from-menu');
+      triggerGoogleSignIn().then(function (ok) {
+        if (ok) {
+          toast('Signed in!');
+          renderCharGrid();
+        } else {
+          toast('Sign-in didn\'t complete — try again.');
+        }
+      });
     }
+
+    // ---- First-launch sign-in prompt ----
+    var welcomeSignInModal = mount.querySelector('[data-rl-welcome-signin]');
+    var welcomeSignInYes = mount.querySelector('[data-rl-welcome-signin-yes]');
+    var welcomeSignInNo = mount.querySelector('[data-rl-welcome-signin-no]');
+    function closeWelcomeSignIn() {
+      markWelcomeSignInShown();
+      if (welcomeSignInModal) welcomeSignInModal.hidden = true;
+    }
+    if (welcomeSignInYes) {
+      welcomeSignInYes.addEventListener('click', function () {
+        welcomeSignInYes.disabled = true;
+        triggerGoogleSignIn().then(function (ok) {
+          welcomeSignInYes.disabled = false;
+          closeWelcomeSignIn();
+          if (ok) {
+            toast('Signed in!');
+            renderCharGrid();
+          } else {
+            toast('Sign-in didn\'t complete — you can try again anytime from the menu.');
+          }
+        });
+      });
+    }
+    if (welcomeSignInNo) welcomeSignInNo.addEventListener('click', closeWelcomeSignIn);
 
     // ---- Claim a Code ----
     // Unconditional (not gated by shopEnabled) so it's safely callable from
@@ -1705,7 +1797,6 @@
     }
 
     var claimShopBtn = mount.querySelector('[data-rl-shop-claim-code]');
-    var claimDetailBtn = mount.querySelector('[data-rl-shop-detail-claim-code]');
     var claimModal = mount.querySelector('[data-rl-claim-modal]');
     var claimEntry = mount.querySelector('[data-rl-claim-entry]');
     var claimPicker = mount.querySelector('[data-rl-claim-picker]');
@@ -1760,7 +1851,6 @@
     }
 
     if (claimShopBtn) claimShopBtn.addEventListener('click', openClaimModal);
-    if (claimDetailBtn) claimDetailBtn.addEventListener('click', openClaimModal);
     if (claimCancelBtn) claimCancelBtn.addEventListener('click', closeClaimModal);
     if (claimPickerCancelBtn) claimPickerCancelBtn.addEventListener('click', closeClaimModal);
     if (claimSubmitBtn) {
@@ -1855,8 +1945,16 @@
         splashEl.classList.add('rl-splash-hide');
         // Actually detach after the fade transition finishes, so it isn't
         // sitting invisibly on top of the game intercepting taps.
-        setTimeout(function () { splashEl.hidden = true; }, 550);
+        setTimeout(function () {
+          splashEl.hidden = true;
+          maybeShowWelcomeSignIn();
+        }, 550);
       }, 350);
+    }
+    function maybeShowWelcomeSignIn() {
+      if (!shopEnabled || hasShownWelcomeSignIn() || isSignedIn()) return;
+      var modal = mount.querySelector('[data-rl-welcome-signin]');
+      if (modal) modal.hidden = false;
     }
     if (shopEnabled && splashEl) {
       splashEl.hidden = false;
