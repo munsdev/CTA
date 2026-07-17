@@ -58,7 +58,7 @@
       supportArtist: 'Support the Artist',
       settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out', notNow: 'Not Now', welcomeSignInTitle: 'Sign in with Google', welcomeSignInSub: 'Save your rebels to your account so they\'re never lost, even on a new device.',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
-      claimCode: 'Claim a Code', purchase: 'Purchase', cancel: 'Cancel',
+      claimCode: 'Claim a Code', purchase: 'Purchase',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
@@ -90,7 +90,7 @@
       supportArtist: 'Den Künstler unterstützen',
       settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden', notNow: 'Nicht jetzt', welcomeSignInTitle: 'Mit Google anmelden', welcomeSignInSub: 'Speichere deine Rebellen in deinem Konto, damit sie nie verloren gehen — auch auf einem neuen Gerät nicht.',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
-      claimCode: 'Code einlösen', purchase: 'Kaufen', cancel: 'Abbrechen',
+      claimCode: 'Code einlösen', purchase: 'Kaufen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
@@ -122,7 +122,7 @@
       supportArtist: 'Soutenir l\'artiste',
       settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter', notNow: 'Pas maintenant', welcomeSignInTitle: 'Se connecter avec Google', welcomeSignInSub: 'Enregistrez vos rebelles sur votre compte pour ne jamais les perdre, même sur un nouvel appareil.',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
-      claimCode: 'Utiliser un code', purchase: 'Acheter', cancel: 'Annuler',
+      claimCode: 'Utiliser un code', purchase: 'Acheter',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
@@ -154,7 +154,7 @@
       supportArtist: 'Apoya al artista',
       settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión', notNow: 'Ahora no', welcomeSignInTitle: 'Iniciar sesión con Google', welcomeSignInSub: 'Guarda tus rebeldes en tu cuenta para que nunca se pierdan, incluso en un dispositivo nuevo.',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
-      claimCode: 'Canjear un código', purchase: 'Comprar', cancel: 'Cancelar',
+      claimCode: 'Canjear un código', purchase: 'Comprar',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
@@ -495,13 +495,6 @@
     + '          <div class="rl-shop-detail-price" data-rl-shop-detail-price>…</div>'
     + '          <button class="rl-btn" data-rl-shop-detail-buy data-i18n="purchase">Purchase</button>'
     + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-detail-back data-i18n="back">Back</button>'
-    + '        </div>'
-    + '      </div>'
-    + '      <div class="rl-shop-confirm" data-rl-shop-confirm hidden>'
-    + '        <div class="rl-shop-confirm-panel">'
-    + '          <p data-rl-shop-confirm-text></p>'
-    + '          <button class="rl-btn" data-rl-shop-confirm-yes data-i18n="purchase">Purchase</button>'
-    + '          <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-shop-confirm-no data-i18n="cancel">Cancel</button>'
     + '        </div>'
     + '      </div>'
     + '    </div>'
@@ -1339,10 +1332,6 @@
     var shopDetailName = mount.querySelector('[data-rl-shop-detail-name]');
     var shopDetailBuy = mount.querySelector('[data-rl-shop-detail-buy]');
     var shopDetailBack = mount.querySelector('[data-rl-shop-detail-back]');
-    var shopConfirmEl = mount.querySelector('[data-rl-shop-confirm]');
-    var shopConfirmText = mount.querySelector('[data-rl-shop-confirm-text]');
-    var shopConfirmYes = mount.querySelector('[data-rl-shop-confirm-yes]');
-    var shopConfirmNo = mount.querySelector('[data-rl-shop-confirm-no]');
     var pendingPurchase = null;
     // Populated by renderShopGrid's batched getProducts() call — reused by
     // openShopDetail so tapping a card doesn't re-query Google a second
@@ -1396,37 +1385,13 @@
       if (shopDetailEl) shopDetailEl.hidden = true;
     }
     if (shopDetailBack) shopDetailBack.addEventListener('click', function () { pendingPurchase = null; closeShopDetail(); });
-    if (shopDetailBuy) {
-      shopDetailBuy.addEventListener('click', function () {
-        if (!pendingPurchase) return;
-        if (!isSignedIn()) { promptSignIn(); return; }
-        openShopConfirm(pendingPurchase);
-      });
-    }
-
-    function openShopConfirm(ch) {
-      if (!shopConfirmEl) return;
-      pendingPurchase = ch;
-      shopConfirmText.textContent = 'Purchase ' + ch.label + ' for $0.00 and add it to your flock?';
-      closeShopDetail();
-      shopConfirmEl.hidden = false;
-      // Visually grayed out when not signed in, but NOT the native
-      // disabled attribute — a truly disabled button doesn't fire click
-      // events at all, which would silently swallow the tap instead of
-      // prompting sign-in as instructed ("if they click it, it asks to
-      // sign them in"). rl-btn-gray is styling-only.
-      if (shopConfirmYes) shopConfirmYes.classList.toggle('rl-btn-gray', !isSignedIn());
-    }
-    function closeShopConfirm() {
-      if (shopConfirmEl) shopConfirmEl.hidden = true;
-    }
     // Play Billing product IDs follow this pattern — must match exactly
     // what's registered as in-app products in Play Console, or
     // getProduct()/purchaseProduct() will fail to find them.
     function playProductIdForRebel(code) { return 'bird_' + code.toLowerCase(); }
 
-    if (shopConfirmYes) {
-      shopConfirmYes.addEventListener('click', function () {
+    if (shopDetailBuy) {
+      shopDetailBuy.addEventListener('click', function () {
         if (!pendingPurchase) return;
         if (!isSignedIn()) { promptSignIn(); return; }
         var ch = pendingPurchase;
@@ -1435,13 +1400,11 @@
           toast('Purchases aren\'t available on this device.');
           return;
         }
-        shopConfirmYes.disabled = true;
-        shopConfirmYes.textContent = 'Purchasing…';
+        shopDetailBuy.disabled = true;
+        shopDetailBuy.textContent = 'Purchasing…';
         var productId = playProductIdForRebel(ch.code);
-        console.log('[purchase] calling purchaseProduct for', productId);
         NativePurchases.purchaseProduct({ productIdentifier: productId, productType: 'inapp', quantity: 1 })
           .then(function (result) {
-            console.log('[purchase] purchaseProduct result:', JSON.stringify(result));
             // Android-only field per the plugin's own docs — this is the
             // actual proof of purchase, sent to the Worker for real
             // verification against Google's API. Never trust it locally;
@@ -1457,7 +1420,6 @@
             });
           })
           .then(function (r) {
-            console.log('[purchase] /api/purchases/verify status:', r.status);
             if (!r.ok) {
               return r.text().then(function (bodyText) {
                 console.log('[purchase] error body:', bodyText);
@@ -1478,7 +1440,7 @@
             toast(ch.label + ' added to your flock!');
             selectedChar = ch.code;
             pendingPurchase = null;
-            closeShopConfirm();
+            closeShopDetail();
             renderCharGrid();
             showScreen('shop-close');
           })
@@ -1493,8 +1455,8 @@
             }
           })
           .finally(function () {
-            shopConfirmYes.disabled = false;
-            shopConfirmYes.textContent = 'Purchase';
+            shopDetailBuy.disabled = false;
+            shopDetailBuy.textContent = 'Purchase';
           });
       });
     }
@@ -1537,18 +1499,9 @@
         .catch(function () { return 0; });
     }
 
-    if (shopConfirmNo) {
-      shopConfirmNo.addEventListener('click', function () {
-        // Cancel drops back to the detail card rather than closing everything,
-        // so a change of mind doesn't lose your place in the shop.
-        closeShopConfirm();
-        if (pendingPurchase) openShopDetail(pendingPurchase);
-      });
-    }
-
     if (shopEnabled) {
       var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
-      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); closeShopConfirm(); pendingPurchase = null; showScreen('shop-close'); });
+      if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); pendingPurchase = null; showScreen('shop-close'); });
 
       var closeInfoBtn = mount.querySelector('[data-rl-close-info]');
       if (closeInfoBtn) closeInfoBtn.addEventListener('click', function () { showScreen('info-close'); });
