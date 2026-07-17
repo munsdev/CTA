@@ -1731,6 +1731,7 @@
         menuSignInBtn.addEventListener('click', function () {
           menuSignInBtn.disabled = true;
           doGoogleSignIn().then(function (ok) {
+            console.log('[probe] menu sign-in .then fired, ok = ' + ok);
             menuSignInBtn.disabled = false;
             if (ok) {
               toast('Signed in!');
@@ -1788,6 +1789,7 @@
         signInBtn.addEventListener('click', function () {
           signInBtn.disabled = true;
           doGoogleSignIn().then(function (ok) {
+            console.log('[probe] settings sign-in .then fired, ok = ' + ok);
             signInBtn.disabled = false;
             if (ok) {
               toast('Signed in!');
@@ -2117,6 +2119,7 @@
         // made it into D1 (e.g. before the acknowledge fix went in) could
         // stay permanently stuck — nothing ever looked again. Fire-and-forget
         // here so it doesn't block/delay the roster showing up.
+        console.log('[probe] boot restore check, isSignedIn() = ' + isSignedIn());
         if (isSignedIn()) {
           restoreGooglePlayPurchases().then(function (restoredCount) {
             if (restoredCount > 0) renderCharGrid();
