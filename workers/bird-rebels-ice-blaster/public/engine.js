@@ -555,6 +555,7 @@
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="menu">Menu</h2>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signin data-i18n="signInGoogle" hidden>Sign in with Google</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signout data-i18n="signOut" hidden>Sign Out</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-about data-i18n="about">About</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
@@ -789,13 +790,11 @@
       screens[e.getAttribute('data-rl-screen')] = e;
     });
     var bottomBarEl = mount.querySelector('[data-rl-bottombar]');
-    var frameEl = mount.querySelector('.rl-frame');
     // App boots straight onto the setup screen via markup defaults — no
     // showScreen() call fires on initial load, so the bar's starting state
     // needs setting explicitly here rather than relying on the first
     // in-game transition to hide it.
     if (bottomBarEl) bottomBarEl.hidden = true;
-    if (frameEl) frameEl.setAttribute('data-rl-bar-hidden', '');
     var infoReturnScreen = 'start'; // which screen Help/Settings/Leaderboard should return to on close
     function showScreen(name) {
       screens.pause.hidden = true;
@@ -807,6 +806,7 @@
       if (screens.info) screens.info.hidden = true;
       if (screens.settings) screens.settings.hidden = true;
       if (screens.menu) screens.menu.hidden = true;
+      if (screens.devlog) screens.devlog.hidden = true;
       if (name === 'start') { screens.start.hidden = false; screens.game.hidden = true; }
       else if (name === 'game') { screens.start.hidden = true; screens.game.hidden = false; }
       else if (name === 'pause') { screens.start.hidden = true; screens.game.hidden = false; screens.pause.hidden = false; }
@@ -824,23 +824,16 @@
       else if (name === 'settings-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
       else if (name === 'settings-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
       else if (name === 'devlog-from-settings') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = true; if (screens.devlog) screens.devlog.hidden = false; }
-      else if (name === 'devlog-close') { showScreen('settings-from-menu'); }
+      else if (name === 'devlog-close') { screens.start.hidden = false; screens.game.hidden = true; if (screens.settings) screens.settings.hidden = false; }
       else if (name === 'leaderboard-from-menu') { infoReturnScreen = 'menu'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-from-start') { infoReturnScreen = 'start'; screens.start.hidden = false; screens.game.hidden = true; screens.leaderboard.hidden = false; }
       else if (name === 'leaderboard-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
       // Bottom bar (the visible textured strip) only shows during actual
-      // gameplay — everywhere else just gets the safety padding reserved
-      // for it (see .rl-native .rl-frame[data-rl-bar-hidden]), so the
-      // background still shows through on the home/menu screens instead
-      // of a bar sitting there with nothing behind it. The padding itself
-      // is only applied when the bar is HIDDEN — on the game screen,
-      // where the bar is visible, no extra padding stacks on top of it.
-      var gameShowing = !screens.game.hidden;
-      if (bottomBarEl) bottomBarEl.hidden = !gameShowing;
-      if (frameEl) {
-        if (gameShowing) frameEl.removeAttribute('data-rl-bar-hidden');
-        else frameEl.setAttribute('data-rl-bar-hidden', '');
-      }
+      // gameplay — everywhere else the reserved space (see .rl-native
+      // .rl-frame's padding-bottom, always applied) just shows the
+      // background through instead of an empty strip with nothing behind
+      // it.
+      if (bottomBarEl) bottomBarEl.hidden = screens.game.hidden;
     }
 
     // ---------- character roster (live from the API) ----------
@@ -1354,7 +1347,14 @@
       var nameEl = mount.querySelector('[data-rl-scene-btn-name]');
       var sc = sceneByCode(selectedScene);
       if (nameEl) nameEl.textContent = sc ? sc.label : 'Standard';
-      if (btn) btn.style.setProperty('--tile-accent', (sc && sc.accentColor) || 'var(--rl-accent)');
+      if (btn) {
+        btn.style.setProperty('--tile-accent', (sc && sc.accentColor) || 'var(--rl-accent)');
+        // Rainbow Blizzard gets a rainbow gradient border instead of a
+        // solid accent color — a plain border-color can't be a gradient,
+        // so this is a dedicated class rather than something the
+        // --tile-accent custom property alone can express.
+        btn.classList.toggle('rl-scene-btn-rainbow', selectedScene === 'blizzard');
+      }
     }
 
     mount.querySelector('[data-rl-scene-btn]').addEventListener('click', function () {
@@ -1681,6 +1681,7 @@
       var signInBtn = mount.querySelector('[data-rl-signin-btn]');
       var signOutBtn = mount.querySelector('[data-rl-signout-btn]');
       var menuSignInBtn = mount.querySelector('[data-rl-menu-signin]');
+      var menuSignOutBtn = mount.querySelector('[data-rl-menu-signout]');
       var GoogleSignIn = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleSignIn;
       // Real web client ID from Google Cloud Console — required by the
       // plugin on every platform, even Android (see its own docs on why).
@@ -1700,10 +1701,10 @@
         }
         if (signInBtn) signInBtn.hidden = signedIn;
         if (signOutBtn) signOutBtn.hidden = !signedIn;
-        // Top-level menu button: only shown when NOT signed in, per
-        // instruction — once signed in, Account status/Sign Out lives in
-        // Settings instead, so the menu doesn't show two redundant entries.
+        // Top-level menu buttons: sign-in shown when signed out, sign-out
+        // shown when signed in — opposite states, mirrors Settings' own pair.
         if (menuSignInBtn) menuSignInBtn.hidden = signedIn;
+        if (menuSignOutBtn) menuSignOutBtn.hidden = !signedIn;
       }
       refreshAccountUi();
       if (menuSignInBtn) {
@@ -1781,15 +1782,16 @@
           });
         });
       }
-      if (signOutBtn) {
-        signOutBtn.addEventListener('click', function () {
-          clearSignedInIdentity();
-          IDENTITY = GUEST_IDENTITY;
-          if (GoogleSignIn && GoogleSignIn.signOut) { try { GoogleSignIn.signOut(); } catch (e) {} }
-          refreshAccountUi();
-          toast('Signed out.');
-        });
+      function doSignOut() {
+        clearSignedInIdentity();
+        IDENTITY = GUEST_IDENTITY;
+        if (GoogleSignIn && GoogleSignIn.signOut) { try { GoogleSignIn.signOut(); } catch (e) {} }
+        refreshAccountUi();
+        renderCharGrid();
+        toast('Signed out.');
       }
+      if (signOutBtn) signOutBtn.addEventListener('click', doSignOut);
+      if (menuSignOutBtn) menuSignOutBtn.addEventListener('click', doSignOut);
     }
 
     // Triggers the real Google sign-in flow directly from wherever the
