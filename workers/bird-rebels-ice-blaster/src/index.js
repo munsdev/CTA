@@ -408,15 +408,41 @@ async function getGoogleAccessToken(env) {
 // else — wrong product, pending payment, cancelled/refunded (1), or any
 // network/auth failure — returns false, since the only safe default here
 // is to NOT grant the entitlement.
-async function verifyGooglePlayPurchase(env, productId, purchaseToken) {
+// Returns the purchase's raw verification data (or null if it doesn't
+// check out) — separated from acknowledgement so the caller can decide
+// what to do with each.
+async function fetchGooglePlayPurchase(env, productId, purchaseToken) {
   const packageName = env.ANDROID_PACKAGE_NAME || 'com.caseytheamerican.iceblaster';
   const accessToken = await getGoogleAccessToken(env);
   const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
   const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
-  if (!res.ok) return false;
-  const data = await res.json();
-  // purchaseState: 0 = purchased, 1 = cancelled, 2 = pending
-  return data.purchaseState === 0;
+  if (!res.ok) return null;
+  return res.json();
+}
+
+// Google auto-refunds and revokes any purchase that isn't explicitly
+// acknowledged within a short window — normally 3 days, but only 5
+// MINUTES for license testers specifically (Google's own documented
+// behavior). Checking purchaseState alone was never enough; this is the
+// step that was actually missing, and it's why every test purchase was
+// showing as successful in the app but then silently reversing itself a
+// few minutes later.
+async function acknowledgeGooglePlayPurchase(env, productId, purchaseToken) {
+  const packageName = env.ANDROID_PACKAGE_NAME || 'com.caseytheamerican.iceblaster';
+  const accessToken = await getGoogleAccessToken(env);
+  const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  // A successful acknowledge returns an empty body — res.ok is the only
+  // signal here. Not throwing on failure: acknowledgement failing shouldn't
+  // block granting the entitlement if the purchase itself already verified
+  // as genuine — worst case Google's own 5-minute window catches it, but
+  // we don't want a flaky acknowledge call to be the reason a real,
+  // already-verified purchase doesn't get granted.
+  return res.ok;
 }
 
 // Entitlements (purchases, coupons, any grant) now require a real, signed-in
@@ -448,16 +474,24 @@ async function verifyAndGrantPurchase(request, env) {
   const signInError = requireSignedIn(device);
   if (signInError) return signInError;
 
-  let verified = false;
+  let purchase = null;
   try {
-    verified = await verifyGooglePlayPurchase(env, productId, purchaseToken);
+    purchase = await fetchGooglePlayPurchase(env, productId, purchaseToken);
   } catch (e) {
     // Network/auth failure talking to Google is NOT the same as a
     // confirmed-invalid purchase — surface a distinct error so the client
     // can retry rather than treating this like a rejected purchase.
     return json({ ok: false, error: 'verification_unavailable' }, 502);
   }
-  if (!verified) return json({ ok: false, error: 'purchase_not_verified' }, 402);
+  // purchaseState: 0 = purchased, 1 = cancelled, 2 = pending
+  if (!purchase || purchase.purchaseState !== 0) return json({ ok: false, error: 'purchase_not_verified' }, 402);
+
+  // acknowledgementState: 0 = not yet acknowledged, 1 = already
+  // acknowledged. Only acknowledge once — a redundant call isn't harmful,
+  // but there's no reason to make it.
+  if (purchase.acknowledgementState === 0) {
+    try { await acknowledgeGooglePlayPurchase(env, productId, purchaseToken); } catch (e) { /* see comment above — don't block granting on this */ }
+  }
 
   await env.CHARACTERS_DB.prepare(
     'INSERT OR IGNORE INTO entitlements (device_id, item_type, item_code, source, created_at) VALUES (?, ?, ?, ?, ?)'
