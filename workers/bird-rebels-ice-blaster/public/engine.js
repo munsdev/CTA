@@ -62,7 +62,7 @@
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
-      casualModeLabel: 'Casual Mode<small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>',
+      casualModeLabel: 'Casual Mode<small>No life bar, no penalty for missed cubes — weapon powerups still work normally. Casual Mode runs are not eligible for the leaderboard.</small>',
       menu: 'Menu'
     },
     de: {
@@ -94,7 +94,7 @@
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
-      casualModeLabel: 'Entspannter Modus<small>Keine Lebensanzeige, keine Strafe für verpasste Würfel — Waffen-Powerups funktionieren normal</small>',
+      casualModeLabel: 'Entspannter Modus<small>Keine Lebensanzeige, keine Strafe für verpasste Würfel — Waffen-Powerups funktionieren normal. Läufe im entspannten Modus zählen nicht für die Bestenliste.</small>',
       menu: 'Menü'
     },
     fr: {
@@ -126,7 +126,7 @@
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
-      casualModeLabel: 'Mode Détente<small>Pas de barre de vie, aucune pénalité pour les glaçons manqués — les bonus d\'armes fonctionnent normalement</small>',
+      casualModeLabel: 'Mode Détente<small>Pas de barre de vie, aucune pénalité pour les glaçons manqués — les bonus d\'armes fonctionnent normalement. Les parties en Mode Détente ne comptent pas pour le classement.</small>',
       menu: 'Menu'
     },
     es: {
@@ -158,7 +158,7 @@
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
-      casualModeLabel: 'Modo Casual<small>Sin barra de vida, sin penalización por cubos perdidos — las mejoras de armas funcionan con normalidad</small>',
+      casualModeLabel: 'Modo Casual<small>Sin barra de vida, sin penalización por cubos perdidos — las mejoras de armas funcionan con normalidad. Las partidas en Modo Casual no se añaden a la clasificación.</small>',
       menu: 'Menú'
     }
   };
@@ -523,9 +523,10 @@
     + '      <div class="rl-check-row">'
     + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
     + '        <label for="rl-kidmode-toggle" data-i18n-html="casualModeLabel">Casual Mode'
-    + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally</small>'
+    + '          <small>No life bar, no penalty for missed cubes — weapon powerups still work normally. Casual Mode runs are not eligible for the leaderboard.</small>'
     + '        </label>'
     + '      </div>'
+    + '      <button class="rl-btn" data-rl-confirm-difficulty data-i18n="confirm">Confirm</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-difficulty data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
@@ -757,11 +758,13 @@
       screens[e.getAttribute('data-rl-screen')] = e;
     });
     var bottomBarEl = mount.querySelector('[data-rl-bottombar]');
+    var frameEl = mount.querySelector('.rl-frame');
     // App boots straight onto the setup screen via markup defaults — no
     // showScreen() call fires on initial load, so the bar's starting state
     // needs setting explicitly here rather than relying on the first
     // in-game transition to hide it.
     if (bottomBarEl) bottomBarEl.hidden = true;
+    if (frameEl) frameEl.setAttribute('data-rl-bar-hidden', '');
     var infoReturnScreen = 'start'; // which screen Help/Settings/Leaderboard should return to on close
     function showScreen(name) {
       screens.pause.hidden = true;
@@ -794,10 +797,17 @@
       else if (name === 'leaderboard-close') { showScreen(infoReturnScreen === 'menu' ? 'menu-from-start' : 'start'); }
       // Bottom bar (the visible textured strip) only shows during actual
       // gameplay — everywhere else just gets the safety padding reserved
-      // for it (see .rl-native .rl-frame), so the background still shows
-      // through on the home/menu screens instead of a bar sitting there
-      // with nothing behind it.
-      if (bottomBarEl) bottomBarEl.hidden = screens.game.hidden;
+      // for it (see .rl-native .rl-frame[data-rl-bar-hidden]), so the
+      // background still shows through on the home/menu screens instead
+      // of a bar sitting there with nothing behind it. The padding itself
+      // is only applied when the bar is HIDDEN — on the game screen,
+      // where the bar is visible, no extra padding stacks on top of it.
+      var gameShowing = !screens.game.hidden;
+      if (bottomBarEl) bottomBarEl.hidden = !gameShowing;
+      if (frameEl) {
+        if (gameShowing) frameEl.removeAttribute('data-rl-bar-hidden');
+        else frameEl.setAttribute('data-rl-bar-hidden', '');
+      }
     }
 
     // ---------- character roster (live from the API) ----------
@@ -2005,13 +2015,13 @@
         selectedTier = btn.getAttribute('data-rl-tier');
         mount.querySelectorAll('[data-rl-tier]').forEach(function (b) { b.classList.toggle('rl-selected', b === btn); });
         updateDifficultyButton();
-        // Difficulty is a cheap, reversible pick (unlike scene selection,
-        // which stays open until Confirm) — closing immediately on tap
-        // keeps this feeling snappy rather than adding an extra confirm
-        // step for no real benefit.
-        showScreen('difficulty-close');
+        // Stays open on tap (unlike before) — Casual Mode also lives on
+        // this screen, so closing immediately on a tier tap made it
+        // impossible to set both before leaving. Confirm now closes it.
       });
     });
+    var difficultyConfirmBtn = mount.querySelector('[data-rl-confirm-difficulty]');
+    if (difficultyConfirmBtn) difficultyConfirmBtn.addEventListener('click', function () { showScreen('difficulty-close'); });
     updateDifficultyButton();
 
     var kidModeEl = mount.querySelector('[data-rl-kidmode]');
