@@ -1196,32 +1196,63 @@
       // handled inside openClaimModal itself).
       if (claimShopBtn) claimShopBtn.classList.toggle('rl-btn-gray', !isSignedIn());
       var owned = ownedRebelCodes();
-      var available = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1; });
-      if (!available.length) {
+      var candidates = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1; });
+      if (!candidates.length) {
         shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
         return;
       }
-      shopGrid.innerHTML = '';
-      available.forEach(function (ch) {
-        var card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'rl-char-card';
-        card.setAttribute('data-rl-char', ch.code);
-        if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
-        var img = document.createElement('img');
-        img.alt = ch.label;
-        img.src = BASE + ch.src;
-        var span = document.createElement('span');
-        span.textContent = ch.label;
-        var price = document.createElement('span');
-        price.className = 'rl-shop-price';
-        price.textContent = '$0.00';
-        card.appendChild(img); card.appendChild(span); card.appendChild(price);
-        card.addEventListener('click', function () {
-          openShopDetail(ch);
+      shopGrid.innerHTML = '<div class="rl-loading">Loading…</div>';
+      var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
+      if (!NativePurchases || !NativePurchases.getProducts) {
+        // No billing available at all (e.g. web) — nothing is purchasable,
+        // so nothing should show as buyable.
+        shopGrid.innerHTML = '<div class="rl-loading">Purchases aren\'t available on this device.</div>';
+        return;
+      }
+      var productIds = candidates.map(function (ch) { return playProductIdForRebel(ch.code); });
+      // getProducts (plural, one batched call) — never getProduct in a
+      // loop, which the plugin's own docs warn causes a race condition
+      // with the underlying native billing client.
+      NativePurchases.getProducts({ productIdentifiers: productIds, productType: 'inapp' })
+        .then(function (result) {
+          var products = (result && result.products) || [];
+          products.forEach(function (p) { shopPriceCache[p.identifier] = p.priceString; });
+          // Only show a bird if Google actually has a real, purchasable
+          // product for it — a bird can exist fully in D1 (art, colors,
+          // label) but simply not appear as buyable here until it's set
+          // up in Play Console. That's the actual point of this filter.
+          var available = candidates.filter(function (ch) {
+            return !!shopPriceCache[playProductIdForRebel(ch.code)];
+          });
+          if (!available.length) {
+            shopGrid.innerHTML = '<div class="rl-loading">No rebels available to purchase right now.</div>';
+            return;
+          }
+          shopGrid.innerHTML = '';
+          available.forEach(function (ch) {
+            var card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'rl-char-card';
+            card.setAttribute('data-rl-char', ch.code);
+            if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
+            var img = document.createElement('img');
+            img.alt = ch.label;
+            img.src = BASE + ch.src;
+            var span = document.createElement('span');
+            span.textContent = ch.label;
+            var price = document.createElement('span');
+            price.className = 'rl-shop-price';
+            price.textContent = shopPriceCache[playProductIdForRebel(ch.code)];
+            card.appendChild(img); card.appendChild(span); card.appendChild(price);
+            card.addEventListener('click', function () {
+              openShopDetail(ch);
+            });
+            shopGrid.appendChild(card);
+          });
+        })
+        .catch(function () {
+          shopGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the shop — check your connection and try again.</div>';
         });
-        shopGrid.appendChild(card);
-      });
     }
 
     // Scenes reuse the .rl-char-card tile look for visual consistency with
@@ -1313,6 +1344,10 @@
     var shopConfirmYes = mount.querySelector('[data-rl-shop-confirm-yes]');
     var shopConfirmNo = mount.querySelector('[data-rl-shop-confirm-no]');
     var pendingPurchase = null;
+    // Populated by renderShopGrid's batched getProducts() call — reused by
+    // openShopDetail so tapping a card doesn't re-query Google a second
+    // time for a price the grid already fetched.
+    var shopPriceCache = {};
 
     function openShopDetail(ch) {
       if (!shopDetailEl) return;
@@ -1327,20 +1362,27 @@
       if (shopDetailBuy) shopDetailBuy.classList.toggle('rl-btn-gray', !signedIn);
       // Real, Google-provided price — priceString is already formatted
       // correctly for the user's own currency/region, so there's no
-      // manual per-region price list to maintain on our end. Previously
-      // this showed a hardcoded, fake "$0.00" placeholder that was never
-      // replaced with anything real.
+      // manual per-region price list to maintain on our end. Reuses the
+      // price already fetched by renderShopGrid's batched call when
+      // available, instead of re-querying Google a second time.
       var shopDetailPriceEl = mount.querySelector('[data-rl-shop-detail-price]');
+      var productId = playProductIdForRebel(ch.code);
+      var cachedPrice = shopPriceCache[productId];
+      if (cachedPrice) {
+        if (shopDetailPriceEl) shopDetailPriceEl.textContent = cachedPrice;
+        return;
+      }
       if (shopDetailPriceEl) shopDetailPriceEl.textContent = '…';
       var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
       if (NativePurchases && NativePurchases.getProduct) {
-        NativePurchases.getProduct({ productIdentifier: playProductIdForRebel(ch.code), productType: 'inapp' })
+        NativePurchases.getProduct({ productIdentifier: productId, productType: 'inapp' })
           .then(function (result) {
             // Guard against the user backing out to the grid and opening a
             // DIFFERENT card before this resolves — only apply the price
             // if it's still the same rebel being shown.
             if (pendingPurchase !== ch || !shopDetailPriceEl) return;
             var price = result && result.product && result.product.priceString;
+            if (price) shopPriceCache[productId] = price;
             shopDetailPriceEl.textContent = price || '—';
           })
           .catch(function () {
