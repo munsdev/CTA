@@ -1516,19 +1516,31 @@
     // sign-in — same underlying operation either way.
     function restoreGooglePlayPurchases() {
       var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
+      devLog('restore: starting (identity = ' + IDENTITY + '), plugin found = ' + !!NativePurchases);
       if (!NativePurchases) return Promise.resolve(0);
       return NativePurchases.getPurchases({ productType: 'inapp' })
         .then(function (result) {
           var purchases = (result && result.purchases) || [];
+          devLog('restore: getPurchases returned ' + purchases.length + ' item(s): [' +
+            purchases.map(function (p) {
+              return (p.productIdentifier || '?') + ' state=' + (p.purchaseState || '?');
+            }).join(', ') + ']');
           var verifyOne = function (p) {
             // Android-only fields per the plugin's docs — skip anything
             // that isn't a confirmed, acknowledged real purchase.
-            if (p.purchaseState !== '1') return Promise.resolve(false);
+            if (p.purchaseState !== '1') {
+              devLog('restore: skipping ' + (p.productIdentifier || '?') + ' — purchaseState = ' + (p.purchaseState || 'n/a') + ' (not "1")');
+              return Promise.resolve(false);
+            }
             var code = null;
             if (p.productIdentifier && p.productIdentifier.indexOf('bird_') === 0) {
               code = p.productIdentifier.slice('bird_'.length).toUpperCase();
             }
-            if (!code || !p.purchaseToken) return Promise.resolve(false);
+            if (!code || !p.purchaseToken) {
+              devLog('restore: skipping ' + (p.productIdentifier || '?') + ' — code = ' + (code || 'none') + ', purchaseToken present = ' + !!p.purchaseToken);
+              return Promise.resolve(false);
+            }
+            devLog('restore: verifying ' + code + ' (productId = ' + p.productIdentifier + ')');
             return fetch(BASE + '/api/purchases/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1537,13 +1549,21 @@
                 productId: p.productIdentifier, purchaseToken: p.purchaseToken
               })
             })
-              .then(function (r) { if (r.ok) { addToFlock(code); return true; } return false; })
-              .catch(function () { return false; });
+              .then(function (r) {
+                devLog('restore: ' + code + ' verify status = ' + r.status);
+                if (r.ok) { addToFlock(code); devLog('restore: ' + code + ' granted, added to flock'); return true; }
+                return r.text().then(function (t) { devLog('restore: ' + code + ' error body = ' + t); return false; }).catch(function () { return false; });
+              })
+              .catch(function (err) { devLog('restore: ' + code + ' caught error = ' + (err && err.message)); return false; });
           };
           return Promise.all(purchases.map(verifyOne));
         })
-        .then(function (results) { return results.filter(Boolean).length; })
-        .catch(function () { return 0; });
+        .then(function (results) {
+          var count = results.filter(Boolean).length;
+          devLog('restore: complete, ' + count + ' purchase(s) restored');
+          return count;
+        })
+        .catch(function (err) { devLog('restore: getPurchases caught error = ' + (err && err.message)); return 0; });
     }
 
     if (shopEnabled) {
