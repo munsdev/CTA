@@ -2090,6 +2090,18 @@
         sceneRoster = Array.isArray(results[2]) ? results[2] : [];
         renderSceneGrid();
         updateSceneButton();
+        // Restore previously only ran at the exact moment of a successful
+        // sign-in — someone ALREADY signed in on a later boot never got
+        // Google's purchase records re-checked against D1 at all. That's
+        // exactly how a purchase that succeeded on Google's side but never
+        // made it into D1 (e.g. before the acknowledge fix went in) could
+        // stay permanently stuck — nothing ever looked again. Fire-and-forget
+        // here so it doesn't block/delay the roster showing up.
+        if (isSignedIn()) {
+          restoreGooglePlayPurchases().then(function (restoredCount) {
+            if (restoredCount > 0) renderCharGrid();
+          });
+        }
       })
       .catch(function () {
         charGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the character roster. Check the Worker is deployed and try refreshing.</div>';
