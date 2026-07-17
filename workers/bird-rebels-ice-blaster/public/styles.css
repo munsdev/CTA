@@ -239,6 +239,12 @@
   background-blend-mode:screen, normal;
 }
 .rl-info-block{ font-size:18px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
+.rl-devlog-output{
+  font-family:ui-monospace, 'SF Mono', 'Cascadia Code', monospace; font-size:11px; line-height:1.5;
+  color:var(--rl-ink); background:rgba(0,0,0,.3); border:1px solid var(--rl-panel-line); border-radius:8px;
+  padding:12px; max-height:50vh; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+  text-align:left; margin:0 0 16px; -webkit-user-select:text; user-select:text;
+}
 .rl-info-block b{ color:var(--rl-ink); }
 .rl-info-divider{ height:1px; background:var(--rl-panel-line); margin:18px 0; }
 .rl-info-subhead{
