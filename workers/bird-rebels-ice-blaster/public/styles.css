@@ -634,17 +634,6 @@
 /* ---------- pause overlay ---------- */
 .rl-pause-panel{ width:100%; max-width:280px; margin:0 auto; text-align:center; }
 
-/* ---------- rebel shop purchase confirm (native only, harmless if unused) ---------- */
-.rl-shop-confirm{
-  position:fixed; inset:0; z-index:25; display:flex; align-items:center; justify-content:center;
-  padding:24px; background:rgba(5,9,15,.72);
-}
-.rl-shop-confirm-panel{
-  width:100%; max-width:280px; text-align:center; padding:20px 18px; border-radius:12px;
-  background:var(--rl-panel); border:1px solid var(--rl-panel-line);
-}
-.rl-shop-confirm-panel p{ font-size:13.5px; color:var(--rl-ink); line-height:1.5; margin:0 0 16px; }
-
 /* ---------- claim-a-code modal (native only, harmless if unused) ---------- */
 .rl-unlock-modal{
   position:fixed; inset:0; z-index:26; display:flex; align-items:center; justify-content:center;
