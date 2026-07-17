@@ -1825,6 +1825,7 @@
       triggerGoogleSignIn().then(function (ok) {
         if (ok) {
           toast('Signed in!');
+          restoreGooglePlayPurchases();
           renderCharGrid();
         } else {
           toast('Sign-in didn\'t complete — try again.');
@@ -1902,6 +1903,7 @@
           closeWelcomeSignIn();
           if (ok) {
             toast('Signed in!');
+            restoreGooglePlayPurchases();
             renderCharGrid();
           } else {
             toast('Sign-in didn\'t complete — you can try again anytime from the menu.');
