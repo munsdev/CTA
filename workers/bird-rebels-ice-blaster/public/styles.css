@@ -210,10 +210,15 @@
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-bg-top),var(--rl-bg-bottom));
   background-size:220px 220px, cover;
   background-blend-mode:soft-light, normal;
-  /* The bottom bar is position:absolute (out of normal flow, same
-     technique as the topbar) so it doesn't push content — this reserves
-     the space it actually occupies, so screens correctly stop short of it
-     instead of their bottom content being covered. */
+}
+/* The bottom bar is position:absolute (out of normal flow, same technique
+   as the topbar) so it doesn't push content — this reserves the space it
+   actually occupies. Only applied when the bar is actually hidden
+   (data-rl-bar-hidden, toggled in showScreen() alongside the bar's own
+   visibility) — on the game screen, where the bar IS visible, no extra
+   padding is added on top of it, since that would double the spacing at
+   the bottom instead of the bar sitting flush. */
+.rl-native .rl-frame[data-rl-bar-hidden]{
   padding-bottom:calc(32px + env(safe-area-inset-bottom));
 }
 /* Setup screen only: solid black instead of the themed navy gradient, to
