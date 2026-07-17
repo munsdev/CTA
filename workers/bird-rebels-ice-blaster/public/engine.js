@@ -56,9 +56,9 @@
       creditsArt: 'Original Rebel Loon artwork by Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
       supportArtist: 'Support the Artist',
-      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — purchases are only saved on this device.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out',
+      settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
-      claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel', restorePurchases: 'Restore Purchases',
+      claimCode: 'Claim a Code', purchase: 'Purchase', claimCodeInstead: 'Claim a Code Instead', cancel: 'Cancel',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
@@ -88,9 +88,9 @@
       creditsArt: 'Original Rebel-Loon-Artwork von Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
       supportArtist: 'Den Künstler unterstützen',
-      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — Käufe werden nur auf diesem Gerät gespeichert.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden',
+      settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
-      claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen', restorePurchases: 'Käufe wiederherstellen',
+      claimCode: 'Code einlösen', purchase: 'Kaufen', claimCodeInstead: 'Stattdessen Code einlösen', cancel: 'Abbrechen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
@@ -120,9 +120,9 @@
       creditsArt: 'Illustration originale de Rebel Loon par Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
       supportArtist: 'Soutenir l\'artiste',
-      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — les achats ne sont enregistrés que sur cet appareil.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter',
+      settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
-      claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler', restorePurchases: 'Restaurer les achats',
+      claimCode: 'Utiliser un code', purchase: 'Acheter', claimCodeInstead: 'Utiliser un code à la place', cancel: 'Annuler',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
@@ -152,9 +152,9 @@
       creditsArt: 'Arte original de Rebel Loon por Casey The American.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
       supportArtist: 'Apoya al artista',
-      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — las compras solo se guardan en este dispositivo.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión',
+      settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
-      claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar', restorePurchases: 'Restaurar compras',
+      claimCode: 'Canjear un código', purchase: 'Comprar', claimCodeInstead: 'Canjear un código en su lugar', cancel: 'Cancelar',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
@@ -474,7 +474,7 @@
     + '        <label for="rl-vibration-toggle" data-i18n="vibration">Vibration</label>'
     + '      </div>'
     + '      <div class="rl-field-label" style="margin:18px 0 8px;" data-i18n="account">Account</div>'
-    + '      <p class="rl-info-block" style="margin-bottom:10px;" data-rl-account-status data-i18n="notSignedIn">Not signed in — purchases are only saved on this device.</p>'
+    + '      <p class="rl-info-block" style="margin-bottom:10px;" data-rl-account-status data-i18n="notSignedIn">Not signed in — sign in with Google to unlock rebels.</p>'
     + '      <button type="button" class="rl-btn" data-rl-signin-btn data-i18n="signInGoogle">Sign in with Google</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-signout-btn hidden data-i18n="signOut">Sign Out</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings data-i18n="back">Back</button>'
@@ -487,7 +487,6 @@
     + '      <p class="rl-sub" data-i18n="rebelShopSub">Add a rebel to your flock. It\'s yours from here on out.</p>'
     + '      <div class="rl-char-grid" data-rl-shop-grid></div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-claim-code data-i18n="claimCode">Claim a Code</button>'
-    + '      <button class="rl-btn rl-btn-ghost" data-rl-shop-restore data-i18n="restorePurchases">Restore Purchases</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-shop data-i18n="back">Back</button>'
     + '      <div class="rl-shop-detail" data-rl-shop-detail hidden>'
     + '        <div class="rl-shop-detail-panel">'
@@ -622,21 +621,21 @@
     function saveLastCharPref(code) {
       try { localStorage.setItem(LAST_CHAR_KEY, code); } catch (e) {}
     }
-    var DEVICE_KEY = 'rl_device_id';
-    function getDeviceId() {
-      try {
-        var id = localStorage.getItem(DEVICE_KEY);
-        if (!id) { id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(DEVICE_KEY, id); }
-        return id;
-      } catch (e) { return 'dev_nostorage'; }
-    }
-    // Once signed in with Google, DEVICE_ID gets reassigned to the
+    // Fixed placeholder for the signed-out state — deliberately NOT a
+    // randomly-generated per-install string. There's no such thing as a
+    // meaningful "device identity" in this app anymore: entitlements are
+    // only ever granted to a real, verified Google account (see
+    // requireSignedIn on the Worker), so a signed-out visitor doesn't
+    // have — and doesn't need — a unique identity at all. This constant
+    // exists purely so screens have a non-null value to pass around before
+    // sign-in, not to represent "this particular device."
+    var GUEST_IDENTITY = 'guest';
+    // Once signed in with Google, IDENTITY gets reassigned to the
     // server-verified account identity (see signInWithGoogle below) — this
     // is what actually ties purchases/entitlements to the person's Google
-    // account instead of just this one device. Cached locally so it
-    // doesn't need re-verifying the ID token every boot; the Worker
-    // already validated it once at sign-in time, and this is just a
-    // lookup key from then on, not a live credential.
+    // account. Cached locally so it doesn't need re-verifying the ID token
+    // every boot; the Worker already validated it once at sign-in time,
+    // and this is just a lookup key from then on, not a live credential.
     var GOOGLE_USER_KEY = 'rl_google_user_v1';
     var GOOGLE_EMAIL_KEY = 'rl_google_email_v1';
     function loadSignedInUserId() {
@@ -654,20 +653,20 @@
     function clearSignedInIdentity() {
       try { localStorage.removeItem(GOOGLE_USER_KEY); localStorage.removeItem(GOOGLE_EMAIL_KEY); } catch (e) {}
     }
-    // Single source of truth for "does this device currently have a real,
-    // signed-in Google identity" — used to gray out purchase/coupon
-    // buttons and gate the same actions client-side that the Worker
-    // already enforces server-side (requireSignedIn there is the actual
-    // security boundary; this is just so the UI doesn't let someone tap a
-    // button that's guaranteed to fail).
+    // Single source of truth for "is there a real, signed-in Google
+    // identity right now" — used to gray out purchase/coupon buttons and
+    // gate the same actions client-side that the Worker already enforces
+    // server-side (requireSignedIn there is the actual security boundary;
+    // this is just so the UI doesn't let someone tap a button that's
+    // guaranteed to fail).
     function isSignedIn() {
-      return DEVICE_ID != null && DEVICE_ID.indexOf('goog_') === 0;
+      return IDENTITY != null && IDENTITY.indexOf('goog_') === 0;
     }
-    var DEVICE_ID = shopEnabled ? (loadSignedInUserId() || getDeviceId()) : null;
+    var IDENTITY = shopEnabled ? (loadSignedInUserId() || GUEST_IDENTITY) : null;
     var couponRebels = []; // rebel codes granted via coupon redemption (D1), separate from the local shop flock
     function loadCouponEntitlements() {
-      if (!DEVICE_ID) return Promise.resolve();
-      return fetch(BASE + '/api/entitlements?device=' + encodeURIComponent(DEVICE_ID))
+      if (!IDENTITY) return Promise.resolve();
+      return fetch(BASE + '/api/entitlements?device=' + encodeURIComponent(IDENTITY))
         .then(function (r) { return r.json(); })
         .then(function (arr) {
           couponRebels = (Array.isArray(arr) ? arr : [])
@@ -1361,7 +1360,7 @@
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                device: DEVICE_ID, itemType: 'rebel', itemCode: ch.code,
+                device: IDENTITY, itemType: 'rebel', itemCode: ch.code,
                 productId: productId, purchaseToken: result.purchaseToken
               })
             });
@@ -1411,7 +1410,7 @@
 
     // Re-verifies every Play purchase owned by whatever Google account is
     // currently active on the device against the Worker, re-granting each
-    // one under the CURRENT DEVICE_ID. Returns a promise resolving to the
+    // one under the CURRENT IDENTITY. Returns a promise resolving to the
     // number of purchases actually restored. Callable from the Shop's
     // Restore Purchases button, or automatically right after a fresh
     // sign-in — same underlying operation either way.
@@ -1434,7 +1433,7 @@
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                device: DEVICE_ID, itemType: 'rebel', itemCode: code,
+                device: IDENTITY, itemType: 'rebel', itemCode: code,
                 productId: p.productIdentifier, purchaseToken: p.purchaseToken
               })
             })
@@ -1445,32 +1444,6 @@
         })
         .then(function (results) { return results.filter(Boolean).length; })
         .catch(function () { return 0; });
-    }
-
-    var restoreBtn = mount.querySelector('[data-rl-shop-restore]');
-    if (restoreBtn) {
-      restoreBtn.addEventListener('click', function () {
-        var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
-        if (!NativePurchases) {
-          toast('Purchases aren\'t available on this device.');
-          return;
-        }
-        restoreBtn.disabled = true;
-        var originalLabel = restoreBtn.textContent;
-        restoreBtn.textContent = 'Restoring…';
-        restoreGooglePlayPurchases()
-          .then(function (restoredCount) {
-            renderCharGrid();
-            toast(restoredCount > 0 ? restoredCount + ' rebel(s) restored!' : 'No previous purchases found.');
-          })
-          .catch(function () {
-            toast('Restore failed — check your connection and try again.');
-          })
-          .finally(function () {
-            restoreBtn.disabled = false;
-            restoreBtn.textContent = originalLabel;
-          });
-      });
     }
 
     if (shopConfirmNo) {
@@ -1639,7 +1612,7 @@
       if (menuSignInBtn) {
         menuSignInBtn.addEventListener('click', function () {
           menuSignInBtn.disabled = true;
-          doGoogleSignIn(false).then(function (ok) {
+          doGoogleSignIn().then(function (ok) {
             menuSignInBtn.disabled = false;
             if (ok) {
               toast('Signed in!');
@@ -1651,13 +1624,12 @@
         });
       }
 
-      function doGoogleSignIn(silent) {
-        if (!GoogleSignIn) { console.log('[signin] GoogleSignIn plugin not found on window.Capacitor.Plugins'); return Promise.resolve(false); }
+      function doGoogleSignIn() {
+        if (!GoogleSignIn) return Promise.resolve(false);
         return GoogleSignIn.initialize({ clientId: GOOGLE_SIGNIN_CLIENT_ID })
           .then(function () { return GoogleSignIn.signIn(); })
           .then(function (result) {
-            console.log('[signin] signIn() result:', JSON.stringify(result));
-            if (!result || !result.idToken) { console.log('[signin] no idToken in result — stopping here'); return false; }
+            if (!result || !result.idToken) return false;
             // Never trust the client-side idToken/userId directly — the
             // Worker verifies the token's signature against Google before
             // this identity is actually used for anything.
@@ -1666,14 +1638,12 @@
               body: JSON.stringify({ idToken: result.idToken })
             })
               .then(function (r) {
-                console.log('[signin] /api/auth/google status:', r.status);
                 if (!r.ok) return r.text().then(function (t) { console.log('[signin] error body:', t); throw new Error('verify failed'); });
                 return r.json();
               })
               .then(function (data) {
-                console.log('[signin] verify response:', JSON.stringify(data));
                 if (!data || !data.ok) return false;
-                DEVICE_ID = data.userId;
+                IDENTITY = data.userId;
                 saveSignedInIdentity(data.userId, result.email || null);
                 refreshAccountUi();
                 return true;
@@ -1685,12 +1655,12 @@
       if (signInBtn) {
         signInBtn.addEventListener('click', function () {
           signInBtn.disabled = true;
-          doGoogleSignIn(false).then(function (ok) {
+          doGoogleSignIn().then(function (ok) {
             signInBtn.disabled = false;
             if (ok) {
               toast('Signed in!');
               // Pull in anything already purchased on this Google account
-              // (e.g. from a previous install) now that DEVICE_ID points
+              // (e.g. from a previous install) now that IDENTITY points
               // at the real account identity — reuses the same restore
               // flow as the Shop's own Restore Purchases button.
               restoreGooglePlayPurchases();
@@ -1703,30 +1673,10 @@
       if (signOutBtn) {
         signOutBtn.addEventListener('click', function () {
           clearSignedInIdentity();
-          DEVICE_ID = getDeviceId();
+          IDENTITY = GUEST_IDENTITY;
           if (GoogleSignIn && GoogleSignIn.signOut) { try { GoogleSignIn.signOut(); } catch (e) {} }
           refreshAccountUi();
           toast('Signed out.');
-        });
-      }
-      // Attempt a quiet sign-in on boot — Credential Manager can return an
-      // already-authorized account with no visible UI if the user has
-      // signed into this (or another) app with the same Google account
-      // before and hasn't declined. If it can't do this silently, it just
-      // does nothing here rather than forcing a prompt — the Settings
-      // button is always there for an explicit sign-in.
-      if (!loadSignedInUserId() && GoogleSignIn) {
-        doGoogleSignIn(true).then(function (ok) {
-          if (!ok) return;
-          refreshAccountUi();
-          // DEVICE_ID just changed from the random local ID to the real
-          // signed-in identity — the boot sequence's own
-          // loadCouponEntitlements() call already ran (and fired) using
-          // the OLD id before this silent sign-in had a chance to resolve,
-          // so it needs to run again now that DEVICE_ID is correct, or
-          // any coupon-granted birds stay invisible until the next full
-          // app restart.
-          loadCouponEntitlements().then(function () { renderCharGrid(); });
         });
       }
     }
@@ -1800,7 +1750,7 @@
         }
       });
       if (needsRosterRefresh) {
-        fetch(BASE + '/api/characters' + (DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
+        fetch(BASE + '/api/characters' + (IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
           .then(function (r) { return r.json(); })
           .then(function (data) { roster = Array.isArray(data) ? data : roster; renderCharGrid(); })
           .catch(function () { renderCharGrid(); });
@@ -1819,7 +1769,7 @@
         if (!code) { if (claimError) claimError.textContent = 'Enter a code first.'; return; }
         fetch(BASE + '/api/entitlements/redeem', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device: DEVICE_ID, code: code })
+          body: JSON.stringify({ device: IDENTITY, code: code })
         })
           .then(function (r) { return r.json(); })
           .then(function (data) {
@@ -1874,7 +1824,7 @@
         if (!pendingPickItemCode || !pendingClaimCode) return;
         fetch(BASE + '/api/entitlements/redeem-choice', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device: DEVICE_ID, code: pendingClaimCode, itemCode: pendingPickItemCode })
+          body: JSON.stringify({ device: IDENTITY, code: pendingClaimCode, itemCode: pendingPickItemCode })
         })
           .then(function (r) { return r.json(); })
           .then(function (res) {
@@ -1925,9 +1875,9 @@
 
     Promise.all([
       loadCouponEntitlements(),
-      fetch(BASE + '/api/characters' + (shopEnabled && DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
+      fetch(BASE + '/api/characters' + (shopEnabled && IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
         .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); }),
-      fetch(BASE + '/api/scenes' + (DEVICE_ID ? '?device=' + encodeURIComponent(DEVICE_ID) : ''))
+      fetch(BASE + '/api/scenes' + (IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
         .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
         .catch(function () { return []; }) // scenes are non-essential to boot — fall back to just Standard rather than blocking the whole roster load
     ])
