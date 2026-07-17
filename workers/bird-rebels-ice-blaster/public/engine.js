@@ -1348,8 +1348,10 @@
         shopConfirmYes.disabled = true;
         shopConfirmYes.textContent = 'Purchasing…';
         var productId = playProductIdForRebel(ch.code);
+        console.log('[purchase] calling purchaseProduct for', productId);
         NativePurchases.purchaseProduct({ productIdentifier: productId, productType: 'inapp', quantity: 1 })
           .then(function (result) {
+            console.log('[purchase] purchaseProduct result:', JSON.stringify(result));
             // Android-only field per the plugin's own docs — this is the
             // actual proof of purchase, sent to the Worker for real
             // verification against Google's API. Never trust it locally;
@@ -1365,11 +1367,15 @@
             });
           })
           .then(function (r) {
+            console.log('[purchase] /api/purchases/verify status:', r.status);
             if (!r.ok) {
-              // 402 from the Worker means Google itself said this purchase
-              // didn't check out (not just a network hiccup) — treat that
-              // as a real failure, not a retry-and-hope case.
-              throw new Error(r.status === 402 ? 'purchase_not_verified' : 'verify_request_failed');
+              return r.text().then(function (bodyText) {
+                console.log('[purchase] error body:', bodyText);
+                // 402 from the Worker means Google itself said this
+                // purchase didn't check out (not just a network hiccup) —
+                // treat that as a real failure, not a retry-and-hope case.
+                throw new Error(r.status === 402 ? 'purchase_not_verified' : 'verify_request_failed');
+              });
             }
             return r.json();
           })
@@ -1387,6 +1393,7 @@
             showScreen('shop-close');
           })
           .catch(function (err) {
+            console.log('[purchase] caught error:', err && err.message);
             // A user backing out of the Play purchase sheet isn't an error
             // worth alarming them about — just quietly reset the button.
             var msg = (err && err.message) || '';
@@ -1709,7 +1716,18 @@
       // does nothing here rather than forcing a prompt — the Settings
       // button is always there for an explicit sign-in.
       if (!loadSignedInUserId() && GoogleSignIn) {
-        doGoogleSignIn(true).then(function (ok) { if (ok) refreshAccountUi(); });
+        doGoogleSignIn(true).then(function (ok) {
+          if (!ok) return;
+          refreshAccountUi();
+          // DEVICE_ID just changed from the random local ID to the real
+          // signed-in identity — the boot sequence's own
+          // loadCouponEntitlements() call already ran (and fired) using
+          // the OLD id before this silent sign-in had a chance to resolve,
+          // so it needs to run again now that DEVICE_ID is correct, or
+          // any coupon-granted birds stay invisible until the next full
+          // app restart.
+          loadCouponEntitlements().then(function () { renderCharGrid(); });
+        });
       }
     }
 
