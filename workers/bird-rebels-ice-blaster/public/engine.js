@@ -75,7 +75,6 @@
       creditsTheme: 'Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
       creditsArtBird: 'Bird Rebels and other artwork by <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
-      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
       supportArtist: 'Buy Me a Coffee',
       viewCollection: 'See the Full Collection',
       settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out', notNow: 'Not Now', welcomeSignInTitle: 'Sign in with Google', welcomeSignInSub: 'Save your rebels to your account so they\'re never lost, even on a new device.',
@@ -109,7 +108,6 @@
       creditsTheme: 'Regenbogen-Blizzard-Musik: bearbeitet nach einem Stück von <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'OG-Rebel-Loon-Design von <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
       creditsArtBird: 'Bird Rebels und weitere Kunstwerke von <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
-      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
       supportArtist: 'Kauf mir einen Kaffee',
       viewCollection: 'Zur ganzen Kollektion',
       settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden', notNow: 'Nicht jetzt', welcomeSignInTitle: 'Mit Google anmelden', welcomeSignInSub: 'Speichere deine Rebellen in deinem Konto, damit sie nie verloren gehen — auch auf einem neuen Gerät nicht.',
@@ -143,7 +141,6 @@
       creditsTheme: 'Thème musical du Blizzard Arc-en-ciel : adapté d\'un morceau de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'Design original du Rebel Loon par <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
       creditsArtBird: 'Bird Rebels et autres illustrations par <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
-      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
       supportArtist: 'Offrir un café',
       viewCollection: 'Voir toute la collection',
       settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter', notNow: 'Pas maintenant', welcomeSignInTitle: 'Se connecter avec Google', welcomeSignInSub: 'Enregistrez vos rebelles sur votre compte pour ne jamais les perdre, même sur un nouvel appareil.',
@@ -177,7 +174,6 @@
       creditsTheme: 'Tema de la Ventisca Arcoíris: adaptado de una pista de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'Diseño original de Rebel Loon por <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
       creditsArtBird: 'Bird Rebels y demás ilustraciones por <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
-      creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
       supportArtist: 'Invítame a un café',
       viewCollection: 'Ver toda la colección',
       settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión', notNow: 'Ahora no', welcomeSignInTitle: 'Iniciar sesión con Google', welcomeSignInSub: 'Guarda tus rebeldes en tu cuenta para que nunca se pierdan, incluso en un dispositivo nuevo.',
@@ -447,14 +443,16 @@
     + '    <div class="rl-screen-inner">'
     + '      <h2 style="margin-bottom:2px;" data-i18n="leaderboard">Leaderboard</h2>'
     + '      <p class="rl-lb-set-note" data-rl-lb-set-note>Normal scores</p>'
-    + '      <div class="rl-tabs" data-rl-lb-scene-tabs>'
-    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-scene-tab="normal" data-i18n="lbSceneNormal">Normal</button>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-scene-tab="blizzard" data-i18n="lbSceneBlizzard">Rainbow Blizzard</button>'
-    + '      </div>'
-    + '      <div class="rl-tabs" data-rl-lb-tabs>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy" data-i18n="tierEasy">Easy</button>'
-    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium" data-i18n="tierMedium">Medium</button>'
-    + '        <button type="button" class="rl-tab" data-rl-lb-tab="hard" data-i18n="tierHard">Hard</button>'
+    + '      <div class="rl-lb-filter-row">'
+    + '        <select data-rl-lb-tier-select aria-label="Difficulty">'
+    + '          <option value="easy" data-i18n="tierEasy">Easy</option>'
+    + '          <option value="medium" selected data-i18n="tierMedium">Medium</option>'
+    + '          <option value="hard" data-i18n="tierHard">Hard</option>'
+    + '        </select>'
+    + '        <select data-rl-lb-scene-select aria-label="Scene">'
+    + '          <option value="normal" selected data-i18n="lbSceneNormal">Normal</option>'
+    + '          <option value="blizzard" data-i18n="lbSceneBlizzard">Rainbow Blizzard</option>'
+    + '        </select>'
     + '      </div>'
     + '      <div class="rl-lb-sort-row">'
     + '        <label for="rl-lb-sort" data-i18n="sortBy">Sort by</label>'
@@ -483,7 +481,6 @@
     + '      <p class="rl-info-block" data-i18n-html="creditsTheme">Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.</p>'
     + '      <p class="rl-info-block" data-i18n-html="creditsArtOg">OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.</p>'
     + '      <p class="rl-info-block" data-i18n-html="creditsArtBird">Bird Rebels and other artwork by <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.</p>'
-    + '      <p class="rl-info-block" data-i18n-html="creditsLink"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
     + '      <a class="rl-btn rl-btn-ghost" href="https://buymeacoffee.com/caseytheamerican" target="_blank" rel="noopener" data-i18n="supportArtist">Buy Me a Coffee</a>'
     + '      <a class="rl-btn rl-btn-ghost" href="https://birdrebels.art" target="_blank" rel="noopener" data-i18n="viewCollection">See the Full Collection</a>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-info data-i18n="back">Back</button>'
@@ -1694,8 +1691,10 @@
         menuLeaderboardBtn.addEventListener('click', function () {
           lbTier = DEFAULT_TIER;
           lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
-          mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
-          mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-scene-tab') === lbSet); });
+          var lbTierSelectEl = mount.querySelector('[data-rl-lb-tier-select]');
+          var lbSceneSelectEl = mount.querySelector('[data-rl-lb-scene-select]');
+          if (lbTierSelectEl) lbTierSelectEl.value = lbTier;
+          if (lbSceneSelectEl) lbSceneSelectEl.value = lbSet;
           loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
           showScreen('leaderboard-from-menu');
         });
@@ -1705,8 +1704,10 @@
         openLeaderboardBtn.addEventListener('click', function () {
           lbTier = DEFAULT_TIER;
           lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
-          mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
-          mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-scene-tab') === lbSet); });
+          var lbTierSelectEl = mount.querySelector('[data-rl-lb-tier-select]');
+          var lbSceneSelectEl = mount.querySelector('[data-rl-lb-scene-select]');
+          if (lbTierSelectEl) lbTierSelectEl.value = lbTier;
+          if (lbSceneSelectEl) lbSceneSelectEl.value = lbSet;
           loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
           showScreen('leaderboard-from-start');
         });
@@ -2380,20 +2381,20 @@
     }
 
     mount.querySelector('[data-rl-close-leaderboard]').addEventListener('click', function () { showScreen('leaderboard-close'); });
-    mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        lbTier = tab.getAttribute('data-rl-lb-tab');
-        mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t === tab); });
+    var lbTierSelect = mount.querySelector('[data-rl-lb-tier-select]');
+    if (lbTierSelect) {
+      lbTierSelect.addEventListener('change', function () {
+        lbTier = this.value;
         loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
       });
-    });
-    mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        lbSet = tab.getAttribute('data-rl-lb-scene-tab');
-        mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t === tab); });
+    }
+    var lbSceneSelect = mount.querySelector('[data-rl-lb-scene-select]');
+    if (lbSceneSelect) {
+      lbSceneSelect.addEventListener('change', function () {
+        lbSet = this.value;
         loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
       });
-    });
+    }
     mount.querySelector('[data-rl-lb-sort]').addEventListener('change', function () {
       lbSort = this.value;
       // Re-sorting keeps whatever page depth was already revealed (doesn't
