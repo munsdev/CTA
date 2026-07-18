@@ -1227,8 +1227,8 @@
       if (claimShopBtn) claimShopBtn.classList.toggle('rl-btn-gray', !isSignedIn());
       var owned = ownedRebelCodes();
       devLog('shop: owned codes = [' + owned.join(',') + ']');
-      var candidates = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1; });
-      devLog('shop: ' + candidates.length + ' candidate(s) after removing owned');
+      var candidates = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1 && ch.isPurchasable; });
+      devLog('shop: ' + candidates.length + ' candidate(s) after removing owned + non-purchasable');
       if (!candidates.length) {
         shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
         return;
