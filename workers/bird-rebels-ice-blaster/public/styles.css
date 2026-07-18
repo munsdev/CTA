@@ -355,13 +355,12 @@
    sitting over nothing. Matches the topbar's texture/z-index treatment. */
 .rl-bottombar{
   position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-  width:100vw; height:32px;
+  width:100vw; height:calc(32px + env(safe-area-inset-bottom));
   background-color:#0a0a0a;
   background-image:url('textures/knobs.png');
   background-repeat:repeat;
   border-top:1px solid rgba(255,255,255,.08);
   z-index:20;
-  padding-bottom:env(safe-area-inset-bottom);
 }
 
 .rl-slider-row{ margin:0 0 20px; }
