@@ -1542,7 +1542,7 @@
         shopDetailBuy.textContent = 'Purchasing…';
         var productId = playProductIdForRebel(ch.code);
         devLog('purchase: starting for ' + productId + ' (identity = ' + IDENTITY + ')');
-        NativePurchases.purchaseProduct({ productIdentifier: productId, productType: 'inapp', quantity: 1 })
+        NativePurchases.purchaseProduct({ productIdentifier: productId, productType: 'inapp', quantity: 1, appAccountToken: IDENTITY })
           .then(function (result) {
             devLog('purchase: purchaseProduct returned, purchaseToken present = ' + !!(result && result.purchaseToken) + ', purchaseState = ' + ((result && result.purchaseState) || 'n/a'));
             // Android-only field per the plugin's own docs — this is the
