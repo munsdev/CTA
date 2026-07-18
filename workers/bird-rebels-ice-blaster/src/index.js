@@ -99,8 +99,8 @@ async function getCharacters(url, env) {
   // actually owns it — otherwise there'd be no way to ever select it.
   const placeholders = ownedCodes.map(() => '?').join(',');
   const sql = ownedCodes.length
-    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
-    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
+    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents, is_purchasable FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
+    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents, is_purchasable FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
   const stmt = ownedCodes.length
     ? env.CHARACTERS_DB.prepare(sql).bind(...ownedCodes)
     : env.CHARACTERS_DB.prepare(sql);
@@ -122,6 +122,11 @@ async function getCharacters(url, env) {
     laserOriginX: r.laser_origin_x != null ? r.laser_origin_x : null,
     laserOriginY: r.laser_origin_y != null ? r.laser_origin_y : null,
     visible: !!r.visible,
+    // Only true once this bird's bird_<code> product has actually been
+    // created and activated in Play Console — the shop uses this to decide
+    // what to query getProducts() for. A bird can be fully playable/owned
+    // without this ever being set (coupon/auto-unlock birds, for example).
+    isPurchasable: !!r.is_purchasable,
   }));
   return json(chars);
 }
