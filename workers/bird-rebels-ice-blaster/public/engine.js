@@ -1242,54 +1242,86 @@
         shopGrid.innerHTML = '<div class="rl-loading">Purchases aren\'t available on this device.</div>';
         return;
       }
-      var productIds = candidates.map(function (ch) { return playProductIdForRebel(ch.code); });
+      var productIds = candidates.map(function (ch) { return playProductIdForRebel(ch.code); })
+        .filter(function (id) { return typeof id === 'string' && id.length > 0; });
       devLog('shop: calling getProducts for ' + productIds.length + ' id(s)');
+      // Guard: the underlying billing client rejects (rather than returning
+      // an empty list) when handed a zero-length product-identifier array.
+      // If there are no candidate product IDs there is genuinely nothing to
+      // show, so short-circuit to the friendly empty state instead of
+      // letting getProducts throw and surface a "couldn't load" error.
+      if (!productIds.length) {
+        devLog('shop: no valid product IDs to query — showing empty state');
+        shopGrid.innerHTML = '<div class="rl-loading">No rebels available to purchase right now.</div>';
+        return;
+      }
+
+      // Render the resolved product list into the grid. Pulled out so both
+      // the first attempt and the retry share one code path.
+      function renderProducts(result) {
+        var products = (result && result.products) || [];
+        devLog('shop: getProducts resolved with ' + products.length + ' product(s)');
+        products.forEach(function (p) { shopPriceCache[p.identifier] = p.priceString; });
+        // Only show a bird if Google actually has a real, purchasable
+        // product for it — a bird can exist fully in D1 (art, colors,
+        // label) but simply not appear as buyable here until it's set
+        // up in Play Console. That's the actual point of this filter.
+        var available = candidates.filter(function (ch) {
+          return !!shopPriceCache[playProductIdForRebel(ch.code)];
+        });
+        devLog('shop: ' + available.length + ' available after price-cache filter');
+        if (!available.length) {
+          shopGrid.innerHTML = '<div class="rl-loading">No rebels available to purchase right now.</div>';
+          return;
+        }
+        shopGrid.innerHTML = '';
+        available.forEach(function (ch) {
+          var card = document.createElement('button');
+          card.type = 'button';
+          card.className = 'rl-char-card';
+          card.setAttribute('data-rl-char', ch.code);
+          if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
+          var img = document.createElement('img');
+          img.alt = ch.label;
+          img.src = BASE + ch.src;
+          var span = document.createElement('span');
+          span.textContent = ch.label;
+          var price = document.createElement('span');
+          price.className = 'rl-shop-price';
+          price.textContent = shopPriceCache[playProductIdForRebel(ch.code)];
+          card.appendChild(img); card.appendChild(span); card.appendChild(price);
+          card.addEventListener('click', function () {
+            openShopDetail(ch);
+          });
+          shopGrid.appendChild(card);
+        });
+      }
+
       // getProducts (plural, one batched call) — never getProduct in a
       // loop, which the plugin's own docs warn causes a race condition
       // with the underlying native billing client.
-      NativePurchases.getProducts({ productIdentifiers: productIds, productType: 'inapp' })
-        .then(function (result) {
-          var products = (result && result.products) || [];
-          devLog('shop: getProducts resolved with ' + products.length + ' product(s)');
-          products.forEach(function (p) { shopPriceCache[p.identifier] = p.priceString; });
-          // Only show a bird if Google actually has a real, purchasable
-          // product for it — a bird can exist fully in D1 (art, colors,
-          // label) but simply not appear as buyable here until it's set
-          // up in Play Console. That's the actual point of this filter.
-          var available = candidates.filter(function (ch) {
-            return !!shopPriceCache[playProductIdForRebel(ch.code)];
+      //
+      // The native billing client can be transiently unready right after
+      // sign-in (the connection is torn down and re-established around the
+      // auth flow), so a single getProducts() call sometimes rejects even
+      // though the catalog is fine. Retry once after a short delay before
+      // giving up — the second attempt almost always lands once the client
+      // has reconnected.
+      function queryProducts(attempt) {
+        return NativePurchases.getProducts({ productIdentifiers: productIds, productType: 'inapp' })
+          .then(renderProducts)
+          .catch(function (err) {
+            var msg = (err && err.message ? err.message : String(err));
+            devLog('shop: getProducts attempt ' + attempt + ' REJECTED — ' + msg);
+            if (attempt < 2) {
+              // Brief backoff to let the billing client reconnect, then retry once.
+              return new Promise(function (resolve) { setTimeout(resolve, 900); })
+                .then(function () { return queryProducts(attempt + 1); });
+            }
+            shopGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the shop — check your connection and try again.</div>';
           });
-          devLog('shop: ' + available.length + ' available after price-cache filter');
-          if (!available.length) {
-            shopGrid.innerHTML = '<div class="rl-loading">No rebels available to purchase right now.</div>';
-            return;
-          }
-          shopGrid.innerHTML = '';
-          available.forEach(function (ch) {
-            var card = document.createElement('button');
-            card.type = 'button';
-            card.className = 'rl-char-card';
-            card.setAttribute('data-rl-char', ch.code);
-            if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
-            var img = document.createElement('img');
-            img.alt = ch.label;
-            img.src = BASE + ch.src;
-            var span = document.createElement('span');
-            span.textContent = ch.label;
-            var price = document.createElement('span');
-            price.className = 'rl-shop-price';
-            price.textContent = shopPriceCache[playProductIdForRebel(ch.code)];
-            card.appendChild(img); card.appendChild(span); card.appendChild(price);
-            card.addEventListener('click', function () {
-              openShopDetail(ch);
-            });
-            shopGrid.appendChild(card);
-          });
-        })
-        .catch(function (err) {
-          devLog('shop: getProducts REJECTED — ' + (err && err.message ? err.message : String(err)));
-          shopGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the shop — check your connection and try again.</div>';
-        });
+      }
+      queryProducts(1);
     }
 
     // Scenes reuse the .rl-char-card tile look for visual consistency with
