@@ -916,9 +916,11 @@
       // ---- native: build the carousel instead of the char-grid ----
       var og = rosterByCode(OG_CODE) || roster[0];
       var lastChar = loadLastCharPref();
-      var wantSelected = (selectedChar && (selectedChar === RANDOM_CODE || rosterByCode(selectedChar)))
+      var owned = ownedRebelCodes();
+      function isPickable(code) { return code === RANDOM_CODE || owned.indexOf(code) !== -1; }
+      var wantSelected = (selectedChar && isPickable(selectedChar))
         ? selectedChar
-        : ((lastChar && (lastChar === RANDOM_CODE || rosterByCode(lastChar))) ? lastChar : og.code);
+        : ((lastChar && isPickable(lastChar)) ? lastChar : og.code);
       selectedChar = wantSelected;
       updateMenuBg(wantSelected);
       renderCarousel();
@@ -1846,6 +1848,14 @@
         clearSignedInIdentity();
         IDENTITY = GUEST_IDENTITY;
         if (GoogleSignIn && GoogleSignIn.signOut) { try { GoogleSignIn.signOut(); } catch (e) {} }
+        // Flock (FLOCK_KEY) and couponRebels are only ever legitimately
+        // populated for a signed-in identity — every entitlement-granting
+        // endpoint requires sign-in server-side. Clearing both here stops
+        // the outgoing account's purchased/claimed birds from bleeding
+        // into the guest state (or the next account signed in, until a
+        // restore overwrites it).
+        try { localStorage.removeItem(FLOCK_KEY); } catch (e) {}
+        couponRebels = [];
         refreshAccountUi();
         renderCharGrid();
         toast('Signed out.');
