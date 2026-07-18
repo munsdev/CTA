@@ -22,7 +22,7 @@
   var PLAY_AREA_EDGE_INSET_RATIO = 0.08;
   // Rainbow Blizzard Mode only: max cumulative horizontal drift a cube can
   // pick up over a full top-to-bottom fall, as a fraction of stage width.
-  var WIND_MAX_RATIO = { easy: 0.10, medium: 0.20, hard: 0.60 }; // doubled for Rainbow Blizzard Mode
+  var WIND_MAX_RATIO = { easy: 0.15, medium: 0.30, hard: 0.90 }; // Rainbow Blizzard Mode only; +50% on top of the earlier doubling
   var DEFAULT_TIER = 'medium';
   // Persistent, on-device developer log — captures sign-in/purchase events
   // with timestamps directly in localStorage, viewable via a hidden
@@ -63,7 +63,7 @@
       meltedThrough: 'Melted Through!', iceCubesMelted: 'Ice cubes melted<b data-rl-final-score>0</b>',
       accuracy: 'Accuracy<b data-rl-final-accuracy>0%</b>', saveScore: 'Save Score',
       casualNoLeaderboard: 'Casual Mode runs aren\'t added to the leaderboard.', signInToSave: 'Sign in to save your score to the leaderboard.', playAgain: 'Play Again',
-      leaderboard: 'Leaderboard', tierEasy: 'Easy', tierMedium: 'Medium', tierHard: 'Hard',
+      leaderboard: 'Leaderboard', tierEasy: 'Easy', tierMedium: 'Medium', tierHard: 'Hard', lbSceneNormal: 'Normal', lbSceneBlizzard: 'Rainbow Blizzard',
       sortBy: 'Sort by', sortScore: 'Score', sortAccuracy: 'Accuracy', sortName: 'Name', sortDate: 'Date',
       loading: 'Loading…', loadMore: 'Load More', back: 'Back',
       about: 'About',
@@ -97,7 +97,7 @@
       meltedThrough: 'Durchgeschmolzen!', iceCubesMelted: 'Geschmolzene Eiswürfel<b data-rl-final-score>0</b>',
       accuracy: 'Genauigkeit<b data-rl-final-accuracy>0%</b>', saveScore: 'Punktzahl speichern',
       casualNoLeaderboard: 'Läufe im entspannten Modus zählen nicht für die Bestenliste.', signInToSave: 'Melde dich an, um deinen Highscore in der Bestenliste zu speichern.', playAgain: 'Nochmal spielen',
-      leaderboard: 'Bestenliste', tierEasy: 'Leicht', tierMedium: 'Mittel', tierHard: 'Schwer',
+      leaderboard: 'Bestenliste', tierEasy: 'Leicht', tierMedium: 'Mittel', tierHard: 'Schwer', lbSceneNormal: 'Normal', lbSceneBlizzard: 'Regenbogen-Blizzard',
       sortBy: 'Sortieren nach', sortScore: 'Punktzahl', sortAccuracy: 'Genauigkeit', sortName: 'Name', sortDate: 'Datum',
       loading: 'Lädt…', loadMore: 'Mehr laden', back: 'Zurück',
       about: 'Über',
@@ -131,7 +131,7 @@
       meltedThrough: 'Tout a fondu !', iceCubesMelted: 'Glaçons fondus<b data-rl-final-score>0</b>',
       accuracy: 'Précision<b data-rl-final-accuracy>0%</b>', saveScore: 'Enregistrer le score',
       casualNoLeaderboard: 'Les parties en Mode Détente ne comptent pas pour le classement.', signInToSave: 'Connecte-toi pour enregistrer ton score dans le classement.', playAgain: 'Rejouer',
-      leaderboard: 'Classement', tierEasy: 'Facile', tierMedium: 'Moyen', tierHard: 'Difficile',
+      leaderboard: 'Classement', tierEasy: 'Facile', tierMedium: 'Moyen', tierHard: 'Difficile', lbSceneNormal: 'Normal', lbSceneBlizzard: 'Blizzard Arc-en-ciel',
       sortBy: 'Trier par', sortScore: 'Score', sortAccuracy: 'Précision', sortName: 'Nom', sortDate: 'Date',
       loading: 'Chargement…', loadMore: 'Charger plus', back: 'Retour',
       about: 'À propos',
@@ -165,7 +165,7 @@
       meltedThrough: '¡Todo se derritió!', iceCubesMelted: 'Cubos de hielo derretidos<b data-rl-final-score>0</b>',
       accuracy: 'Precisión<b data-rl-final-accuracy>0%</b>', saveScore: 'Guardar puntuación',
       casualNoLeaderboard: 'Las partidas en Modo Casual no se añaden a la clasificación.', signInToSave: 'Inicia sesión para guardar tu puntuación en la clasificación.', playAgain: 'Jugar de nuevo',
-      leaderboard: 'Clasificación', tierEasy: 'Fácil', tierMedium: 'Medio', tierHard: 'Difícil',
+      leaderboard: 'Clasificación', tierEasy: 'Fácil', tierMedium: 'Medio', tierHard: 'Difícil', lbSceneNormal: 'Normal', lbSceneBlizzard: 'Ventisca Arcoíris',
       sortBy: 'Ordenar por', sortScore: 'Puntuación', sortAccuracy: 'Precisión', sortName: 'Nombre', sortDate: 'Fecha',
       loading: 'Cargando…', loadMore: 'Cargar más', back: 'Atrás',
       about: 'Acerca de',
@@ -447,6 +447,10 @@
     + '    <div class="rl-screen-inner">'
     + '      <h2 style="margin-bottom:2px;" data-i18n="leaderboard">Leaderboard</h2>'
     + '      <p class="rl-lb-set-note" data-rl-lb-set-note>Normal scores</p>'
+    + '      <div class="rl-tabs" data-rl-lb-scene-tabs>'
+    + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-scene-tab="normal" data-i18n="lbSceneNormal">Normal</button>'
+    + '        <button type="button" class="rl-tab" data-rl-lb-scene-tab="blizzard" data-i18n="lbSceneBlizzard">Rainbow Blizzard</button>'
+    + '      </div>'
     + '      <div class="rl-tabs" data-rl-lb-tabs>'
     + '        <button type="button" class="rl-tab" data-rl-lb-tab="easy" data-i18n="tierEasy">Easy</button>'
     + '        <button type="button" class="rl-tab rl-selected" data-rl-lb-tab="medium" data-i18n="tierMedium">Medium</button>'
@@ -1691,6 +1695,7 @@
           lbTier = DEFAULT_TIER;
           lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
           mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
+          mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-scene-tab') === lbSet); });
           loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
           showScreen('leaderboard-from-menu');
         });
@@ -1701,6 +1706,7 @@
           lbTier = DEFAULT_TIER;
           lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
           mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-tab') === lbTier); });
+          mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t.getAttribute('data-rl-lb-scene-tab') === lbSet); });
           loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
           showScreen('leaderboard-from-start');
         });
@@ -2378,6 +2384,13 @@
       tab.addEventListener('click', function () {
         lbTier = tab.getAttribute('data-rl-lb-tab');
         mount.querySelectorAll('[data-rl-lb-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t === tab); });
+        loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
+      });
+    });
+    mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        lbSet = tab.getAttribute('data-rl-lb-scene-tab');
+        mount.querySelectorAll('[data-rl-lb-scene-tab]').forEach(function (t) { t.classList.toggle('rl-selected', t === tab); });
         loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
       });
     });
@@ -3060,7 +3073,7 @@
       S.wind.streaks.push({
         y: rand(H * 0.08, H * 0.92),
         x: fromLeft ? -30 : W + 30,
-        vx: (fromLeft ? 1 : -1) * rand(90, 150),
+        vx: (fromLeft ? 1 : -1) * rand(135, 225), // +50% over the original 90-150 range, matching WIND_MAX_RATIO's bump
         len: rand(28, 60), life: 1
       });
     }
@@ -3069,7 +3082,7 @@
         S.wind.bands = rollWindBands(S.wind.maxPxPerSec);
         S.wind.nextRollAt = now + rand(6000, 9000);
       }
-      if (Math.random() < dt * 0.6) spawnWindStreak(); // roughly one every ~1.5s on average
+      if (Math.random() < dt * 0.9) spawnWindStreak(); // +50% over the original 0.6 (roughly one every ~1s now instead of ~1.5s)
       for (var i = S.wind.streaks.length - 1; i >= 0; i--) {
         var st = S.wind.streaks[i];
         st.x += st.vx * dt; st.life -= dt * 0.5;
@@ -3094,7 +3107,7 @@
     // coverage, not anatomical detail. Shared by the regular and mega
     // rockets in every mode; only color/scale/stripe differ. Drawn pointing
     // "up" (−y); caller translates.
-    var RAINBOW = ['#ff5f5f', '#ffab5f', '#ffe95f', '#5fe08a', '#5fb8ff', '#9d7bff', '#ff7be0'];
+    var RAINBOW = ['#ff2d2d', '#ff9d0d', '#ffe600', '#2ee66b', '#0fb4ff', '#8a3ffc', '#ff2ec4'];
     function drawRocketBody(scale, bodyColor, stripeColor) {
       ctx.fillStyle = bodyColor;
       roundRect(ctx, -3.2 * scale, -9 * scale, 6.4 * scale, 15 * scale, 3.2 * scale);
@@ -3223,10 +3236,10 @@
           if (S.cfg.blizzard) {
             var grad = ctx.createLinearGradient(pr.tailX, pr.tailY, pr.headX, pr.headY);
             RAINBOW.forEach(function (c, idx) { grad.addColorStop(idx / (RAINBOW.length - 1), c); });
-            ctx.globalAlpha = fadeAlpha * 0.55; ctx.strokeStyle = grad; ctx.lineWidth = pr.pathWidth;
+            ctx.globalAlpha = fadeAlpha * 0.8; ctx.strokeStyle = grad; ctx.lineWidth = pr.pathWidth;
             ctx.lineCap = 'round';
             ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
-            ctx.globalAlpha = fadeAlpha; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, pr.pathWidth * 0.3);
+            ctx.globalAlpha = fadeAlpha * 0.8; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, pr.pathWidth * 0.22);
             ctx.beginPath(); ctx.moveTo(pr.tailX, pr.tailY); ctx.lineTo(pr.headX, pr.headY); ctx.stroke();
           } else {
             var colors = S.laserColors || { outer: '#9d2732', core: '#ff8a8a' };
