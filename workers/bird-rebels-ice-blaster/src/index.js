@@ -511,6 +511,19 @@ async function verifyAndGrantPurchase(request, env) {
     }, 402);
   }
 
+  // obfuscatedExternalAccountId is Google's own record of who this specific
+  // purchase was tagged for at purchase time (see appAccountToken in the
+  // client's purchaseProduct call). Google Play purchases are otherwise
+  // scoped to the DEVICE's Play Store account, not this app's own Sign-In —
+  // without this check, any signed-in identity on a device that has ever
+  // purchased anything (under any account) could restore it for themselves.
+  // Purchases made before this tagging existed carry no value here at all
+  // (older client build) and fall through to the previous trusting
+  // behavior — there's no way to retroactively know who they belonged to.
+  if (purchase.obfuscatedExternalAccountId && purchase.obfuscatedExternalAccountId !== device) {
+    return json({ ok: false, error: 'purchase_belongs_to_different_account' }, 403);
+  }
+
   // acknowledgementState: 0 = not yet acknowledged, 1 = already
   // acknowledged. Only acknowledge once — a redundant call isn't harmful,
   // but there's no reason to make it.
