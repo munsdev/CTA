@@ -54,7 +54,7 @@
   // language doesn't override, so a partial translation never breaks.
   var I18N = {
     en: {
-      selectYourRebel: 'Select Your Rebel', loadingRoster: 'Loading roster…',
+      selectYourRebel: 'Select Your Rebel', loadingRoster: 'Loading roster…', offlineModeNote: 'OFFLINE MODE — SOME FEATURES DISABLED',
       getMoreRebels: 'Get More Rebels', difficulty: 'Difficulty', scene: 'Scene',
       startGame: 'Start Game', finish: 'Finish', pause: 'Pause',
       hudMelted: 'Melted<br><b data-rl-score>0</b>', hudEscaped: 'Escaped<br><b data-rl-escaped>0</b>',
@@ -62,7 +62,7 @@
       paused: 'Paused', resume: 'Resume', restartRun: 'Restart Run', reset: 'Reset',
       meltedThrough: 'Melted Through!', iceCubesMelted: 'Ice cubes melted<b data-rl-final-score>0</b>',
       accuracy: 'Accuracy<b data-rl-final-accuracy>0%</b>', saveScore: 'Save Score',
-      casualNoLeaderboard: 'Casual Mode runs aren\'t added to the leaderboard.', playAgain: 'Play Again',
+      casualNoLeaderboard: 'Casual Mode runs aren\'t added to the leaderboard.', signInToSave: 'Sign in to save your score to the leaderboard.', playAgain: 'Play Again',
       leaderboard: 'Leaderboard', tierEasy: 'Easy', tierMedium: 'Medium', tierHard: 'Hard',
       sortBy: 'Sort by', sortScore: 'Score', sortAccuracy: 'Accuracy', sortName: 'Name', sortDate: 'Date',
       loading: 'Loading…', loadMore: 'Load More', back: 'Back',
@@ -88,7 +88,7 @@
       menu: 'Menu'
     },
     de: {
-      selectYourRebel: 'Wähle deinen Rebellen', loadingRoster: 'Lade Vogelliste…',
+      selectYourRebel: 'Wähle deinen Rebellen', loadingRoster: 'Lade Vogelliste…', offlineModeNote: 'OFFLINE-MODUS — EINIGE FUNKTIONEN DEAKTIVIERT',
       getMoreRebels: 'Mehr Rebellen holen', difficulty: 'Schwierigkeit', scene: 'Szene',
       startGame: 'Spiel starten', finish: 'Beenden', pause: 'Pause',
       hudMelted: 'Geschmolzen<br><b data-rl-score>0</b>', hudEscaped: 'Entkommen<br><b data-rl-escaped>0</b>',
@@ -96,7 +96,7 @@
       paused: 'Pausiert', resume: 'Fortsetzen', restartRun: 'Lauf neu starten', reset: 'Zurücksetzen',
       meltedThrough: 'Durchgeschmolzen!', iceCubesMelted: 'Geschmolzene Eiswürfel<b data-rl-final-score>0</b>',
       accuracy: 'Genauigkeit<b data-rl-final-accuracy>0%</b>', saveScore: 'Punktzahl speichern',
-      casualNoLeaderboard: 'Läufe im entspannten Modus zählen nicht für die Bestenliste.', playAgain: 'Nochmal spielen',
+      casualNoLeaderboard: 'Läufe im entspannten Modus zählen nicht für die Bestenliste.', signInToSave: 'Melde dich an, um deinen Highscore in der Bestenliste zu speichern.', playAgain: 'Nochmal spielen',
       leaderboard: 'Bestenliste', tierEasy: 'Leicht', tierMedium: 'Mittel', tierHard: 'Schwer',
       sortBy: 'Sortieren nach', sortScore: 'Punktzahl', sortAccuracy: 'Genauigkeit', sortName: 'Name', sortDate: 'Datum',
       loading: 'Lädt…', loadMore: 'Mehr laden', back: 'Zurück',
@@ -122,7 +122,7 @@
       menu: 'Menü'
     },
     fr: {
-      selectYourRebel: 'Choisis ton rebelle', loadingRoster: 'Chargement de la liste…',
+      selectYourRebel: 'Choisis ton rebelle', loadingRoster: 'Chargement de la liste…', offlineModeNote: 'MODE HORS LIGNE — CERTAINES FONCTIONS DÉSACTIVÉES',
       getMoreRebels: 'Obtenir plus de rebelles', difficulty: 'Difficulté', scene: 'Scène',
       startGame: 'Démarrer', finish: 'Terminer', pause: 'Pause',
       hudMelted: 'Fondus<br><b data-rl-score>0</b>', hudEscaped: 'Échappés<br><b data-rl-escaped>0</b>',
@@ -130,7 +130,7 @@
       paused: 'En pause', resume: 'Reprendre', restartRun: 'Recommencer la partie', reset: 'Réinitialiser',
       meltedThrough: 'Tout a fondu !', iceCubesMelted: 'Glaçons fondus<b data-rl-final-score>0</b>',
       accuracy: 'Précision<b data-rl-final-accuracy>0%</b>', saveScore: 'Enregistrer le score',
-      casualNoLeaderboard: 'Les parties en Mode Détente ne comptent pas pour le classement.', playAgain: 'Rejouer',
+      casualNoLeaderboard: 'Les parties en Mode Détente ne comptent pas pour le classement.', signInToSave: 'Connecte-toi pour enregistrer ton score dans le classement.', playAgain: 'Rejouer',
       leaderboard: 'Classement', tierEasy: 'Facile', tierMedium: 'Moyen', tierHard: 'Difficile',
       sortBy: 'Trier par', sortScore: 'Score', sortAccuracy: 'Précision', sortName: 'Nom', sortDate: 'Date',
       loading: 'Chargement…', loadMore: 'Charger plus', back: 'Retour',
@@ -156,7 +156,7 @@
       menu: 'Menu'
     },
     es: {
-      selectYourRebel: 'Elige a tu rebelde', loadingRoster: 'Cargando la lista…',
+      selectYourRebel: 'Elige a tu rebelde', loadingRoster: 'Cargando la lista…', offlineModeNote: 'MODO SIN CONEXIÓN — ALGUNAS FUNCIONES DESACTIVADAS',
       getMoreRebels: 'Consigue más rebeldes', difficulty: 'Dificultad', scene: 'Escena',
       startGame: 'Empezar', finish: 'Finalizar', pause: 'Pausa',
       hudMelted: 'Derretidos<br><b data-rl-score>0</b>', hudEscaped: 'Escapados<br><b data-rl-escaped>0</b>',
@@ -164,7 +164,7 @@
       paused: 'Pausado', resume: 'Reanudar', restartRun: 'Reiniciar partida', reset: 'Restablecer',
       meltedThrough: '¡Todo se derritió!', iceCubesMelted: 'Cubos de hielo derretidos<b data-rl-final-score>0</b>',
       accuracy: 'Precisión<b data-rl-final-accuracy>0%</b>', saveScore: 'Guardar puntuación',
-      casualNoLeaderboard: 'Las partidas en Modo Casual no se añaden a la clasificación.', playAgain: 'Jugar de nuevo',
+      casualNoLeaderboard: 'Las partidas en Modo Casual no se añaden a la clasificación.', signInToSave: 'Inicia sesión para guardar tu puntuación en la clasificación.', playAgain: 'Jugar de nuevo',
       leaderboard: 'Clasificación', tierEasy: 'Fácil', tierMedium: 'Medio', tierHard: 'Difícil',
       sortBy: 'Ordenar por', sortScore: 'Puntuación', sortAccuracy: 'Precisión', sortName: 'Nombre', sortDate: 'Fecha',
       loading: 'Cargando…', loadMore: 'Cargar más', back: 'Atrás',
@@ -379,6 +379,7 @@
     + '        <button class="rl-btn" data-rl-start data-i18n="startGame">Start Game</button>'
     + '        <button class="rl-btn rl-btn-ghost" data-rl-open-leaderboard data-i18n="leaderboard">Leaderboard</button>'
     + '        <p class="rl-error" data-rl-start-error></p>'
+    + '        <p class="rl-offline-note" data-rl-offline-note data-i18n="offlineModeNote" hidden>OFFLINE MODE — SOME FEATURES DISABLED</p>'
     + '      </div>'
     + '    </div>'
     + '  </div>'
@@ -434,6 +435,10 @@
     + '        <div class="rl-board" data-rl-board-inline hidden></div>'
     + '      </div>'
     + '      <p class="rl-tier-note" data-rl-kid-note hidden data-i18n="casualNoLeaderboard">Casual Mode runs aren\'t added to the leaderboard.</p>'
+    + '      <div data-rl-signin-note hidden>'
+    + '        <p class="rl-tier-note" data-i18n="signInToSave">Sign in to save your score to the leaderboard.</p>'
+    + '        <button class="rl-btn rl-btn-ghost" data-rl-gameover-signin data-i18n="signInGoogle">Sign in with Google</button>'
+    + '      </div>'
     + '      <button class="rl-btn rl-btn-ghost" data-rl-restart data-i18n="playAgain">Play Again</button>'
     + '    </div>'
     + '  </div>'
@@ -622,6 +627,10 @@
     mount.dataset.booted = '1';
 
     var BASE = mount.getAttribute('data-rl-base') || '';
+    // Offline-baseline roster entries (see OFFLINE_BASELINE_ROSTER below) are
+    // bundled locally and carry a src that's already correct as-is — never
+    // prefixed with BASE like every live/API-sourced roster entry is.
+    function charImgSrc(ch) { return ch.localSrc ? ch.src : (BASE + ch.src); }
     // Sounds normally load over the network from the same Worker as
     // everything else (BASE). The native wrapper bundles the mp3s inside
     // the app itself and points this at that local folder instead, via
@@ -858,6 +867,37 @@
     var charAccent = {};
     var RANDOM_CODE = '__RANDOM__';
 
+    // ---------- offline support ----------
+    // Roster/scenes are cached locally every time they load live, and used
+    // as a fallback if a later boot has no network. If there's no cache
+    // AT ALL yet (a genuinely first-ever offline launch), OFFLINE_BASELINE_ROSTER
+    // — OG + MN, both auto-unlock/free, images bundled locally in www/img/ —
+    // keeps the free game playable rather than dead-ending. Everything
+    // network-only (shop, sign-in, leaderboards, other rebels) is simply
+    // unavailable in that state; offlineFallbackActive drives the small
+    // "OFFLINE MODE" footer note for exactly that case.
+    var ROSTER_CACHE_KEY = 'rl_roster_cache_v1';
+    var SCENES_CACHE_KEY = 'rl_scenes_cache_v1';
+    var offlineFallbackActive = false;
+    var OFFLINE_BASELINE_ROSTER = [
+      { code: 'OG', label: 'OG Rebel Loon', src: 'img/OG.png', localSrc: true,
+        accentColor: '#5F8BC2', primaryColor: '#5F8BC2', secondaryColor: null, trueAccentColor: null,
+        autoUnlock: true, priceCents: 0, laserOriginX: 425, laserOriginY: 285, visible: true, isPurchasable: false },
+      { code: 'MN', label: 'MN Loon Rebel', src: 'img/MN.png', localSrc: true,
+        accentColor: '#62b7d0', primaryColor: '#62b7d0', secondaryColor: '#3b587f', trueAccentColor: '#ffffff',
+        autoUnlock: true, priceCents: 0, laserOriginX: null, laserOriginY: null, visible: true, isPurchasable: false }
+    ];
+    function saveRosterCache(list) { try { localStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify(list)); } catch (e) {} }
+    function loadRosterCache() {
+      try { var v = JSON.parse(localStorage.getItem(ROSTER_CACHE_KEY) || 'null'); return Array.isArray(v) ? v : null; }
+      catch (e) { return null; }
+    }
+    function saveScenesCache(list) { try { localStorage.setItem(SCENES_CACHE_KEY, JSON.stringify(list)); } catch (e) {} }
+    function loadScenesCache() {
+      try { var v = JSON.parse(localStorage.getItem(SCENES_CACHE_KEY) || 'null'); return Array.isArray(v) ? v : null; }
+      catch (e) { return null; }
+    }
+
     // ---------- scene roster (live from the API — Standard, Rainbow
     // Blizzard, and any future purchasable scenes) ----------
     var sceneGrid = mount.querySelector('[data-rl-scene-grid]');
@@ -867,7 +907,7 @@
 
     function preloadChar(ch) {
       var preload = new Image();
-      preload.src = BASE + ch.src;
+      preload.src = charImgSrc(ch);
       charImgs[ch.code] = preload;
       charAccent[ch.code] = ch.accentColor || null;
     }
@@ -911,7 +951,7 @@
           card.setAttribute('data-rl-char', ch.code);
           var img = document.createElement('img');
           img.alt = ch.label;
-          img.src = BASE + ch.src;
+          img.src = charImgSrc(ch);
           var span = document.createElement('span');
           span.textContent = ch.label;
           card.appendChild(img); card.appendChild(span);
@@ -961,11 +1001,11 @@
     function buildCarouselItems() {
       var og = rosterByCode(OG_CODE) || roster[0];
       var owned = ownedRebelCodes();
-      var items = [{ code: og.code, label: og.label, imgSrc: BASE + og.src }];
+      var items = [{ code: og.code, label: og.label, imgSrc: charImgSrc(og) }];
       owned.forEach(function (code) {
         if (code === og.code) return;
         var ch = rosterByCode(code);
-        if (ch) items.push({ code: ch.code, label: ch.label, imgSrc: BASE + ch.src });
+        if (ch) items.push({ code: ch.code, label: ch.label, imgSrc: charImgSrc(ch) });
       });
       items.push({ code: RANDOM_CODE, label: 'Random', imgSrc: null, isRandom: true });
       return items;
@@ -1297,7 +1337,7 @@
           if (ch.accentColor) card.style.setProperty('--tile-accent', ch.accentColor);
           var img = document.createElement('img');
           img.alt = ch.label;
-          img.src = BASE + ch.src;
+          img.src = charImgSrc(ch);
           var span = document.createElement('span');
           span.textContent = ch.label;
           var price = document.createElement('span');
@@ -1438,7 +1478,7 @@
     function openShopDetail(ch) {
       if (!shopDetailEl) return;
       pendingPurchase = ch;
-      shopDetailImg.src = BASE + ch.src;
+      shopDetailImg.src = charImgSrc(ch);
       shopDetailImg.alt = ch.label;
       shopDetailName.textContent = ch.label;
       shopDetailEl.hidden = false;
@@ -2089,7 +2129,7 @@
                 if (charAccent[opt.itemCode]) card.style.setProperty('--tile-accent', charAccent[opt.itemCode]);
                 var img = document.createElement('img');
                 img.alt = opt.label;
-                if (ch) img.src = BASE + ch.src;
+                if (ch) img.src = charImgSrc(ch);
                 var span = document.createElement('span');
                 span.textContent = opt.label;
                 card.appendChild(img); card.appendChild(span);
@@ -2179,10 +2219,20 @@
     Promise.all([
       loadCouponEntitlements(),
       fetch(BASE + '/api/characters' + (shopEnabled && IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
-        .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); }),
+        .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
+        .then(function (list) { saveRosterCache(list); return list; })
+        .catch(function () {
+          var cached = loadRosterCache();
+          if (cached) return cached;
+          offlineFallbackActive = true;
+          return OFFLINE_BASELINE_ROSTER;
+        }),
       fetch(BASE + '/api/scenes' + (IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
         .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
-        .catch(function () { return []; }) // scenes are non-essential to boot — fall back to just Standard rather than blocking the whole roster load
+        .then(function (list) { saveScenesCache(list); return list; })
+        // scenes are non-essential to boot either way — fall back to cache,
+        // then to just Standard, rather than blocking the whole roster load
+        .catch(function () { return loadScenesCache() || []; })
     ])
       .then(function (results) {
         roster = Array.isArray(results[1]) ? results[1] : [];
@@ -2190,6 +2240,8 @@
         sceneRoster = Array.isArray(results[2]) ? results[2] : [];
         renderSceneGrid();
         updateSceneButton();
+        var offlineNoteEl = mount.querySelector('[data-rl-offline-note]');
+        if (offlineNoteEl) offlineNoteEl.hidden = !offlineFallbackActive;
         // Restore previously only ran at the exact moment of a successful
         // sign-in — someone ALREADY signed in on a later boot never got
         // Google's purchase records re-checked against D1 at all. That's
@@ -2368,6 +2420,8 @@
     var submitError = mount.querySelector('[data-rl-submit-error]');
     var scoreSubmitBlock = mount.querySelector('[data-rl-score-submit]');
     var kidNote = mount.querySelector('[data-rl-kid-note]');
+    var signinNote = mount.querySelector('[data-rl-signin-note]');
+    var gameoverSigninBtn = mount.querySelector('[data-rl-gameover-signin]');
     var restartBtn = mount.querySelector('[data-rl-restart]');
 
     // ---------- gameover safety: protect an unsaved high score from a stray tap ----------
@@ -2960,6 +3014,20 @@
       });
     }
 
+    // Baseline skyline overlay — sits above the background gradient/glow but
+    // below the rebel and every gameplay entity (drawn between drawBackground
+    // and drawProjectiles in the render loop). Regular scene only for now;
+    // Blizzard and any future scene get their own baseline art later, hence
+    // the scene-specific filename rather than one shared image.
+    var skylineImg = new Image();
+    skylineImg.src = 'img/skyline-regular.png';
+    function drawSkyline() {
+      if (S.cfg.blizzard) return;
+      if (!skylineImg.complete || !skylineImg.naturalWidth) return;
+      var drawH = W * (skylineImg.naturalHeight / skylineImg.naturalWidth);
+      ctx.drawImage(skylineImg, 0, H - drawH, W, drawH);
+    }
+
     // ---------- wind (Rainbow Blizzard Mode only) ----------
     // 3 elevation bands (top/mid/bottom third of the stage), each carrying
     // its own horizontal gust velocity. Adjacent bands are constrained to
@@ -3366,6 +3434,7 @@
       ctx.translate(shakeX, shakeY);
       drawBackground(now);
       if (S.cfg.blizzard) drawWindStreaks();
+      drawSkyline();
       var eye = getEyePos();
       drawProjectiles(now);
       drawLoon(eye);
@@ -3393,13 +3462,15 @@
       boardInlineNote.hidden = true;
       submitError.textContent = '';
       initialInputs.forEach(function (inp) { inp.value = ''; });
-      scoreSubmitBlock.hidden = S.cfg.kidMode;
+      var canSubmit = !S.cfg.kidMode && isSignedIn();
+      scoreSubmitBlock.hidden = !canSubmit;
       kidNote.hidden = !S.cfg.kidMode;
-      scoreSaved = S.cfg.kidMode; // kid mode never submits, so there's nothing to protect
+      signinNote.hidden = S.cfg.kidMode || isSignedIn();
+      scoreSaved = !canSubmit; // nothing to protect if this run was never eligible to submit
       resetRestartConfirm();
       showScreen('gameover');
       gameoverLockUntil = Date.now() + GAMEOVER_INPUT_LOCK_MS;
-      if (!S.cfg.kidMode) setTimeout(function () { initialInputs[0].focus(); }, 50);
+      if (canSubmit) setTimeout(function () { initialInputs[0].focus(); }, 50);
     }
 
     // ---------- initials input UX ----------
@@ -3423,7 +3494,7 @@
       fetch(BASE + '/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initials: initials, tier: submitTier, score: S.melted, accuracy: S.accuracy, character: S.cfg.character })
+        body: JSON.stringify({ device: IDENTITY, initials: initials, tier: submitTier, score: S.melted, accuracy: S.accuracy, character: S.cfg.character })
       })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
         .then(function (res) {
@@ -3445,6 +3516,25 @@
           btn.removeAttribute('disabled'); btn.textContent = 'Save Score';
         });
     });
+
+    // Signing in right from the gameover screen (instead of backing out to
+    // the menu) reveals the normal submit UI in place, same score intact.
+    if (gameoverSigninBtn) {
+      gameoverSigninBtn.addEventListener('click', function () {
+        triggerGoogleSignIn().then(function (ok) {
+          if (!ok) { toast('Sign-in didn\'t complete — try again.'); return; }
+          toast('Signed in!');
+          restoreGooglePlayPurchases();
+          renderCharGrid();
+          if (!S.cfg.kidMode) {
+            signinNote.hidden = true;
+            scoreSubmitBlock.hidden = false;
+            scoreSaved = false;
+            setTimeout(function () { initialInputs[0].focus(); }, 50);
+          }
+        });
+      });
+    }
 
     restartBtn.addEventListener('click', function () {
       // Absorb momentum taps that land right as the gameover screen appears —
