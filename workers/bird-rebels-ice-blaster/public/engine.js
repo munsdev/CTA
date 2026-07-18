@@ -1219,13 +1219,16 @@
     }
 
     function renderShopGrid() {
-      if (!shopGrid) return;
+      if (!shopGrid) { devLog('shop: renderShopGrid called but shopGrid element missing'); return; }
+      devLog('shop: renderShopGrid start (signedIn=' + isSignedIn() + ', identity=' + IDENTITY + ', rosterLen=' + roster.length + ')');
       // Visually reflects sign-in status every time the Shop screen
       // renders — grayed out but still tappable (prompts sign-in on tap,
       // handled inside openClaimModal itself).
       if (claimShopBtn) claimShopBtn.classList.toggle('rl-btn-gray', !isSignedIn());
       var owned = ownedRebelCodes();
+      devLog('shop: owned codes = [' + owned.join(',') + ']');
       var candidates = roster.filter(function (ch) { return owned.indexOf(ch.code) === -1; });
+      devLog('shop: ' + candidates.length + ' candidate(s) after removing owned');
       if (!candidates.length) {
         shopGrid.innerHTML = '<div class="rl-loading">You\'ve got the whole flock!</div>';
         return;
@@ -1233,18 +1236,21 @@
       shopGrid.innerHTML = '<div class="rl-loading">Loading…</div>';
       var NativePurchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases;
       if (!NativePurchases || !NativePurchases.getProducts) {
+        devLog('shop: NativePurchases.getProducts unavailable — no billing on device');
         // No billing available at all (e.g. web) — nothing is purchasable,
         // so nothing should show as buyable.
         shopGrid.innerHTML = '<div class="rl-loading">Purchases aren\'t available on this device.</div>';
         return;
       }
       var productIds = candidates.map(function (ch) { return playProductIdForRebel(ch.code); });
+      devLog('shop: calling getProducts for ' + productIds.length + ' id(s)');
       // getProducts (plural, one batched call) — never getProduct in a
       // loop, which the plugin's own docs warn causes a race condition
       // with the underlying native billing client.
       NativePurchases.getProducts({ productIdentifiers: productIds, productType: 'inapp' })
         .then(function (result) {
           var products = (result && result.products) || [];
+          devLog('shop: getProducts resolved with ' + products.length + ' product(s)');
           products.forEach(function (p) { shopPriceCache[p.identifier] = p.priceString; });
           // Only show a bird if Google actually has a real, purchasable
           // product for it — a bird can exist fully in D1 (art, colors,
@@ -1253,6 +1259,7 @@
           var available = candidates.filter(function (ch) {
             return !!shopPriceCache[playProductIdForRebel(ch.code)];
           });
+          devLog('shop: ' + available.length + ' available after price-cache filter');
           if (!available.length) {
             shopGrid.innerHTML = '<div class="rl-loading">No rebels available to purchase right now.</div>';
             return;
@@ -1279,7 +1286,8 @@
             shopGrid.appendChild(card);
           });
         })
-        .catch(function () {
+        .catch(function (err) {
+          devLog('shop: getProducts REJECTED — ' + (err && err.message ? err.message : String(err)));
           shopGrid.innerHTML = '<div class="rl-loading">Couldn\'t load the shop — check your connection and try again.</div>';
         });
     }
