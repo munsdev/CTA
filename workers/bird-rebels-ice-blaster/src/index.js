@@ -419,12 +419,9 @@ async function fetchGooglePlayPurchase(env, productId, purchaseToken) {
   if (!res.ok) {
     let errBody = '';
     try { errBody = await res.text(); } catch (e) {}
-    console.log('[verify-debug] Google API non-OK: status=' + res.status + ' productId=' + productId + ' body=' + errBody.slice(0, 500));
-    return null;
+    return { __httpError: res.status, __body: errBody.slice(0, 300) };
   }
-  const data = await res.json();
-  console.log('[verify-debug] Google API OK: productId=' + productId + ' purchaseState=' + data.purchaseState + ' purchaseType=' + data.purchaseType + ' acknowledgementState=' + data.acknowledgementState + ' orderId=' + (data.orderId || 'none'));
-  return data;
+  return res.json();
 }
 
 // Google auto-refunds and revokes any purchase that isn't explicitly
@@ -485,13 +482,25 @@ async function verifyAndGrantPurchase(request, env) {
   try {
     purchase = await fetchGooglePlayPurchase(env, productId, purchaseToken);
   } catch (e) {
-    // Network/auth failure talking to Google is NOT the same as a
-    // confirmed-invalid purchase — surface a distinct error so the client
-    // can retry rather than treating this like a rejected purchase.
-    return json({ ok: false, error: 'verification_unavailable' }, 502);
+    return json({ ok: false, error: 'verification_unavailable', detail: String(e && e.message || e).slice(0, 200) }, 502);
   }
+
+  // If Google's API returned a non-OK HTTP status, surface it verbatim.
+  if (purchase && purchase.__httpError) {
+    return json({ ok: false, error: 'google_api_error', googleStatus: purchase.__httpError, googleBody: purchase.__body }, 402);
+  }
+
   // purchaseState: 0 = purchased, 1 = cancelled, 2 = pending
-  if (!purchase || purchase.purchaseState !== 0) return json({ ok: false, error: 'purchase_not_verified' }, 402);
+  if (!purchase || purchase.purchaseState !== 0) {
+    return json({
+      ok: false,
+      error: 'purchase_not_verified',
+      purchaseState: purchase ? purchase.purchaseState : 'null',
+      purchaseType: purchase ? purchase.purchaseType : 'null',
+      acknowledgementState: purchase ? purchase.acknowledgementState : 'null',
+      orderId: purchase ? (purchase.orderId || 'none') : 'null'
+    }, 402);
+  }
 
   // acknowledgementState: 0 = not yet acknowledged, 1 = already
   // acknowledged. Only acknowledge once — a redundant call isn't harmful,
