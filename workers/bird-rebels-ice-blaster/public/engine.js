@@ -68,20 +68,22 @@
       loading: 'Loading…', loadMore: 'Load More', back: 'Back',
       about: 'About',
       aboutIce: 'Ice cubes are falling — laser them down before they reach the bottom.',
-      aboutSpeed: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
+      aboutSpeed: 'Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
       aboutCasual: '<b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.',
       aboutBlizzard: '<b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.',
       credits: 'Credits',
-      creditsTheme: 'Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.',
-      creditsArt: 'Original Rebel Loon artwork by Casey The American.',
+      creditsTheme: 'Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
+      creditsArtOg: 'OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
+      creditsArtBird: 'Bird Rebels and other artwork by <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.',
-      supportArtist: 'Support the Artist',
+      supportArtist: 'Buy Me a Coffee',
+      viewCollection: 'See the Full Collection',
       settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out', notNow: 'Not Now', welcomeSignInTitle: 'Sign in with Google', welcomeSignInSub: 'Save your rebels to your account so they\'re never lost, even on a new device.',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
       claimCode: 'Claim a Code', purchase: 'Purchase',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
-      difficultyNote: 'Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
+      difficultyNote: 'Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
       casualModeLabel: 'Casual Mode<small>No life bar, no penalty for missed cubes — weapon powerups still work normally. Casual Mode runs are not eligible for the leaderboard.</small>',
       menu: 'Menu'
     },
@@ -100,20 +102,22 @@
       loading: 'Lädt…', loadMore: 'Mehr laden', back: 'Zurück',
       about: 'Über',
       aboutIce: 'Eiswürfel fallen herab — schieß sie ab, bevor sie den Boden erreichen.',
-      aboutSpeed: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
+      aboutSpeed: 'Geschwindigkeit & Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
       aboutCasual: '<b>Entspannter Modus</b> — keine Lebensanzeige, keine Strafe für verpasste Würfel. Waffen-Powerups funktionieren normal.',
       aboutBlizzard: '<b>Regenbogen-Blizzard</b> — ersetzt deinen Laser durch Raketen, fügt eine eigene Bestenliste hinzu.',
       credits: 'Mitwirkende',
-      creditsTheme: 'Regenbogen-Blizzard-Musik: bearbeitet nach einem Stück von Emmett Doyle.',
-      creditsArt: 'Original Rebel-Loon-Artwork von Casey The American.',
+      creditsTheme: 'Regenbogen-Blizzard-Musik: bearbeitet nach einem Stück von <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
+      creditsArtOg: 'OG-Rebel-Loon-Design von <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
+      creditsArtBird: 'Bird Rebels und weitere Kunstwerke von <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — weitere Bird-Rebels-Kunst, Merch und Downloads.',
-      supportArtist: 'Den Künstler unterstützen',
+      supportArtist: 'Kauf mir einen Kaffee',
+      viewCollection: 'Zur ganzen Kollektion',
       settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden', notNow: 'Nicht jetzt', welcomeSignInTitle: 'Mit Google anmelden', welcomeSignInSub: 'Speichere deine Rebellen in deinem Konto, damit sie nie verloren gehen — auch auf einem neuen Gerät nicht.',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
       claimCode: 'Code einlösen', purchase: 'Kaufen',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
-      difficultyNote: 'Geschwindigkeit &amp; Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
+      difficultyNote: 'Geschwindigkeit & Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
       casualModeLabel: 'Entspannter Modus<small>Keine Lebensanzeige, keine Strafe für verpasste Würfel — Waffen-Powerups funktionieren normal. Läufe im entspannten Modus zählen nicht für die Bestenliste.</small>',
       menu: 'Menü'
     },
@@ -136,10 +140,12 @@
       aboutCasual: '<b>Mode Détente</b> — pas de barre de vie, aucune pénalité pour les glaçons manqués. Les bonus d\'armes fonctionnent normalement.',
       aboutBlizzard: '<b>Blizzard Arc-en-ciel</b> — remplace ton laser par des roquettes, ajoute un classement séparé.',
       credits: 'Crédits',
-      creditsTheme: 'Thème musical du Blizzard Arc-en-ciel : adapté d\'un morceau d\'Emmett Doyle.',
-      creditsArt: 'Illustration originale de Rebel Loon par Casey The American.',
+      creditsTheme: 'Thème musical du Blizzard Arc-en-ciel : adapté d\'un morceau de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
+      creditsArtOg: 'Design original du Rebel Loon par <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
+      creditsArtBird: 'Bird Rebels et autres illustrations par <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — plus d\'art, de produits dérivés et de téléchargements Bird Rebels.',
-      supportArtist: 'Soutenir l\'artiste',
+      supportArtist: 'Offrir un café',
+      viewCollection: 'Voir toute la collection',
       settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter', notNow: 'Pas maintenant', welcomeSignInTitle: 'Se connecter avec Google', welcomeSignInSub: 'Enregistrez vos rebelles sur votre compte pour ne jamais les perdre, même sur un nouvel appareil.',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
       claimCode: 'Utiliser un code', purchase: 'Acheter',
@@ -168,10 +174,12 @@
       aboutCasual: '<b>Modo Casual</b> — sin barra de vida, sin penalización por cubos perdidos. Las mejoras de armas funcionan con normalidad.',
       aboutBlizzard: '<b>Ventisca Arcoíris</b> — cambia tu láser por cohetes y añade una clasificación aparte.',
       credits: 'Créditos',
-      creditsTheme: 'Tema de la Ventisca Arcoíris: adaptado de una pista de Emmett Doyle.',
-      creditsArt: 'Arte original de Rebel Loon por Casey The American.',
+      creditsTheme: 'Tema de la Ventisca Arcoíris: adaptado de una pista de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
+      creditsArtOg: 'Diseño original de Rebel Loon por <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
+      creditsArtBird: 'Bird Rebels y demás ilustraciones por <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.',
       creditsLink: '<a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — más arte, productos y descargas de Bird Rebels.',
-      supportArtist: 'Apoya al artista',
+      supportArtist: 'Invítame a un café',
+      viewCollection: 'Ver toda la colección',
       settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión', notNow: 'Ahora no', welcomeSignInTitle: 'Iniciar sesión con Google', welcomeSignInSub: 'Guarda tus rebeldes en tu cuenta para que nunca se pierdan, incluso en un dispositivo nuevo.',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
       claimCode: 'Canjear un código', purchase: 'Comprar',
@@ -458,15 +466,17 @@
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="about">About</h2>'
     + '      <p class="rl-info-block" data-i18n="aboutIce">Ice cubes are falling — laser them down before they reach the bottom.</p>'
-    + '      <p class="rl-info-block" data-i18n="aboutSpeed">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <p class="rl-info-block" data-i18n="aboutSpeed">Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <p class="rl-info-block" data-i18n-html="aboutCasual"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
     + '      <p class="rl-info-block" data-i18n-html="aboutBlizzard"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
     + '      <div class="rl-info-divider"></div>'
     + '      <h3 class="rl-info-subhead" data-i18n="credits">Credits</h3>'
-    + '      <p class="rl-info-block" data-i18n="creditsTheme">Rainbow Blizzard theme: chopped &amp; modified from a track by Emmett Doyle.</p>'
-    + '      <p class="rl-info-block" data-i18n="creditsArt">Original Rebel Loon artwork by Casey The American.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="creditsTheme">Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="creditsArtOg">OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="creditsArtBird">Bird Rebels and other artwork by <a href="https://www.caseytheamerican.com/" target="_blank" rel="noopener">Casey The American</a>.</p>'
     + '      <p class="rl-info-block" data-i18n-html="creditsLink"><a href="https://birdrebels.art" target="_blank" rel="noopener">birdrebels.art</a> — more Bird Rebels art, merch, and downloads.</p>'
-    + '      <a class="rl-btn rl-btn-ghost" href="https://birdrebels.art" target="_blank" rel="noopener" data-i18n="supportArtist">Support the Artist</a>'
+    + '      <a class="rl-btn rl-btn-ghost" href="https://buymeacoffee.com/caseytheamerican" target="_blank" rel="noopener" data-i18n="supportArtist">Buy Me a Coffee</a>'
+    + '      <a class="rl-btn rl-btn-ghost" href="https://birdrebels.art" target="_blank" rel="noopener" data-i18n="viewCollection">See the Full Collection</a>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-info data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
@@ -496,7 +506,6 @@
     + '      <div class="rl-field-label" style="margin:18px 0 8px;" data-i18n="account">Account</div>'
     + '      <p class="rl-info-block" style="margin-bottom:10px;" data-rl-account-status data-i18n="notSignedIn">Not signed in — sign in with Google to unlock rebels.</p>'
     + '      <button type="button" class="rl-btn" data-rl-signin-btn data-i18n="signInGoogle">Sign in with Google</button>'
-    + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-signout-btn hidden data-i18n="signOut">Sign Out</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-settings data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
@@ -539,7 +548,7 @@
     + '        <button type="button" class="rl-tier-btn rl-selected" data-rl-tier="medium" data-i18n="tierMedium">Medium</button>'
     + '        <button type="button" class="rl-tier-btn" data-rl-tier="hard" data-i18n="tierHard">Hard</button>'
     + '      </div>'
-    + '      <p class="rl-tier-note" data-i18n="difficultyNote">Speed &amp; frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
+    + '      <p class="rl-tier-note" data-i18n="difficultyNote">Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
     + '      <div class="rl-check-row">'
     + '        <input type="checkbox" id="rl-kidmode-toggle" data-rl-kidmode>'
     + '        <label for="rl-kidmode-toggle" data-i18n-html="casualModeLabel">Casual Mode'
@@ -554,11 +563,14 @@
     + '  <div class="rl-overlay" data-rl-screen="menu" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="menu">Menu</h2>'
-    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signin data-i18n="signInGoogle" hidden>Sign in with Google</button>'
-    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signout data-i18n="signOut" hidden>Sign Out</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-about data-i18n="about">About</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signin data-i18n="signInGoogle" hidden>Sign in with Google</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item rl-menu-account-btn" data-rl-menu-signout hidden>'
+    + '        <span data-i18n="signOut">Sign Out</span>'
+    + '        <small class="rl-menu-account-email" data-rl-menu-account-email></small>'
+    + '      </button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-menu data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
@@ -1701,8 +1713,22 @@
           el.innerHTML = t(el.getAttribute('data-i18n-html'), lang);
         });
       }
+      var SUPPORTED_LANGS = ['en', 'de', 'fr', 'es'];
+      // Only used when there's no saved preference yet (first boot, or
+      // after a fresh install) — a manual pick from the language buttons
+      // always wins from then on via saveLangPref below.
+      function detectDeviceLang() {
+        try {
+          var raw = (navigator.language || (navigator.languages && navigator.languages[0]) || 'en');
+          var code = raw.slice(0, 2).toLowerCase();
+          return SUPPORTED_LANGS.indexOf(code) !== -1 ? code : 'en';
+        } catch (e) { return 'en'; }
+      }
       function loadLangPref() {
-        try { return localStorage.getItem(LANG_KEY) || 'en'; } catch (e) { return 'en'; }
+        try {
+          var saved = localStorage.getItem(LANG_KEY);
+          return saved || detectDeviceLang();
+        } catch (e) { return detectDeviceLang(); }
       }
       function saveLangPref(lang) {
         try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
@@ -1741,9 +1767,9 @@
       // ---- Account: Google Sign-In ----
       var accountStatusEl = mount.querySelector('[data-rl-account-status]');
       var signInBtn = mount.querySelector('[data-rl-signin-btn]');
-      var signOutBtn = mount.querySelector('[data-rl-signout-btn]');
       var menuSignInBtn = mount.querySelector('[data-rl-menu-signin]');
       var menuSignOutBtn = mount.querySelector('[data-rl-menu-signout]');
+      var menuAccountEmailEl = mount.querySelector('[data-rl-menu-account-email]');
       var GoogleSignIn = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleSignIn;
       // Real web client ID from Google Cloud Console — required by the
       // plugin on every platform, even Android (see its own docs on why).
@@ -1762,11 +1788,14 @@
           }
         }
         if (signInBtn) signInBtn.hidden = signedIn;
-        if (signOutBtn) signOutBtn.hidden = !signedIn;
-        // Top-level menu buttons: sign-in shown when signed out, sign-out
-        // shown when signed in — opposite states, mirrors Settings' own pair.
+        // Top-level menu: sign-in button shown when signed out; the Sign
+        // Out button (which also carries the account email as its
+        // subline) shown when signed in. Settings no longer has its own
+        // sign-out control — the megamenu one is the only sign-out entry
+        // point now.
         if (menuSignInBtn) menuSignInBtn.hidden = signedIn;
         if (menuSignOutBtn) menuSignOutBtn.hidden = !signedIn;
+        if (menuAccountEmailEl) menuAccountEmailEl.textContent = signedIn ? (email || '') : '';
       }
       refreshAccountUi();
       if (menuSignInBtn) {
@@ -1860,7 +1889,6 @@
         renderCharGrid();
         toast('Signed out.');
       }
-      if (signOutBtn) signOutBtn.addEventListener('click', doSignOut);
       if (menuSignOutBtn) menuSignOutBtn.addEventListener('click', doSignOut);
     }
 
@@ -2654,6 +2682,7 @@
       playSound(destroyed ? 'hit' : 'explosion');
       spawnMegaBlast(x, y, radius);
       triggerShake(11, 340);
+      triggerVibration();
     }
     function spawnMegaBlast(x, y, radius) {
       S.blasts.push({ x: x, y: y, radius: radius, born: performance.now(), white: S.cfg.blizzard });
