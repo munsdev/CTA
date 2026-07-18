@@ -290,6 +290,10 @@ async function postLeaderboard(request, env) {
     return json({ error: 'malformed request body' }, 400);
   }
 
+  const device = String((body && body.device) || '');
+  const signInError = requireSignedIn(device);
+  if (signInError) return signInError;
+
   const tier = String((body && body.tier) || '').toLowerCase();
   if (!TIERS.includes(tier)) return json({ error: 'tier must be easy, medium, hard, easy-blizzard, medium-blizzard, or hard-blizzard' }, 400);
 
