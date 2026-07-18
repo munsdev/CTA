@@ -416,8 +416,15 @@ async function fetchGooglePlayPurchase(env, productId, purchaseToken) {
   const accessToken = await getGoogleAccessToken(env);
   const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
   const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
-  if (!res.ok) return null;
-  return res.json();
+  if (!res.ok) {
+    let errBody = '';
+    try { errBody = await res.text(); } catch (e) {}
+    console.log('[verify-debug] Google API non-OK: status=' + res.status + ' productId=' + productId + ' body=' + errBody.slice(0, 500));
+    return null;
+  }
+  const data = await res.json();
+  console.log('[verify-debug] Google API OK: productId=' + productId + ' purchaseState=' + data.purchaseState + ' purchaseType=' + data.purchaseType + ' acknowledgementState=' + data.acknowledgementState + ' orderId=' + (data.orderId || 'none'));
+  return data;
 }
 
 // Google auto-refunds and revokes any purchase that isn't explicitly
