@@ -70,7 +70,7 @@
       aboutIce: 'Ice cubes are falling — laser them down before they reach the bottom.',
       aboutSpeed: 'Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
       aboutCasual: '<b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.',
-      aboutBlizzard: '<b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.',
+      aboutBlizzard: '<b>Rainbow Blizzard</b> — your laser turns rainbow, rockets keep their toy look, adds a separate leaderboard.',
       credits: 'Credits',
       creditsTheme: 'Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -104,7 +104,7 @@
       aboutIce: 'Eiswürfel fallen herab — schieß sie ab, bevor sie den Boden erreichen.',
       aboutSpeed: 'Geschwindigkeit & Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
       aboutCasual: '<b>Entspannter Modus</b> — keine Lebensanzeige, keine Strafe für verpasste Würfel. Waffen-Powerups funktionieren normal.',
-      aboutBlizzard: '<b>Regenbogen-Blizzard</b> — ersetzt deinen Laser durch Raketen, fügt eine eigene Bestenliste hinzu.',
+      aboutBlizzard: '<b>Regenbogen-Blizzard</b> — dein Laser wird zum Regenbogen, Raketen behalten ihren Spielzeug-Look, eigene Bestenliste.',
       credits: 'Mitwirkende',
       creditsTheme: 'Regenbogen-Blizzard-Musik: bearbeitet nach einem Stück von <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'OG-Rebel-Loon-Design von <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -138,7 +138,7 @@
       aboutIce: 'Des glaçons tombent — détruis-les avant qu\'ils n\'atteignent le sol.',
       aboutSpeed: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
       aboutCasual: '<b>Mode Détente</b> — pas de barre de vie, aucune pénalité pour les glaçons manqués. Les bonus d\'armes fonctionnent normalement.',
-      aboutBlizzard: '<b>Blizzard Arc-en-ciel</b> — remplace ton laser par des roquettes, ajoute un classement séparé.',
+      aboutBlizzard: '<b>Blizzard Arc-en-ciel</b> — ton laser devient arc-en-ciel, les roquettes gardent leur look jouet, classement séparé.',
       credits: 'Crédits',
       creditsTheme: 'Thème musical du Blizzard Arc-en-ciel : adapté d\'un morceau de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'Design original du Rebel Loon par <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -172,7 +172,7 @@
       aboutIce: 'Están cayendo cubos de hielo — destrúyelos antes de que lleguen al suelo.',
       aboutSpeed: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
       aboutCasual: '<b>Modo Casual</b> — sin barra de vida, sin penalización por cubos perdidos. Las mejoras de armas funcionan con normalidad.',
-      aboutBlizzard: '<b>Ventisca Arcoíris</b> — cambia tu láser por cohetes y añade una clasificación aparte.',
+      aboutBlizzard: '<b>Ventisca Arcoíris</b> — tu láser se vuelve arcoíris, los cohetes mantienen su look de juguete, clasificación aparte.',
       credits: 'Créditos',
       creditsTheme: 'Tema de la Ventisca Arcoíris: adaptado de una pista de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'Diseño original de Rebel Loon por <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -2438,8 +2438,7 @@
         accuracy: 0,
         cubes: [],
         snow: null,           // life-restore pickup
-        bubble: null,         // weapon powerup pickup (type: 'triple'|'rocket'|'mega')
-        powerupSeqIndex: 0,   // rotates which powerup the next bubble grants
+        bubble: null,         // weapon powerup pickup (type: 'triple'|'rocket'|'triplerocket'|'mega')
         nextSnowAt: SNOWFLAKE_INTERVAL,
         nextBubbleAt: SNOWFLAKE_INTERVAL / 2,
         nextSpawnAt: 0,
@@ -2448,8 +2447,9 @@
         shards: [],
         blasts: [],
         shakeUntil: 0, shakeMag: 0, shakeDuration: 0,
-        powerup: null,        // null | 'triple' | 'rocket' | 'mega'
-        powerupUntil: 0,
+        powerup: null,        // null | 'triple' | 'rocket' | 'triplerocket' | 'mega'
+        powerupUntil: 0,      // timer expiry (triple) or safety backstop (shot-based)
+        powerupShotsLeft: 0,  // rocket-family powerups: 10 trigger-pulls instead of a timer
         powerupWasActive: false,
         laserColors: computeLaserColors(accentColor),
         bgColors: computeBgColors(accentColor),
@@ -2486,7 +2486,14 @@
       });
     }
 
-    var POWERUP_LABELS = { triple: '⚡ Triple Laser', rocket: '🚀 Rocket Barrage', mega: '💥 Mega Rocket' };
+    var POWERUP_LABELS = { triple: '⚡ Triple Laser', rocket: '🚀 Rocket Barrage', triplerocket: '🚀 Triple Rocket', mega: '💥 Mega Rocket' };
+    // Rocket-family powerups run on a 10-trigger-pull budget instead of a
+    // timer — Triple (laser) is the only one that stays timer-based.
+    var SHOT_BASED_POWERUPS = { rocket: true, triplerocket: true, mega: true };
+    var POWERUP_SHOTS = 10;
+    // Generous backstop so a shot-based powerup can't sit uncollected/unused
+    // forever if the player stops firing — not meant to ever bind in normal play.
+    var POWERUP_SHOT_BACKSTOP_MS = 30000;
     function updateHud() {
       scoreEl.textContent = S.melted;
       escapedEl.textContent = S.escaped;
@@ -2498,9 +2505,14 @@
       if (active) {
         tripleBanner.hidden = false;
         powerupLabelEl.textContent = POWERUP_LABELS[S.powerup] || POWERUP_LABELS.triple;
-        var remainingMs = S.powerupUntil - now;
-        tripleTimerEl.textContent = Math.ceil(remainingMs / 1000);
-        powerupBarFillEl.style.transform = 'scaleX(' + clamp(remainingMs / POWERUP_MS, 0, 1) + ')';
+        if (SHOT_BASED_POWERUPS[S.powerup]) {
+          tripleTimerEl.textContent = S.powerupShotsLeft;
+          powerupBarFillEl.style.transform = 'scaleX(' + clamp(S.powerupShotsLeft / POWERUP_SHOTS, 0, 1) + ')';
+        } else {
+          var remainingMs = S.powerupUntil - now;
+          tripleTimerEl.textContent = Math.ceil(remainingMs / 1000);
+          powerupBarFillEl.style.transform = 'scaleX(' + clamp(remainingMs / POWERUP_MS, 0, 1) + ')';
+        }
       } else {
         tripleBanner.hidden = true;
       }
@@ -2538,18 +2550,15 @@
       var y = rand(H * 0.14, H * 0.42);
       S.snow = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(34, 46), vy: rand(-4, 4), r: 11, wob: rand(0, Math.PI * 2) };
     }
-    // Weapon powerups float through in a bubble and rotate through 3 kinds,
-    // Same rotation in both modes now: Triple → Mega → Triple… "Triple" just
-    // fans whatever the mode's default weapon is (lasers normally, rockets
-    // in Rainbow Blizzard) rather than being laser-only. Regular Rocket is
-    // no longer a standalone powerup — it's the default weapon in Rainbow
-    // Blizzard Mode, so there's nothing left for it to power up FROM there.
-    var POWERUP_SEQUENCE = ['triple', 'mega'];
+    // Weapon powerups float through in a bubble, picked at random each time
+    // (not a fixed rotation) from the same 4 pickups in both scenes: Triple
+    // (laser), Rocket, Triple Rocket, Mega Rocket. Laser itself is the
+    // default weapon, not a pickup — nothing powers up "into" it.
+    var POWERUP_TYPES = ['triple', 'rocket', 'triplerocket', 'mega'];
     function spawnPowerupBubble() {
       var fromLeft = Math.random() < 0.5;
       var y = rand(H * 0.14, H * 0.42);
-      var type = POWERUP_SEQUENCE[S.powerupSeqIndex % POWERUP_SEQUENCE.length];
-      S.powerupSeqIndex++;
+      var type = POWERUP_TYPES[Math.floor(rand(0, POWERUP_TYPES.length))];
       S.bubble = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(30, 42), vy: rand(-4, 4), r: 14, wob: rand(0, Math.PI * 2), type: type };
     }
 
@@ -2558,9 +2567,9 @@
     // sensibly across screen sizes, same spirit as "25vh" — computed to
     // actual px against the live H when a shot is fired.
     var WEAPONS = {
-      laser:  { speedRatio: 3.2, pathWidth: 9,  trailRatio: 0.55, pierce: true  }, // default in normal mode — fast, narrow, long trail, passes through
-      rocket: { speedRatio: 1.3, pathWidth: 24, trailRatio: 0.25, pierce: false }, // default in Rainbow Blizzard Mode — slower, wide, short trail, stops on impact
-      mega:   { speedRatio: 1.05, pathWidth: 34, trailRatio: 0.3, pierce: false } // powerup in both modes — bigger, slower still, explodes in a radius
+      laser:  { speedRatio: 3.2, pathWidth: 9,  trailRatio: 0.55, pierce: true  }, // default weapon in both scenes — fast, narrow, long trail, passes through
+      rocket: { speedRatio: 1.3, pathWidth: 24, trailRatio: 0.25, pierce: false }, // powerup in both scenes (Rocket / Triple Rocket) — slower, wide, short trail, stops on impact
+      mega:   { speedRatio: 1.05, pathWidth: 34, trailRatio: 0.3, pierce: false } // powerup in both scenes — bigger, slower still, explodes in a radius
     };
     var TOY_COLORS = ['#ffb59e', '#7b3f8f', '#c8a2e0', '#ff8fb0', '#5b7fd4', '#9be08a', '#ffd36e'];
     // peach, eggplant, lavender, rose pink, blueberry, mint, butter
@@ -2585,24 +2594,30 @@
     }
 
     // ---------- firing ----------
-    // Laser is the default weapon in normal mode; Rainbow Blizzard Mode fires
-    // regular rockets by default instead and never fires lasers at all.
-    // Triple fans out 3 of whichever is currently the default. Mega is the
-    // one powerup shared by both modes (reskinned per mode — see drawProjectiles).
+    // Laser is the default weapon in BOTH scenes now — Rainbow Blizzard
+    // just renders it as a rainbow beam (see drawProjectiles) instead of
+    // swapping the weapon out. Triple/Rocket/Triple Rocket/Mega are all
+    // powerups on top of that default, same set in both scenes.
     function fire(now) {
       if (now - S.lastFireAt < FIRE_COOLDOWN) return;
       S.lastFireAt = now;
-      var active = (S.powerup && now < S.powerupUntil) ? S.powerup : null;
-      var defaultWeapon = S.cfg.blizzard ? 'rocket' : 'laser';
-      var weaponKey = active === 'mega' ? 'mega' : defaultWeapon;
+      var active = (S.powerup && now < S.powerupUntil && (!SHOT_BASED_POWERUPS[S.powerup] || S.powerupShotsLeft > 0)) ? S.powerup : null;
+      var weaponKey = (active === 'mega') ? 'mega' : (active === 'rocket' || active === 'triplerocket') ? 'rocket' : 'laser';
       playSound(weaponKey === 'laser' ? 'laser' : 'squish');
       var eye = getEyePos();
-      var offsets = active === 'triple' ? [-W / 4, 0, W / 4] : [0];
+      var offsets = (active === 'triple' || active === 'triplerocket') ? [-W / 4, 0, W / 4] : [0];
       offsets.forEach(function (off) {
         var topX = eye.x + off;
         var color = weaponKey !== 'laser' ? TOY_COLORS[Math.floor(rand(0, TOY_COLORS.length))] : null;
         spawnProjectile(eye.x, eye.y, topX, -6, weaponKey, now, color);
       });
+      // Rocket-family powerups spend one of their 10 trigger-pulls here,
+      // regardless of how many projectiles that pull fired (Triple Rocket
+      // fires 3 rockets per pull, so 10 pulls = 30 rockets total).
+      if (active && SHOT_BASED_POWERUPS[active]) {
+        S.powerupShotsLeft--;
+        if (S.powerupShotsLeft <= 0) S.powerupUntil = 0;
+      }
     }
 
     // Checks only the projectile's CURRENT trail segment (tail..head) — the
@@ -2757,7 +2772,12 @@
       spawnBurst(S.bubble.x, S.bubble.y, '#9de6ff');
       S.powerup = S.bubble.type;
       S.bubble = null;
-      S.powerupUntil = performance.now() + POWERUP_MS;
+      if (SHOT_BASED_POWERUPS[S.powerup]) {
+        S.powerupShotsLeft = POWERUP_SHOTS;
+        S.powerupUntil = performance.now() + POWERUP_SHOT_BACKSTOP_MS;
+      } else {
+        S.powerupUntil = performance.now() + POWERUP_MS;
+      }
       playSound('powerup');
     }
 
@@ -3024,6 +3044,41 @@
       roundRect(ctx, -1.5 * scale, -7 * scale, 1.8 * scale, 8 * scale, 0.9 * scale);
       ctx.fill();
     }
+    // Simple missile/firework silhouette for NORMAL-scene rockets only —
+    // pointed nose, straight body, two angled tail fins. Deliberately plain
+    // (flat fills, no extra detail) per "keep it super simple." Blizzard
+    // keeps drawRocketBody exactly as-is; this never runs there.
+    function drawMissileBody(scale, bodyColor, stripeColor) {
+      ctx.fillStyle = bodyColor;
+      ctx.beginPath();
+      ctx.moveTo(0, -11 * scale);
+      ctx.lineTo(3.2 * scale, -3 * scale);
+      ctx.lineTo(-3.2 * scale, -3 * scale);
+      ctx.closePath();
+      ctx.fill();
+      roundRect(ctx, -3.2 * scale, -3 * scale, 6.4 * scale, 11 * scale, 1 * scale);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-3.2 * scale, 3 * scale);
+      ctx.lineTo(-6.5 * scale, 8 * scale);
+      ctx.lineTo(-3.2 * scale, 8 * scale);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(3.2 * scale, 3 * scale);
+      ctx.lineTo(6.5 * scale, 8 * scale);
+      ctx.lineTo(3.2 * scale, 8 * scale);
+      ctx.closePath();
+      ctx.fill();
+      if (stripeColor) {
+        ctx.fillStyle = stripeColor;
+        roundRect(ctx, -3.2 * scale, -0.5 * scale, 6.4 * scale, 2.2 * scale, 0.4 * scale);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      roundRect(ctx, -1.4 * scale, -8 * scale, 1.6 * scale, 7 * scale, 0.8 * scale);
+      ctx.fill();
+    }
     // Fire trail for normal-mode rockets — hot yellow-white near the rocket,
     // cooling toward the character's accent color at the tail (same "accent
     // tints it, doesn't have to carry it" idea as the laser core).
@@ -3085,11 +3140,11 @@
             ctx.globalAlpha = fadeAlpha;
             ctx.translate(pr.headX, pr.headY);
             if (S.cfg.blizzard) {
-              drawRocketBody(scale, pr.color, null); // silicone colors, no stripe — reads as a big rubber rocket either way
+              drawRocketBody(scale, pr.color, null); // toy/silicone colors, no stripe — unchanged, this look stays exclusive to Blizzard
             } else if (isMega) {
-              drawRocketBody(scale, '#e0332c', '#ffd23f'); // red body, yellow stripe
+              drawMissileBody(scale, '#e0332c', '#ffd23f'); // red body, yellow stripe
             } else {
-              drawRocketBody(scale, '#c9d3da', null); // plain silver
+              drawMissileBody(scale, '#c9d3da', null); // plain silver
             }
             ctx.restore();
           }
@@ -3182,9 +3237,19 @@
           ctx.stroke();
         });
       } else if (b.type === 'rocket') {
-        ctx.save(); ctx.scale(0.6, 0.6); drawRocketBody(0.95, '#c9d3da', null); ctx.restore();
+        ctx.save(); ctx.scale(0.6, 0.6);
+        if (S.cfg.blizzard) drawRocketBody(0.95, '#c9d3da', null); else drawMissileBody(0.95, '#c9d3da', null);
+        ctx.restore();
+      } else if (b.type === 'triplerocket') {
+        [-0.5, 0, 0.5].forEach(function (off) {
+          ctx.save(); ctx.translate(off * b.r * 0.9, 0); ctx.scale(0.4, 0.4);
+          if (S.cfg.blizzard) drawRocketBody(0.95, '#c9d3da', null); else drawMissileBody(0.95, '#c9d3da', null);
+          ctx.restore();
+        });
       } else if (b.type === 'mega') {
-        ctx.save(); ctx.scale(0.6, 0.6); drawRocketBody(1.3, '#e0332c', '#ffd23f'); ctx.restore();
+        ctx.save(); ctx.scale(0.6, 0.6);
+        if (S.cfg.blizzard) drawRocketBody(1.3, '#e0332c', '#ffd23f'); else drawMissileBody(1.3, '#e0332c', '#ffd23f');
+        ctx.restore();
       }
       ctx.restore();
     }
