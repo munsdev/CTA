@@ -205,7 +205,7 @@
 .rl-scene-btn.rl-scene-btn-rainbow{
   border:1.5px solid transparent;
   background:
-    linear-gradient(rgba(255,255,255,.02), rgba(255,255,255,.02)) padding-box,
+    linear-gradient(var(--rl-panel), var(--rl-panel)) padding-box,
     linear-gradient(90deg, #ff5f5f, #ffab5f, #ffe95f, #5fe08a, #5fb8ff, #9d7bff, #ff7be0) border-box;
 }
 
@@ -255,6 +255,7 @@
   background-blend-mode:screen, normal;
 }
 .rl-info-block{ font-size:18px; color:var(--rl-dim); line-height:1.5; margin:0 0 14px; }
+.rl-info-block a{ color:var(--rl-ink); }
 .rl-devlog-output{
   font-family:ui-monospace, 'SF Mono', 'Cascadia Code', monospace; font-size:11px; line-height:1.5;
   color:var(--rl-ink); background:rgba(0,0,0,.3); border:1px solid var(--rl-panel-line); border-radius:8px;
@@ -588,6 +589,19 @@
   justify-content:center; padding:26px 22px; background:rgba(8,14,22,.92); backdrop-filter:blur(2px);
   overflow-y:auto;
 }
+/* The native topbar (see [data-rl-topbar] rules) belongs to the start
+   screen, which stays rendered underneath every overlay (showScreen()
+   doesn't hide it) — its higher z-index means it paints on top of
+   whatever's here. For short dialogs (pause/gameover) that's invisible
+   since they're vertically centered well below it, but any overlay with
+   enough content to reach the top of the screen would get that content
+   hidden behind the bar. Reserve its height and stop centering (so
+   overflow-y:auto above scrolls from a natural top-aligned start) for
+   every overlay except those two intentionally-short ones. */
+.rl-native .rl-overlay:not([data-rl-screen="pause"]):not([data-rl-screen="gameover"]){
+  justify-content:flex-start;
+  padding-top:calc(6rem + 26px);
+}
 .rl-overlay h2{
   font-family:var(--rl-font-display); font-size:33px; font-weight:800; text-align:center; margin:0 0 4px;
 }
@@ -641,6 +655,12 @@
 .rl-board-row.rl-me{ background:rgba(255,207,77,.08); }
 .rl-board-empty{ padding:18px 12px; text-align:center; color:var(--rl-dim); font-size:12.5px; }
 .rl-lb-set-note{ text-align:center; font-size:11px; color:var(--rl-dim); margin:0 0 10px; letter-spacing:.02em; }
+.rl-lb-filter-row{ display:flex; gap:8px; margin:0 0 10px; }
+.rl-lb-filter-row select{
+  flex:1 1 0; min-width:0;
+  background:var(--rl-panel); color:var(--rl-ink); border:1px solid var(--rl-panel-line); border-radius:7px;
+  padding:8px 10px; font-family:var(--rl-font-body); font-size:13px; text-align:center;
+}
 .rl-lb-sort-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 10px; }
 .rl-lb-sort-row label{ font-size:11px; color:var(--rl-dim); text-transform:uppercase; letter-spacing:.03em; }
 .rl-lb-sort-row select{
