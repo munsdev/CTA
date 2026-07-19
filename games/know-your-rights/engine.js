@@ -57,7 +57,7 @@ window.KnowYourRights.init = function (root, base) {
      the source of truth — edit scenes in D1 going forward. */
   var BUNDLED_SCENES = [
     {
-      id: 'door', art: 'door', name: 'At the door',
+      id: 'door', art: 'door', name: 'At the door', active: true,
       teaches: 'Consent is the whole game.', floor: 0, exitAt: null,
       open: 'Someone is knocking. You are on the inside of your own front door.',
       law: 'A warrant signed by an immigration officer does not let anyone in. Only a judge can sign one that does \u2014 and they almost never do.',
@@ -105,7 +105,7 @@ window.KnowYourRights.init = function (root, base) {
     },
 
     {
-      id: 'car', art: 'car', name: 'Car stop',
+      id: 'car', art: 'car', name: 'Car stop', active: false,
       teaches: 'A stop is not an arrest.', floor: 20, exitAt: 20,
       open: 'Lights fill the mirror. You pull onto the shoulder.',
       law: 'A stop lasts as long as the reason for it. Everything after that needs a new reason.',
@@ -157,7 +157,7 @@ window.KnowYourRights.init = function (root, base) {
     },
 
     {
-      id: 'street', art: 'street', name: 'On the street',
+      id: 'street', art: 'street', name: 'On the street', active: false,
       teaches: '\u201cAm I free to go?\u201d', floor: 15, exitAt: 15,
       open: 'Two blocks from home. Somebody behind you says hey.',
       law: 'If you are free to go, it was never a stop. Ask, and you find out which one it is.',
@@ -199,7 +199,7 @@ window.KnowYourRights.init = function (root, base) {
     },
 
     {
-      id: 'store', art: 'store', name: 'Outside a grocery store',
+      id: 'store', art: 'store', name: 'Outside a grocery store', active: false,
       teaches: 'Suspicion is cheap. Do not add to it.', floor: 10, exitAt: 12,
       open: 'Two of them by the carts. Nobody is going in or out.',
       law: 'They can stand in a public place and watch you. What they cannot do is make you help.',
@@ -241,7 +241,7 @@ window.KnowYourRights.init = function (root, base) {
     },
 
     {
-      id: 'site', art: 'site', name: 'Construction site',
+      id: 'site', art: 'site', name: 'Construction site', active: false,
       teaches: 'Someone else can open your door.', floor: 70, exitAt: 25,
       open: 'Two vans at the gate. The foreman is already walking toward them.',
       law: 'Your employer can let them into the parts of the site you work in. Nobody asks you.',
@@ -555,7 +555,7 @@ window.KnowYourRights.init = function (root, base) {
       elBar=x('bar'), elCount=x('count'), elRec=x('btnRec'), elHint=x('btnHint'),
       elSceneName=x('sceneName'), elDots=x('beatDots'),
       elStamp=x('stamp'), elTruth=x('truth'), elPlain=x('plain'),
-      elList=x('list'), elReward=x('reward'), elDiff=x('diffRow');
+      elList=x('list'), elReward=x('reward'), elDiff=x('diffRow'), elTitleTap=x('titleTap');
   visCanvas=x('canvas'); visCanvas.width=LW; visCanvas.height=LH; vx=visCanvas.getContext('2d');
   var elLayers=x('layers');
 
@@ -700,12 +700,40 @@ window.KnowYourRights.init = function (root, base) {
   document.addEventListener('click', function(e){ var t=e.target; if(!t||!t.closest) return;
     if(t.closest('[data-kyr-reset]')||t.closest('[gm-reset-button]')){ e.preventDefault(); toTitle(); } });
 
+  var devUnlocked = false; // set true by the 8-tap unlock on the title word; not persisted across reloads
+
   function buildMenu(){
     elMenuList.innerHTML='';
-    SCENES.forEach(function(sc,i){ var b=document.createElement('button'); b.className='pr-row'; b.type='button'; b.dataset.scene=i;
-      b.innerHTML='<span class="pr-cur">\u25b6</span><span class="pr-rowin"><b>'+sc.name+'</b><i>'+sc.teaches+'</i></span>'; elMenuList.appendChild(b); });
+    SCENES.forEach(function(sc,i){
+      var isActive = sc.active !== false; // undefined/true = active; explicit false = hidden
+      if (!isActive && !devUnlocked) return;
+      var b=document.createElement('button'); b.className='pr-row'; b.type='button'; b.dataset.scene=i;
+      if (!isActive) b.classList.add('pr-row--dev');
+      b.innerHTML='<span class="pr-cur">\u25b6</span><span class="pr-rowin"><b>'+sc.name+(isActive?'':' <i class="pr-devtag">DEV</i>')+'</b><i>'+sc.teaches+'</i></span>';
+      elMenuList.appendChild(b);
+    });
   }
   elDiff.querySelector('[data-diff="medium"]').classList.add('on');
+
+  /* ------------------------------------------------------------------
+     Dev unlock — 8 taps on the KNOW title word within 2s of each other
+     reveals inactive (in-development) scenes for testing, for this
+     session only. Rebuilds the menu in place if already on the title
+     screen so the reveal is immediate.
+     ------------------------------------------------------------------ */
+  (function(){
+    if (!elTitleTap) return;
+    var taps = 0, resetTimer = null;
+    elTitleTap.addEventListener('click', function(){
+      taps++;
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(function(){ taps = 0; }, 2000);
+      if (taps >= 8){
+        taps = 0;
+        if (!devUnlocked){ devUnlocked = true; buildMenu(); }
+      }
+    });
+  })();
 
   /* ------------------------------------------------------------------
      loadContent — fetch-then-cache-then-fallback, mirrors the Ice
