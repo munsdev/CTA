@@ -40,9 +40,22 @@ window.KnowYourRights.init = function (root, base) {
   var DELTA = { shield: 0, steady: -8, soft: 12, harmful: 30, severe: 45, fatal: 100 };
 
   /* ------------------------------------------------------------------
-     SCENES  — dialogue only; shield option holds the pressure loop
+     CONTENT SOURCE — Worker + D1 (kyr-content), cache-then-refresh.
+     SCENES/ENDINGS below start as the bundled offline-baseline fallback
+     and are REASSIGNED once loading resolves (see loadContent() near the
+     bottom of init), before the scene picker or gameplay code reads them.
+     Functions defined further down close over these vars by reference,
+     so a reassignment is picked up automatically everywhere.
      ------------------------------------------------------------------ */
-  var SCENES = [
+  var CONTENT_API_BASE = 'https://kyr-content.casey-945.workers.dev';
+  var CONTENT_CACHE_KEY = 'kyr:content:v1';
+  var CONTENT_FETCH_TIMEOUT_MS = 4000;
+
+  /* BUNDLED_SCENES / BUNDLED_ENDINGS — guaranteed-offline baseline, used
+     only when there's no usable cache AND no reachable network. Same
+     content as migrated into kyr-content-db; this copy is a floor, not
+     the source of truth — edit scenes in D1 going forward. */
+  var BUNDLED_SCENES = [
     {
       id: 'door', art: 'door', name: 'At the door',
       teaches: 'Consent is the whole game.', floor: 0, exitAt: null,
@@ -274,12 +287,16 @@ window.KnowYourRights.init = function (root, base) {
     }
   ];
 
-  var ENDINGS = {
+  var BUNDLED_ENDINGS = {
     clean:  { stamp:'WALKED AWAY', truth:'You gave them nothing, and they had nothing.' },
     lucky:  { stamp:'WALKED AWAY', truth:'You handed them something and they let you go anyway. That was luck. Luck is not a plan.' },
     intact: { stamp:'DETAINED',    truth:'They took you anyway. You gave them nothing. That is what a lawyer will need.' },
     damaged:{ stamp:'DETAINED',    truth:'They took you, and they took what you gave them.' }
   };
+
+  var SCENES = BUNDLED_SCENES;
+  var ENDINGS = BUNDLED_ENDINGS;
+
   var FORCED_ENTRY = 'They came through the door. You never opened it, you never consented, and the paper they carried was signed by an immigration officer, not a judge. Write down the time. Write down what it said. A lawyer starts there.';
   var RECORDED_NOTE = 'You have it on video. Thirty seconds. It goes to the lawyer with everything else.';
 
@@ -683,9 +700,75 @@ window.KnowYourRights.init = function (root, base) {
   document.addEventListener('click', function(e){ var t=e.target; if(!t||!t.closest) return;
     if(t.closest('[data-kyr-reset]')||t.closest('[gm-reset-button]')){ e.preventDefault(); toTitle(); } });
 
-  elMenuList.innerHTML='';
-  SCENES.forEach(function(sc,i){ var b=document.createElement('button'); b.className='pr-row'; b.type='button'; b.dataset.scene=i;
-    b.innerHTML='<span class="pr-cur">\u25b6</span><span class="pr-rowin"><b>'+sc.name+'</b><i>'+sc.teaches+'</i></span>'; elMenuList.appendChild(b); });
+  function buildMenu(){
+    elMenuList.innerHTML='';
+    SCENES.forEach(function(sc,i){ var b=document.createElement('button'); b.className='pr-row'; b.type='button'; b.dataset.scene=i;
+      b.innerHTML='<span class="pr-cur">\u25b6</span><span class="pr-rowin"><b>'+sc.name+'</b><i>'+sc.teaches+'</i></span>'; elMenuList.appendChild(b); });
+  }
   elDiff.querySelector('[data-diff="medium"]').classList.add('on');
-  toTitle();
+
+  /* ------------------------------------------------------------------
+     loadContent — fetch-then-cache-then-fallback, mirrors the Ice
+     Blaster characters/scenes pattern. Never blocks the boot screen
+     longer than CONTENT_FETCH_TIMEOUT_MS; whichever source resolves
+     first (cache, fresh fetch, or bundled baseline) is what the player
+     sees, and the game becomes interactive the moment ANY source is in
+     place, not necessarily the freshest one.
+     ------------------------------------------------------------------ */
+  function readCache(){
+    try {
+      var raw = localStorage.getItem(CONTENT_CACHE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.scenes && parsed.scenes.length && parsed.endings) return parsed;
+    } catch (e) { /* corrupt cache — ignore, fall through */ }
+    return null;
+  }
+  function writeCache(payload){
+    try { localStorage.setItem(CONTENT_CACHE_KEY, JSON.stringify(payload)); }
+    catch (e) { /* storage full/unavailable — non-fatal, just skip caching */ }
+  }
+  function fetchWithTimeout(url, ms){
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var opts = ctrl ? { signal: ctrl.signal } : {};
+    var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, ms) : null;
+    return fetch(url, opts).finally(function(){ if (timer) clearTimeout(timer); });
+  }
+  function applyContent(payload, isInitialLoad){
+    if (payload && payload.scenes && payload.scenes.length && payload.endings){
+      SCENES = payload.scenes; ENDINGS = payload.endings;
+    }
+    /* else: leave SCENES/ENDINGS at whatever they already were
+       (BUNDLED_* from the top-level assignment) — this is the true
+       first-launch-offline case. */
+    buildMenu();
+    /* A late-arriving fetch (after the player has already started
+       playing) must not yank the menu out from under an in-progress
+       scene or jump them back to the title screen mid-drill. Content
+       swaps silently apply to the NEXT time they reach the title/menu
+       — S.over is true whenever a scene isn't actively being played
+       (title screen, or a finished result screen waiting on Replay/Title). */
+    if (isInitialLoad || !S || S.over) toTitle();
+  }
+  function loadContent(){
+    var cached = readCache();
+    if (cached) { applyContent(cached, true); }
+    else { buildMenu(); toTitle(); }
+
+    fetchWithTimeout(CONTENT_API_BASE + '/api/kyr/version', CONTENT_FETCH_TIMEOUT_MS)
+      .then(function(r){ if(!r.ok) throw new Error('version check failed'); return r.json(); })
+      .then(function(v){
+        if (cached && cached.version === v.version) return; // cache is current, nothing to do
+        return fetchWithTimeout(CONTENT_API_BASE + '/api/kyr/scenes', CONTENT_FETCH_TIMEOUT_MS)
+          .then(function(r){ if(!r.ok) throw new Error('scenes fetch failed'); return r.json(); })
+          .then(function(fresh){
+            writeCache(fresh);
+            applyContent(fresh, !cached);
+          });
+      })
+      .catch(function(){ /* offline, timed out, or Worker unreachable —
+        silent: we're already interactive on cache or bundled content,
+        this was purely a best-effort freshness check. */ });
+  }
+  loadContent();
 };
