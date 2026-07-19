@@ -99,8 +99,8 @@ async function getCharacters(url, env) {
   // actually owns it — otherwise there'd be no way to ever select it.
   const placeholders = ownedCodes.map(() => '?').join(',');
   const sql = ownedCodes.length
-    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents, is_purchasable FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
-    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents, is_purchasable FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
+    ? `SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents, is_purchasable FROM characters WHERE active = 1 AND (visible = 1 OR code IN (${placeholders})) ORDER BY sort_order ASC`
+    : 'SELECT code, label, filename, sort_order, primary_color, secondary_color, accent_color, laser_color, laser_origin_x, laser_origin_y, visible, auto_unlock, price_cents, is_purchasable FROM characters WHERE active = 1 AND visible = 1 ORDER BY sort_order ASC';
   const stmt = ownedCodes.length
     ? env.CHARACTERS_DB.prepare(sql).bind(...ownedCodes)
     : env.CHARACTERS_DB.prepare(sql);
@@ -117,6 +117,10 @@ async function getCharacters(url, env) {
     primaryColor: r.primary_color || null,
     secondaryColor: r.secondary_color || null,
     trueAccentColor: r.accent_color || null,
+    // Optional override: if set, this bird's laser uses this color instead
+    // of accentColor specifically, while bg/glow/UI tile accent stay on
+    // accentColor as before. Most birds leave this null.
+    laserColor: r.laser_color || null,
     autoUnlock: !!r.auto_unlock,
     priceCents: r.price_cents || 0,
     laserOriginX: r.laser_origin_x != null ? r.laser_origin_x : null,
