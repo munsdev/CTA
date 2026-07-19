@@ -1,0 +1,16 @@
+name = "kyr-content"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Content-delivery Worker for Know Your Rights. Read-only: no player state,
+# no leaderboard, no auth. Serves the five scenes' data (dialogue, options,
+# checklist, endings) out of D1 so content can be edited without a client
+# redeploy. The client (web + Capacitor Android) fetches /api/kyr/version on
+# boot, compares to its cached value, and only pulls /api/kyr/scenes on a
+# mismatch or first-ever launch — mirrors the Ice Blaster characters/scenes
+# cache pattern.
+
+[[d1_databases]]
+binding = "KYR_DB"
+database_name = "kyr-content-db"
+database_id = "fa82b7ca-a3c3-4ce4-9739-d96345895395"
