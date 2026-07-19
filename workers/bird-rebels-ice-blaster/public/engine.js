@@ -866,7 +866,6 @@
     var selectedChar = null;
     var charImgs = {};
     var charAccent = {};
-    var charLaserColor = {};
     var RANDOM_CODE = '__RANDOM__';
 
     // ---------- offline support ----------
@@ -883,7 +882,7 @@
     var offlineFallbackActive = false;
     var OFFLINE_BASELINE_ROSTER = [
       { code: 'OG', label: 'OG Rebel Loon', src: 'img/OG.png', localSrc: true,
-        accentColor: '#5F8BC2', primaryColor: '#5F8BC2', secondaryColor: null, trueAccentColor: null, laserColor: '#FF2800',
+        accentColor: '#FF2800', primaryColor: '#FF2800', secondaryColor: null, trueAccentColor: null,
         autoUnlock: true, priceCents: 0, laserOriginX: 425, laserOriginY: 285, visible: true, isPurchasable: false },
       { code: 'MN', label: 'MN Loon Rebel', src: 'img/MN.png', localSrc: true,
         accentColor: '#62b7d0', primaryColor: '#62b7d0', secondaryColor: '#3b587f', trueAccentColor: '#ffffff',
@@ -912,7 +911,6 @@
       preload.src = charImgSrc(ch);
       charImgs[ch.code] = preload;
       charAccent[ch.code] = ch.accentColor || null;
-      charLaserColor[ch.code] = ch.laserColor || null;
     }
 
     function rosterByCode(code) {
@@ -2480,7 +2478,6 @@
     var S = null;
     function freshState() {
       var accentColor = charAccent[selectedChar] || null;
-      var laserColor = charLaserColor[selectedChar] || accentColor;
       var blizzard = selectedScene === 'blizzard'; // works on any difficulty tier
       var tierCfg = TIERS[selectedTier] || TIERS[DEFAULT_TIER];
       // Max wind velocity such that, if it stayed pinned at max the whole
@@ -2522,7 +2519,7 @@
         powerupUntil: 0,      // timer expiry (triple) or safety backstop (shot-based)
         powerupShotsLeft: 0,  // rocket-family powerups: 10 trigger-pulls instead of a timer
         powerupWasActive: false,
-        laserColors: computeLaserColors(laserColor),
+        laserColors: computeLaserColors(accentColor),
         bgColors: computeBgColors(accentColor),
         wind: { bands: rollWindBands(windMaxPxPerSec), maxPxPerSec: windMaxPxPerSec, nextRollAt: 0, streaks: [] },
         cfg: {
