@@ -64,7 +64,7 @@ async function getScenes(env) {
   }
 
   const { results: sceneRows } = await env.KYR_DB.prepare(
-    'SELECT id, art, name, teaches, floor, exit_at, exit_deny, open_text, law_text FROM scenes ORDER BY sort_order ASC'
+    'SELECT id, art, name, teaches, floor, exit_at, exit_deny, open_text, law_text, active FROM scenes ORDER BY sort_order ASC'
   ).all();
 
   const { results: checklistRows } = await env.KYR_DB.prepare(
@@ -135,6 +135,7 @@ async function getScenes(env) {
     exitDeny: s.exit_deny || undefined,
     open: s.open_text,
     law: s.law_text,
+    active: !!s.active,
     checklist: checklistByScene.get(s.id) || [],
     beats: beatsByScene.get(s.id) || [],
   }));
