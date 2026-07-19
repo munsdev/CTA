@@ -60,8 +60,8 @@
 /* ===================== TITLE ======================================= */
 .gm-root.pr [data-el="title"]{padding:22px 18px 16px; gap:14px; overflow-y:auto;}
 .gm-root.pr .pr-titlecard{text-align:center;}
-.gm-root.pr .pr-eyebrow{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.42em; font-size:11px; color:var(--gm-dim); margin-left:.42em;}
-.gm-root.pr .pr-big{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.09em; font-size:clamp(28px,9cqw,42px); line-height:1; color:var(--gm-primary);}
+.gm-root.pr .pr-big{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.28em; font-size:clamp(34px,11cqw,52px); line-height:1; color:var(--gm-primary); cursor:default; -webkit-user-select:none; user-select:none;}
+.gm-root.pr .pr-eyebrow{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.32em; font-size:13px; color:var(--gm-dim); margin-top:6px;}
 .gm-root.pr .pr-sub{margin-top:8px; font-size:12px; color:var(--gm-dim); letter-spacing:.04em;}
 .gm-root.pr .pr-difflabel{font-family:var(--gm-font-display); font-weight:700; text-transform:uppercase; letter-spacing:.2em; font-size:10px; color:var(--gm-dim); text-align:center;}
 .gm-root.pr .pr-diff{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
@@ -86,6 +86,8 @@
 .gm-root.pr .pr-row:hover,.gm-root.pr .pr-row:focus-visible{background:var(--gm-surface-2); border-color:var(--gm-primary); outline:none;}
 .gm-root.pr .pr-row.soon{opacity:.4; cursor:default;}
 .gm-root.pr .pr-row.soon:hover{background:transparent; border-color:var(--gm-line);}
+.gm-root.pr .pr-row--dev{border-style:dashed; opacity:.72;}
+.gm-root.pr .pr-devtag{font-family:var(--gm-font-display); font-weight:700; letter-spacing:.1em; font-size:9px; color:var(--gm-warn,#e0b23e); border:1px solid currentColor; border-radius:2px; padding:1px 4px; margin-left:6px; vertical-align:middle;}
 .gm-root.pr .pr-cur{color:var(--gm-primary); opacity:0; font-size:12px; line-height:1.55; flex:none;}
 .gm-root.pr .pr-row:hover .pr-cur,.gm-root.pr .pr-row:focus-visible .pr-cur,
 .gm-root.pr .pr-opt:hover .pr-cur,.gm-root.pr .pr-opt:focus-visible .pr-cur{opacity:1;}
