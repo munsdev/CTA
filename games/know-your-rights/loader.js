@@ -33,8 +33,8 @@
 
   <div class="pr-screen" data-el="title">
     <div class="pr-titlecard">
-      <div class="pr-eyebrow">Know</div>
-      <div class="pr-big">Your Rights</div>
+      <div class="pr-big" data-el="titleTap">K&#8202;N&#8202;O&#8202;W</div>
+      <div class="pr-eyebrow">your rights</div>
       <div class="pr-sub">Learn the lines. Know when to use them.</div>
     </div>
     <div class="pr-difflabel">Timer</div>
