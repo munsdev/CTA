@@ -781,11 +781,33 @@
 
     var blizzardTheme = new Audio(SOUND_BASE + '/sounds/blizzard-theme.mp3');
     blizzardTheme.loop = true;
+    var standardTheme = new Audio(SOUND_BASE + '/sounds/standard-theme.ogg');
+    standardTheme.loop = true;
+    var menuMusic = new Audio(SOUND_BASE + '/sounds/menu-theme.ogg');
+    menuMusic.loop = true;
     var musicGain = 1; // 0-1 master multiplier, controlled by the Settings slider (native only)
-    function applyMusicVolume() { blizzardTheme.volume = 0.55 * musicGain; }
+    function applyMusicVolume() {
+      blizzardTheme.volume = 0.55 * musicGain;
+      standardTheme.volume = 0.55 * musicGain;
+      menuMusic.volume = 0.5 * musicGain;
+    }
     applyMusicVolume();
     blizzardTheme.preload = 'auto';
+    standardTheme.preload = 'auto';
+    menuMusic.preload = 'auto';
     function stopBlizzardTheme() { try { blizzardTheme.pause(); blizzardTheme.currentTime = 0; } catch (e) {} }
+    function stopStandardTheme() { try { standardTheme.pause(); standardTheme.currentTime = 0; } catch (e) {} }
+    function stopMenuMusic() { try { menuMusic.pause(); menuMusic.currentTime = 0; } catch (e) {} }
+    function playMenuMusic() { try { var p = menuMusic.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    // Autoplay is blocked without a user gesture in most WebViews (same
+    // reason soundPlayer.unlock() exists for sound effects) — try
+    // immediately in case this context allows it, and otherwise catch it
+    // on whatever the very first tap anywhere turns out to be.
+    playMenuMusic();
+    mount.addEventListener('pointerdown', function firstTouchStartsMenuMusic() {
+      mount.removeEventListener('pointerdown', firstTouchStartsMenuMusic);
+      if (menuMusic.paused && !(S && S.running)) playMenuMusic();
+    }, { once: true });
 
     // Vibration on ice hitting the ground, native only. Defaults true so it
     // works before Settings has had a chance to load any saved preference.
@@ -2925,7 +2947,7 @@
     }
     function pauseGame() {
       S.paused = true; S.firing = false; S.pauseStartedAt = performance.now();
-      if (S.cfg.blizzard) blizzardTheme.pause();
+      if (S.cfg.blizzard) blizzardTheme.pause(); else standardTheme.pause();
       showScreen('pause');
     }
     function resumeGame() {
@@ -2939,20 +2961,26 @@
       S.lastT = now; // avoid a big dt jump on resume
       S.paused = false;
       if (S.cfg.blizzard) { var p = blizzardTheme.play(); if (p && p.catch) p.catch(function () {}); }
+      else { var p3 = standardTheme.play(); if (p3 && p3.catch) p3.catch(function () {}); }
       showScreen('game');
     }
     pauseBtn.addEventListener('click', togglePause);
     mount.querySelector('[data-rl-resume]').addEventListener('click', resumeGame);
     mount.querySelector('[data-rl-restart-run]').addEventListener('click', function () {
       stopBlizzardTheme();
+      stopStandardTheme();
       S = freshState();
       setLives(START_LIVES);
       blizzardBanner.hidden = !S.cfg.blizzard; // reflects whatever the Rainbow Blizzard toggle currently says
+      if (S.cfg.blizzard) { var p = blizzardTheme.play(); if (p && p.catch) p.catch(function () {}); }
+      else { var p2 = standardTheme.play(); if (p2 && p2.catch) p2.catch(function () {}); }
       showScreen('game');
     });
     var doReset = function () {
       if (S) S.running = false;
       stopBlizzardTheme();
+      stopStandardTheme();
+      playMenuMusic();
       blizzardBanner.hidden = true;
       showScreen('start');
     };
@@ -3468,6 +3496,7 @@
       if (!S.running) return;
       S.running = false;
       stopBlizzardTheme();
+      stopStandardTheme();
       blizzardBanner.hidden = true;
       S.accuracy = S.shotsFired > 0 ? S.shotsHit / S.shotsFired : 0;
       finalScoreEl.textContent = S.melted;
@@ -3570,6 +3599,7 @@
       resetRestartConfirm();
       var submitBtn = mount.querySelector('[data-rl-submit-score]');
       submitBtn.removeAttribute('disabled'); submitBtn.textContent = 'Save Score';
+      playMenuMusic();
       showScreen('start');
     });
 
@@ -3603,12 +3633,18 @@
       }
 
       stopBlizzardTheme();
+      stopStandardTheme();
+      stopMenuMusic();
       blizzardBanner.hidden = !S.cfg.blizzard;
       if (S.cfg.blizzard) {
         toast('🌀 RAINBOW BLIZZARD MODE', 2000);
         blizzardTheme.currentTime = 0;
         var p = blizzardTheme.play();
         if (p && p.catch) p.catch(function () {});
+      } else {
+        standardTheme.currentTime = 0;
+        var p2 = standardTheme.play();
+        if (p2 && p2.catch) p2.catch(function () {});
       }
 
       if (!loopStarted) {
