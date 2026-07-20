@@ -66,7 +66,13 @@ var BZ_ASSETS = {
 
   function svgToImage(svgMarkup, viewBoxOverride) {
     var vb = viewBoxOverride || ('0 0 ' + SRC + ' ' + SRC);
-    var full = '<svg xmlns="http://www.w3.org/2000/svg" width="' + SRC + '" height="' + SRC +
+    // Parse the viewBox dims so the rendered raster matches its true aspect
+    // ratio — forcing a square width/height here stretches non-square
+    // viewBoxes (e.g. Doyle's tall/narrow box) when the browser rasterizes.
+    var parts = vb.split(/\s+/).map(Number);
+    var vbW = parts[2] || SRC;
+    var vbH = parts[3] || SRC;
+    var full = '<svg xmlns="http://www.w3.org/2000/svg" width="' + vbW + '" height="' + vbH +
       '" viewBox="' + vb + '">' + svgMarkup + '</svg>';
     var blob = new Blob([full], { type: 'image/svg+xml' });
     var url = URL.createObjectURL(blob);
@@ -221,26 +227,84 @@ var BZ_ASSETS = {
       }
 
       // ---- Patrol geometry ----
-      // Circle centered in the open street area. Officers walk this loop;
-      // pair A and pair B start at opposite phase so 2 are always "in the
-      // street" (near side of circle) and 2 near/at the sidewalk (far side).
-      var PATROL = {
-        cx: 830,
-        cy: 880,
-        rx: 420,   // horizontal radius
-        ry: 160,   // vertical radius (flattened ellipse for depth feel)
+      // Rectangular perimeter walk, inset from the street's true edges:
+      //   - Top edge:    far sidewalk line, walked right -> left
+      //   - Left edge:   walked top -> bottom (down toward the barriers)
+      //   - Bottom edge: just behind the close barriers, walked left -> right
+      //   - Right edge:  walked bottom -> top (back up toward the sidewalk)
+      // Depth scale ties to the same perimeter progress: smallest along the
+      // top (far) edge, full-size along the bottom (near) edge, interpolated
+      // on the left/right edges as they transit between the two.
+      var PATROL_RECT = {
+        left: 250,
+        right: 1410,
+        top: 560,
+        bottom: 960
       };
+      var RECT_W = PATROL_RECT.right - PATROL_RECT.left;
+      var RECT_H = PATROL_RECT.bottom - PATROL_RECT.top;
+      var PERIMETER = 2 * (RECT_W + RECT_H);
+      // Fraction of total perimeter length occupied by each edge, used to
+      // map a 0..1 "progress" value onto the correct edge + position.
+      var SEG_TOP = RECT_W / PERIMETER;
+      var SEG_LEFT = RECT_H / PERIMETER;
+      var SEG_BOTTOM = RECT_W / PERIMETER;
+      // (right edge takes the remainder, avoids float drift at progress=1)
 
-      // Officer patrol state: angle in radians, 0 = far side (near sidewalk/back view),
-      // PI = near side (toward viewer/forward view). walkPhase drives the
-      // 2-frame leg toggle, advancing with distance traveled (not raw time)
-      // so faster patrol speeds naturally step the legs faster too.
-      var WALK_STEP_RATE = 5.6; // tuned for ~0.5s per leg-pose swap at patrol speed
+      // Returns { x, y, depthT, facingForward } for a given progress in [0,1).
+      // depthT: 0 = nearest/largest (bottom edge), 1 = farthest/smallest (top edge).
+      function patrolPosition(progress) {
+        var p = progress - Math.floor(progress); // wrap into [0,1)
+        var x, y, depthT, facingForward;
+
+        if (p < SEG_TOP) {
+          // Top edge: right -> left, facing the viewer (walking toward us
+          // as they cross), full "far" depth.
+          var t = p / SEG_TOP;
+          x = PATROL_RECT.right - t * RECT_W;
+          y = PATROL_RECT.top;
+          depthT = 1;
+          facingForward = true; // approaching side-on, treat as forward-ish
+        } else if (p < SEG_TOP + SEG_LEFT) {
+          // Left edge: top -> bottom, walking down/away initially, depth
+          // shrinks from far to near across the transit.
+          var t2 = (p - SEG_TOP) / SEG_LEFT;
+          x = PATROL_RECT.left;
+          y = PATROL_RECT.top + t2 * RECT_H;
+          depthT = 1 - t2;
+          facingForward = false; // walking down the side, back mostly to us
+        } else if (p < SEG_TOP + SEG_LEFT + SEG_BOTTOM) {
+          // Bottom edge: left -> right, nearest to viewer, full "near" depth.
+          var t3 = (p - SEG_TOP - SEG_LEFT) / SEG_BOTTOM;
+          x = PATROL_RECT.left + t3 * RECT_W;
+          y = PATROL_RECT.bottom;
+          depthT = 0;
+          facingForward = true;
+        } else {
+          // Right edge: bottom -> top, walking back up, depth grows from
+          // near to far across the transit.
+          var segRight = 1 - (SEG_TOP + SEG_LEFT + SEG_BOTTOM);
+          var t4 = (p - SEG_TOP - SEG_LEFT - SEG_BOTTOM) / segRight;
+          x = PATROL_RECT.right;
+          y = PATROL_RECT.bottom - t4 * RECT_H;
+          depthT = t4;
+          facingForward = false;
+        }
+
+        return { x: x, y: y, depthT: depthT, facingForward: facingForward };
+      }
+
+      // Officer patrol state: progress in [0,1) around the rectangle
+      // perimeter. Pair A and pair B start at opposite phase (0.5 apart)
+      // so two officers are always roughly opposite each other on the loop.
+      // walkPhase drives the 2-frame leg toggle, advancing with distance
+      // traveled (not raw time) so it reads as footfall.
+      var WALK_STEP_RATE = 74; // tuned for ~0.5s per leg-pose swap at patrol speed
       var officerState = [
-        { pairId: 'A', variant: 'agent1', angle: 0,               speed: 0.006, walkPhase: 0 },
-        { pairId: 'A', variant: 'agent1', angle: Math.PI,         speed: 0.006, walkPhase: 0 },
-        { pairId: 'B', variant: 'agent2', angle: Math.PI * 0.5,   speed: 0.006, walkPhase: 0 },
-        { pairId: 'B', variant: 'agent2', angle: Math.PI * 1.5,   speed: 0.006, walkPhase: 0 }
+        { pairId: 'A', variant: 'agent1', progress: 0,     speed: 0.00045, walkPhase: 0 },
+        { pairId: 'A', variant: 'agent1', progress: 0.5,   speed: 0.00045, walkPhase: 0 },
+        { pairId: 'B', variant: 'agent2', progress: 0.25,  speed: 0.00045, walkPhase: 0 },
+        { pairId: 'B', variant: 'agent2', progress: 0.75,  speed: 0.00045, walkPhase: 0 }
       ];
 
       // ---- Render loop ----
@@ -276,9 +340,8 @@ var BZ_ASSETS = {
 
         // ---- Draw officers ----
         officerState.forEach(function (o) {
-          var pos = patrolPosition(o.angle);
-          var facingForward = Math.sin(o.angle) > 0; // near half of loop = facing viewer
-          var direction = facingForward ? 'forward' : 'back';
+          var pos = patrolPosition(o.progress);
+          var direction = pos.facingForward ? 'forward' : 'back';
           // 2-frame leg toggle: alternate walk/stand pose as walkPhase crosses
           // whole-number boundaries, so it reads as footfall, not a blink.
           var legPose = Math.floor(o.walkPhase) % 2 === 0 ? 'walk' : 'stand';
@@ -286,9 +349,10 @@ var BZ_ASSETS = {
           var img = images.officers[spriteKey];
           if (!img) return;
 
-          // Depth scale: slightly smaller near the far/back side of the loop
-          var depthT = (Math.cos(o.angle) + 1) / 2; // 0 at near(front), 1 at far(back) roughly
-          var scaleFactor = 1 - depthT * 0.18;
+          // Depth scale: smaller along the far/top edge, full size along the
+          // near/bottom edge, per the rectangle's own depthT (0=near, 1=far).
+          // Slightly stronger falloff than before per Casey's "a bit smaller" note.
+          var scaleFactor = 1 - pos.depthT * 0.32;
 
           var footX = pos.x;
           var footY = pos.y;
@@ -322,13 +386,6 @@ var BZ_ASSETS = {
 
         // ---- "COMING SOON" text, bottom-left toward center, fading right ----
         drawComingSoon(ctx);
-      }
-
-      function patrolPosition(angle) {
-        return {
-          x: PATROL.cx + Math.cos(angle) * PATROL.rx,
-          y: PATROL.cy + Math.sin(angle) * PATROL.ry
-        };
       }
 
       function drawComingSoon(ctx) {
@@ -370,10 +427,10 @@ var BZ_ASSETS = {
         var dt = ts - lastTime;
         lastTime = ts;
 
-        // Advance officer patrol angles + walk-cycle phase
+        // Advance officer patrol progress (0..1 around the rectangle) + walk-cycle phase
         officerState.forEach(function (o) {
-          o.angle += o.speed;
-          if (o.angle > Math.PI * 2) o.angle -= Math.PI * 2;
+          o.progress += o.speed;
+          if (o.progress > 1) o.progress -= 1;
           o.walkPhase += o.speed * WALK_STEP_RATE;
         });
 
