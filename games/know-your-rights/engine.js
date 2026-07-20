@@ -738,6 +738,13 @@ window.KnowYourRights.init = function (root, base) {
       var startCard = g.cardsById['start'];
       var firstGoto = startCard && startCard.answers && startCard.answers[0] && startCard.answers[0].goto;
       if (firstGoto) S.cardId = firstGoto;
+      /* Paint the first real card's art immediately so the player sees the
+         scene the instant the loader fades, rather than a black stack for
+         the duration of the opening typewriter line — renderGraphCard()
+         (called after that line finishes) will repaint over this, which is
+         harmless since paintGraphLayers is idempotent against the same state. */
+      var firstCard = g.cardsById[S.cardId];
+      if (firstCard) paintGraphLayers(firstCard);
       return say(g.open, true, renderGraphCard);
     }
     S={ i:i, sc:sc, beat:0, round:0, risk:sc.floor, damaged:false, keys:{}, over:false, recording:false,
