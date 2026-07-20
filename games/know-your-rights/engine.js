@@ -57,7 +57,7 @@ window.KnowYourRights.init = function (root, base) {
      the source of truth — edit scenes in D1 going forward. */
   var BUNDLED_SCENES = [
     {
-      id: 'door', art: 'door', name: 'At the door', active: true,
+      id: 'door', art: 'door', name: 'At the door', active: true, mode: 'graph',
       teaches: 'Consent is the whole game.', floor: 0, exitAt: null,
       open: 'Someone is knocking. You are on the inside of your own front door.',
       law: 'A warrant signed by an immigration officer does not let anyone in. Only a judge can sign one that does \u2014 and they almost never do.',
@@ -296,6 +296,54 @@ window.KnowYourRights.init = function (root, base) {
 
   var SCENES = BUNDLED_SCENES;
   var ENDINGS = BUNDLED_ENDINGS;
+
+  /* ------------------------------------------------------------------
+     GRAPH SCENES — cards/answers/goto/layerRules, fetched separately
+     from the legacy beats[] scenes above. Keyed by scene id. A graph
+     scene entry in SCENES (see BUNDLED_SCENES) carries mode:'graph'
+     and no beats/checklist of its own — curBeat()/renderBeat()/etc.
+     dispatch to the graph renderer whenever S.sc.mode==='graph'.
+     Falls back to null (scene simply won't be playable) if neither
+     cache nor network has it yet — same fail-open posture as the
+     legacy path, just scoped to graph scenes so it can't regress them.
+     ------------------------------------------------------------------ */
+  var GRAPHS = {}; // sceneId -> { cardsById, npcsById, meters, credits, layerFiles }
+  var GRAPH_CACHE_KEY = 'kyr:graph:v1';
+
+  function indexGraph(raw){
+    var cardsById = {}; (raw.cards||[]).forEach(function(c){ cardsById[c.id]=c; });
+    var npcsById = {}; (raw.npcs||[]).forEach(function(n){ npcsById[n.id]=n; });
+    var layerFiles = {}; (raw.layers||[]).forEach(function(l){ layerFiles[l.id.replace(raw.slug+'-','')]=l.file; });
+    var meterDefs = (raw.effects&&raw.effects.meters)||[];
+    var creditDefs = (raw.effects&&raw.effects.credits)||[];
+    return {
+      slug: raw.slug, title: raw.title, teaches: raw.teaches, floor: raw.floor,
+      exitAt: raw.exitAt, exitDeny: raw.exitDeny, open: raw.open, law: raw.law,
+      active: raw.active, cardsById: cardsById, npcsById: npcsById,
+      layerFiles: layerFiles, meterDefs: meterDefs, creditDefs: creditDefs
+    };
+  }
+  function readGraphCache(){
+    try { var raw=localStorage.getItem(GRAPH_CACHE_KEY); return raw?JSON.parse(raw):null; }
+    catch(e){ return null; }
+  }
+  function writeGraphCache(all){
+    try { localStorage.setItem(GRAPH_CACHE_KEY, JSON.stringify(all)); } catch(e){}
+  }
+  function loadGraphScene(slug){
+    var cached = readGraphCache();
+    if (cached && cached[slug]) GRAPHS[slug] = indexGraph(cached[slug]);
+    fetchWithTimeout(CONTENT_API_BASE + '/api/kyr/graph/scenes/' + encodeURIComponent(slug), CONTENT_FETCH_TIMEOUT_MS)
+      .then(function(r){ if(!r.ok) throw new Error('graph fetch failed'); return r.json(); })
+      .then(function(fresh){
+        if (fresh && fresh.error) throw new Error(fresh.error);
+        GRAPHS[slug] = indexGraph(fresh);
+        var all = readGraphCache() || {}; all[slug] = fresh; writeGraphCache(all);
+      })
+      .catch(function(){ /* offline/unreachable — keep whatever cache gave us, or
+        nothing if this is a true first launch; scene picker checks GRAPHS[slug]
+        before allowing entry, same fail-open posture as the legacy path. */ });
+  }
 
   var FORCED_ENTRY = 'They came through the door. You never opened it, you never consented, and the paper they carried was signed by an immigration officer, not a judge. Write down the time. Write down what it said. A lawyer starts there.';
   var RECORDED_NOTE = 'You have it on video. Thirty seconds. It goes to the lawyer with everything else.';
@@ -593,7 +641,105 @@ window.KnowYourRights.init = function (root, base) {
   function toTitle(){ if(typing){ clearInterval(typing); typing=null; } stopTimer();
     elTitle.hidden=false; elGame.hidden=true; elResult.hidden=true; }
 
+  /* ------------------------------------------------------------------
+     GRAPH GAMEPLAY — evaluated fresh against live state every render,
+     never precomputed per a scripted path. A layer rule looks like:
+       { if: { door:'closed', warrantShown:false }, show:'agentWin' }
+       { if: { door_not:'closed', meter:'detain', gte:30 }, show:'agentDoor2' }
+     `door`/`door_not` compare S.doorState; `warrantShown` compares
+     S.warrantShown; `meter`+`gte`/`lte` compare S.risk (the door
+     scene's only meter, 'detain', is kept in sync with S.risk so the
+     rest of the engine — finish(), the hint system — doesn't need to
+     know graph scenes exist).
+     ------------------------------------------------------------------ */
+  function ruleMatches(cond){
+    if ('door' in cond && S.doorState !== cond.door) return false;
+    if ('door_not' in cond && S.doorState === cond.door_not) return false;
+    if ('warrantShown' in cond && !!S.warrantShown !== cond.warrantShown) return false;
+    if (cond.meter){
+      var val = (cond.meter === 'detain') ? S.risk : (S.meters && S.meters[cond.meter]) || 0;
+      if ('gte' in cond && !(val >= cond.gte)) return false;
+      if ('lte' in cond && !(val <= cond.lte)) return false;
+    }
+    return true;
+  }
+  function paintGraphLayers(card){
+    var g = GRAPHS[S.sc.id]; if (!g) return;
+    var show = {}; (card.layers||[]).forEach(function(k){ show[k]=true; });
+    (card.layerRules||[]).forEach(function(rule){ if (ruleMatches(rule.if)) show[rule.show]=true; });
+    /* Reuse the door art system's existing show()/doorImgs — same 10
+       committed SVGs, just driven by rule evaluation instead of the
+       old paintDoor()'s three hand-written if/else branches. */
+    if (S.sc.art === 'door'){ buildDoorLayers(); elLayers.hidden=false; visCanvas.style.display='none'; show(Object.keys(show)); }
+  }
+  function curGraphCard(){ var g=GRAPHS[S.sc.id]; return g ? g.cardsById[S.cardId] : null; }
+  function renderGraphCard(){
+    var g = GRAPHS[S.sc.id], card = curGraphCard();
+    if (!g || !card){ return finish(); }
+    if (card.type === 'end'){ return finish(S.pendingForcedDetain); }
+    paintGraphLayers(card);
+    S.cardsSeen = S.cardsSeen || {}; S.cardsSeen[card.id] = true;
+    S.pathLen = (S.pathLen||0) + 1;
+    drawDots();
+    var resp = (card.responses||[])[0];
+    if (!resp){ return showGraphChoices(card); }
+    var extra = (card.responses||[]).slice(1).filter(function(r){ return r.variantMode==='narration-on-shield'; });
+    say(pick(resp.texts), resp.speaker==null, function(){
+      if (extra.length){ say(pick(extra[0].texts), true, function(){ showGraphChoices(card); }); }
+      else showGraphChoices(card);
+    });
+  }
+  function showGraphChoices(card){
+    elOpts.innerHTML='';
+    card.answers.forEach(function(a,i){ var btn=document.createElement('button');
+      btn.className='pr-opt'; btn.type='button'; btn.dataset.i=i;
+      btn.innerHTML='<span class="pr-cur">\u25b6</span><span>'+a.text+'</span>'; elOpts.appendChild(btn); });
+    elOpts.hidden=false; timer.timeouts=0; startTimer();
+    elOpts.onclick=function(e){ var t=e.target.closest('.pr-opt'); if(!t) return; resolveGraphAnswer(card.answers[+t.dataset.i]); };
+  }
+  function resolveGraphAnswer(a){
+    stopTimer();
+    var fx = a.effects || {};
+    if (fx.credits) for (var k in fx.credits) if (fx.credits[k]) S.keys[k]=true;
+    if (fx.damaged) S.damaged = true;
+    if (fx.door){
+      if (fx.door === 'warrant'){ S.warrantShown = true; }
+      else { S.doorState = fx.door; }
+    }
+    if (fx.meters && 'detain' in fx.meters){
+      S.risk = Math.min(100, Math.max(curFloor(), S.risk + fx.meters.detain));
+    }
+    var goto = a.goto;
+    var nextCard = goto ? (GRAPHS[S.sc.id] && GRAPHS[S.sc.id].cardsById[goto]) : null;
+    if (nextCard && nextCard.type === 'end' && fx.grade === 'fatal'){
+      S.risk = 100; S.doorState = 'open';
+      S.cardId = goto;
+      return say(fx.why || '', true, function(){ finish(true); });
+    }
+    if (!goto){ return finish(); }
+    S.cardId = goto;
+    if (fx.why){ return say(fx.why, true, renderGraphCard); }
+    renderGraphCard();
+  }
+
   function startScene(i){ var sc=SCENES[i];
+    if (sc.mode === 'graph'){
+      var g = GRAPHS[sc.id];
+      if (!g){ /* not loaded yet (offline/slow network) — bail to title rather
+        than render a broken scene; loadGraphScene keeps retrying in the background. */
+        return toTitle(); }
+      S={ i:i, sc:sc, cardId:'start', risk:g.floor, damaged:false, keys:{}, over:false, recording:false,
+          doorState:'closed', warrantShown:false, cardsSeen:{}, pathLen:0 };
+      artState.open=0; artState.lit=false;
+      elTitle.hidden=true; elResult.hidden=true; elGame.hidden=false;
+      elSceneName.textContent=g.title; elRec.className='pr-rec';
+      buildDoorLayers(); elLayers.hidden=false; visCanvas.style.display='none';
+      drawDots();
+      var startCard = g.cardsById['start'];
+      var firstGoto = startCard && startCard.answers && startCard.answers[0] && startCard.answers[0].goto;
+      if (firstGoto) S.cardId = firstGoto;
+      return say(g.open, true, renderGraphCard);
+    }
     S={ i:i, sc:sc, beat:0, round:0, risk:sc.floor, damaged:false, keys:{}, over:false, recording:false,
         doorState:'closed', agentWin:false, warrantShown:false };
     artState.open=0; artState.lit=false;
@@ -611,6 +757,15 @@ window.KnowYourRights.init = function (root, base) {
     say(sc.open, true, renderBeat); }
 
   function drawDots(){ elDots.innerHTML='';
+    if (S.sc.mode === 'graph'){
+      /* Path length is dynamic in a graph scene (branches make it longer),
+         so dots track progress-so-far rather than a fixed beat count —
+         one dot per card visited this run, capped so a long detour
+         doesn't overflow the strip. */
+      var n = Math.min(S.pathLen||0, 12);
+      for (var j=0;j<n;j++){ var dd=document.createElement('i'); dd.className = j<n-1?'on':'now'; elDots.appendChild(dd); }
+      return;
+    }
     for (var i=0;i<S.sc.beats.length;i++){ var d=document.createElement('i');
       d.className=i<S.beat?'on':(i===S.beat?'now':''); elDots.appendChild(d); } }
   function curBeat(){ return S.sc.beats[S.beat]; }
@@ -634,7 +789,7 @@ window.KnowYourRights.init = function (root, base) {
     elOpts.onclick=function(e){ var t=e.target.closest('.pr-opt'); if(!t) return; resolve(r.box[+t.dataset.i], b); }; }
 
   function grantKeys(keys){ if(keys) keys.forEach(function(k){ S.keys[k]=true; }); }
-  function curFloor(){ return S.sc.floor; }
+  function curFloor(){ return (S.sc.mode==='graph') ? (GRAPHS[S.sc.id]?GRAPHS[S.sc.id].floor:0) : S.sc.floor; }
 
   function resolve(o,b){ stopTimer(); grantKeys(o.keys); if(o.damages) S.damaged=true;
     if (S.sc.id==='door' && o.door){
@@ -658,6 +813,13 @@ window.KnowYourRights.init = function (root, base) {
   elRec.addEventListener('click', function(){ if(!S) return;
     if(!S.recording){ S.recording=true; S.keys.record=true; elRec.classList.add('on'); } });
   elHint.addEventListener('click', function(){ if(!S||elGame.hidden) return;
+    if (S.sc.mode === 'graph'){
+      var card = curGraphCard(); if (!card) return;
+      var gi = -1;
+      card.answers.forEach(function(a,i){ if (a.effects && (a.effects.grade==='shield'||a.effects.grade==='steady')) gi=i; });
+      if (gi>=0){ var gopt=elOpts.querySelector('[data-i="'+gi+'"]'); if(gopt) pulse(gopt); }
+      return;
+    }
     var b=curBeat(); if(!b) return; var r=b.rounds[Math.min(S.round,b.rounds.length-1)], idx=-1;
     r.box.forEach(function(o,i){ if(o.g==='shield'||o.g==='ask') idx=i; });
     if(idx>=0){ var opt=elOpts.querySelector('[data-i="'+idx+'"]'); if(opt) pulse(opt); } });
@@ -665,16 +827,23 @@ window.KnowYourRights.init = function (root, base) {
     setTimeout(function(){ el.classList.remove('hint'); },1600); }
 
   function finish(forcedDetain){ if(S.over) return; S.over=true; stopTimer();
-    var sc=S.sc, detained=forcedDetain===true?true:(Math.random()*100<S.risk), forced=false;
-    if (sc.id==='door' && !S.damaged && S.risk===0 && !detained && Math.random()<CONFIG.forcedEntryChance){ detained=true; forced=true; }
+    var sc=S.sc, isGraph=(sc.mode==='graph'), g=isGraph?GRAPHS[sc.id]:null;
+    var detained=forcedDetain===true?true:(Math.random()*100<S.risk), forced=false;
+    var isDoorFloorZero = isGraph ? (g && g.floor===0) : (sc.id==='door');
+    if (isDoorFloorZero && !S.damaged && S.risk===0 && !detained && Math.random()<CONFIG.forcedEntryChance){ detained=true; forced=true; }
     var key=detained?(S.damaged?'damaged':'intact'):(S.damaged?'lucky':'clean'), e=ENDINGS[key];
-    if (forced){ artState.open=1; render(); }
+    if (forced){
+      S.doorState='open'; artState.open=1;
+      if (sc.art==='door') paintGraphLayers({layers:['sky','floor','walls','doorOpen'],layerRules:[]});
+      else render();
+    }
     elGame.hidden=true; elResult.hidden=false;
     elStamp.textContent=e.stamp; elStamp.className='gm-stamp '+(detained?'bad':'ok');
     var truth=forced?FORCED_ENTRY:e.truth; if(S.recording) truth+='\n\n'+RECORDED_NOTE;
-    elTruth.textContent=truth; elPlain.textContent=sc.law;
+    elTruth.textContent=truth; elPlain.textContent = isGraph ? (g?g.law:'') : sc.law;
     elList.innerHTML='';
-    sc.checklist.forEach(function(row){ var li=document.createElement('li'); var got=!!S.keys[row[0]];
+    var checklist = isGraph ? (g?g.creditDefs.map(function(c){return [c.key,c.label];}):[]) : sc.checklist;
+    checklist.forEach(function(row){ var li=document.createElement('li'); var got=!!S.keys[row[0]];
       li.className=got?'got':''; li.innerHTML='<span class="bx">'+(got?'\u2611':'\u2610')+'</span>'+row[1]; elList.appendChild(li); });
     renderReward(); }
   function renderReward(){ var r=CONFIG.reward; elReward.innerHTML='';
@@ -765,6 +934,11 @@ window.KnowYourRights.init = function (root, base) {
   function applyContent(payload, isInitialLoad){
     if (payload && payload.scenes && payload.scenes.length && payload.endings){
       SCENES = payload.scenes; ENDINGS = payload.endings;
+      /* The legacy /api/kyr/scenes endpoint still serves a beats-shaped
+         'door' entry for backward compatibility with older clients — the
+         graph renderer is the only one that should ever run for it here,
+         so re-tag it regardless of what the legacy payload says. */
+      SCENES.forEach(function(sc){ if (sc.id === 'door') sc.mode = 'graph'; });
     }
     /* else: leave SCENES/ENDINGS at whatever they already were
        (BUNDLED_* from the top-level assignment) — this is the true
@@ -799,4 +973,5 @@ window.KnowYourRights.init = function (root, base) {
         this was purely a best-effort freshness check. */ });
   }
   loadContent();
+  loadGraphScene('door');
 };
