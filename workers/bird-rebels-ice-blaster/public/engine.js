@@ -203,6 +203,10 @@
   var MEGA_RADIUS_RATIO = 0.5; // mega rocket blast radius, as a fraction of stage width
   var MAX_STAGE_RATIO = 0.72;
   var LB_MAX = 10;
+  // Runs under this score can't be submitted — keeps zero/near-zero taps
+  // and abandoned runs off the board. Enforced here for the UI gate and
+  // again server-side in the Worker (never trust the client alone).
+  var MIN_LEADERBOARD_SCORE = 5;
 
   // Sound files are served as static assets from ./public/sounds/ — add your
   // 5 files there with these exact names and redeploy (`wrangler deploy`),
@@ -571,7 +575,6 @@
     + '      <h2 data-i18n="menu">Menu</h2>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-about data-i18n="about">About</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
-    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-leaderboard data-i18n="leaderboard">Leaderboard</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signin data-i18n="signInGoogle" hidden>Sign in with Google</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item rl-menu-account-btn" data-rl-menu-signout hidden>'
     + '        <span data-i18n="signOut">Sign Out</span>'
@@ -809,12 +812,50 @@
       if (menuMusic.paused && !(S && S.running)) playMenuMusic();
     }, { once: true });
 
-    // Vibration on ice hitting the ground, native only. Defaults true so it
-    // works before Settings has had a chance to load any saved preference.
-    // Uses the real Capacitor Haptics plugin (navigator.vibrate() was tried
-    // first but didn't actually work in this WebView) — same
-    // window.Capacitor.Plugins.X access pattern already used elsewhere in
-    // this app (see index.html's back-button handler for the App plugin).
+    // Pause whichever track is currently playing when the app goes to the
+    // background (Home button, app switcher, screen lock) and resume that
+    // same track when it comes back — without this, music kept playing
+    // in the background until the app was hard-closed. Uses the
+    // Capacitor App plugin's appStateChange event, same
+    // window.Capacitor.Plugins.X bridge pattern as Haptics above.
+    (function wireAppLifecycleMusicPause() {
+      var App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (!App || !App.addListener) return;
+      var pausedTrack = null; // which track (if any) we paused on backgrounding
+      App.addListener('appStateChange', function (state) {
+        try {
+          if (!state || !state.isActive) {
+            // Going to background — remember and pause whichever one is
+            // actually playing (menu music, standard theme, or blizzard
+            // theme; only one should ever be unpaused at a time).
+            if (!blizzardTheme.paused) pausedTrack = blizzardTheme;
+            else if (!standardTheme.paused) pausedTrack = standardTheme;
+            else if (!menuMusic.paused) pausedTrack = menuMusic;
+            else pausedTrack = null;
+            if (pausedTrack) pausedTrack.pause();
+          } else if (pausedTrack) {
+            // Coming back to foreground — resume the same track, not
+            // whatever screen happens to be showing now.
+            var p = pausedTrack.play();
+            if (p && p.catch) p.catch(function () {});
+            pausedTrack = null;
+          }
+        } catch (e) {}
+      });
+    })();
+
+    // Vibration, native only. Defaults true so it works before Settings has
+    // had a chance to load any saved preference. Uses the real Capacitor
+    // Haptics plugin (navigator.vibrate() was tried first but didn't
+    // actually work in this WebView) — same window.Capacitor.Plugins.X
+    // access pattern already used elsewhere in this app (see index.html's
+    // back-button handler for the App plugin).
+    //
+    // Two distinct feels so ice hitting the ground doesn't feel identical
+    // to a mega rocket going off: a short plain buzz for ice, and a
+    // heavier impact pulse for the mega blast. Both are wrapped in their
+    // own try/catch — Haptics being unavailable (or a bad style string)
+    // on some device shouldn't ever throw into game logic.
     var vibrationEnabled = true;
     function triggerVibration() {
       if (!shopEnabled || !vibrationEnabled) return;
@@ -826,6 +867,19 @@
         // directly instead of importing the JS module (which exposes
         // ImpactStyle as a proper enum).
         if (Haptics && Haptics.vibrate) Haptics.vibrate();
+      } catch (e) {}
+    }
+    // Heavier "impact" pulse, reserved for the mega rocket explosion so it
+    // reads as a bigger hit than ordinary ice-hitting-ground vibration.
+    // impact({style}) takes the raw string the bridge expects directly
+    // ('HEAVY') — same reasoning as the plain-string note on vibrate()
+    // above, just the impact variant of it.
+    function triggerImpactVibration() {
+      if (!shopEnabled || !vibrationEnabled) return;
+      try {
+        var Haptics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+        if (Haptics && Haptics.impact) Haptics.impact({ style: 'HEAVY' });
+        else if (Haptics && Haptics.vibrate) Haptics.vibrate();
       } catch (e) {}
     }
 
@@ -1242,15 +1296,25 @@
         updateCarouselCardScales();
       }
 
-      carouselTrack.addEventListener('scroll', function () {
-        startCarouselRaf();
-        clearTimeout(carouselSettleTimer);
-        // Was 120ms — that fixed wait before even checking whether the
-        // clone-wraparound jump was needed was the actual source of the
-        // "takes too long" lag at the carousel ends (the jump itself is
-        // instant, behavior:'auto'). 50ms still reliably distinguishes
-        // "still scrolling" from "stopped" without the noticeable pause.
+      // Verifies scrollLeft actually hasn't moved since the check was
+      // scheduled before committing onSettle(). Without this, momentum/
+      // inertial scrolling in some WebViews can leave a gap longer than the
+      // debounce window between scroll events even while still
+      // decelerating — the 50ms timer fires, commits whatever card looks
+      // centered at that instant, and then the scroll continues settling
+      // to a different card with no further scroll event arriving to
+      // trigger a re-check (trailing near-zero-velocity events get
+      // coalesced/dropped). That's the "occasionally doesn't activate the
+      // centered one" bug — this makes the settle self-correct by
+      // rescheduling instead of committing on a moving target.
+      function checkSettled() {
+        var posAtCheck = carouselTrack.scrollLeft;
         carouselSettleTimer = setTimeout(function () {
+          if (carouselTrack.scrollLeft !== posAtCheck) {
+            // Still moving — don't commit yet, check again.
+            checkSettled();
+            return;
+          }
           // Stopping the RAF loop BEFORE onSettle() used to leave a real
           // gap if onSettle() then triggered a wraparound jump: the
           // continuous scale/opacity/z-index update had already halted and
@@ -1262,6 +1326,18 @@
           onSettle();
           stopCarouselRaf();
         }, 50);
+      }
+
+      carouselTrack.addEventListener('scroll', function () {
+        startCarouselRaf();
+        clearTimeout(carouselSettleTimer);
+        // Was 120ms — that fixed wait before even checking whether the
+        // clone-wraparound jump was needed was the actual source of the
+        // "takes too long" lag at the carousel ends (the jump itself is
+        // instant, behavior:'auto'). 50ms still reliably distinguishes
+        // "still scrolling" from "stopped" without the noticeable pause,
+        // and checkSettled() above re-verifies before actually committing.
+        checkSettled();
       }, { passive: true });
 
       // Land centered on the resolved selection (selectedChar was already
@@ -1706,21 +1782,8 @@
       if (closeMenuBtn) closeMenuBtn.addEventListener('click', function () { showScreen('menu-close'); });
       var menuAboutBtn = mount.querySelector('[data-rl-menu-about]');
       var menuSettingsBtn = mount.querySelector('[data-rl-menu-settings]');
-      var menuLeaderboardBtn = mount.querySelector('[data-rl-menu-leaderboard]');
       if (menuAboutBtn) menuAboutBtn.addEventListener('click', function () { showScreen('info-from-menu'); });
       if (menuSettingsBtn) menuSettingsBtn.addEventListener('click', function () { showScreen('settings-from-menu'); });
-      if (menuLeaderboardBtn) {
-        menuLeaderboardBtn.addEventListener('click', function () {
-          lbTier = DEFAULT_TIER;
-          lbSet = selectedScene === 'blizzard' ? 'blizzard' : 'normal';
-          var lbTierSelectEl = mount.querySelector('[data-rl-lb-tier-select]');
-          var lbSceneSelectEl = mount.querySelector('[data-rl-lb-scene-select]');
-          if (lbTierSelectEl) lbTierSelectEl.value = lbTier;
-          if (lbSceneSelectEl) lbSceneSelectEl.value = lbSet;
-          loadLeaderboard(lbTier, lbSet, mount.querySelector('[data-rl-board-full]'), mount.querySelector('[data-rl-lb-set-note]'));
-          showScreen('leaderboard-from-menu');
-        });
-      }
       var openLeaderboardBtn = mount.querySelector('[data-rl-open-leaderboard]');
       if (openLeaderboardBtn) {
         openLeaderboardBtn.addEventListener('click', function () {
@@ -2359,6 +2422,16 @@
         })
         .catch(function () { container.innerHTML = '<div class="rl-loading">Couldn\'t load the leaderboard.</div>'; });
     }
+    // Formats whole seconds as M:SS (no leading zero on minutes) for the
+    // leaderboard's game-length column. Older rows submitted before
+    // gameLength existed come back as 0/undefined — shown as an em dash
+    // rather than a misleading "0:00".
+    function formatGameLength(seconds) {
+      if (!seconds || seconds <= 0) return '—';
+      var m = Math.floor(seconds / 60);
+      var s = Math.floor(seconds % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
     // visibleCount is optional — omitted (or null), every row in arr is
     // rendered, which is what the post-game inline mini-board wants.
     // Passed, only the first N rows render and the function returns
@@ -2370,7 +2443,17 @@
         return false;
       }
       var shown = (visibleCount == null) ? arr : arr.slice(0, visibleCount);
-      var html = '';
+      // Column headers so the numeric columns (accuracy, length, score)
+      // are self-explanatory instead of just bare numbers.
+      var html =
+        '<div class="rl-board-row rl-board-head">'
+        + '<span class="rl-rank"></span>'
+        + '<span class="rl-char-tag"></span>'
+        + '<span class="rl-init">Name</span>'
+        + '<span class="rl-acc-num">Acc.</span>'
+        + '<span class="rl-length">Time</span>'
+        + '<span class="rl-pts">Score</span>'
+        + '</div>';
       shown.forEach(function (row, i) {
         var mine = highlightTs && row.ts === highlightTs;
         var accPct = Math.round((row.accuracy || 0) * 100);
@@ -2384,7 +2467,8 @@
           + '<span class="rl-rank">' + (i + 1) + '</span>'
           + '<span class="rl-char-tag">' + (row.character || '—') + '</span>'
           + '<span class="rl-init">' + row.initials + '</span>'
-          + '<span class="rl-acc-bar" title="' + accPct + '% accuracy"><span class="rl-acc-fill" style="width:' + accPct + '%"></span></span>'
+          + '<span class="rl-acc-num">' + accPct + '%</span>'
+          + '<span class="rl-length">' + formatGameLength(row.gameLength) + '</span>'
           + '<span class="rl-pts">' + row.score + '</span>'
           + '</div>';
       });
@@ -2576,10 +2660,12 @@
       });
     }
 
-    var POWERUP_LABELS = { triple: '⚡ Triple Laser', rocket: '🚀 Rocket Barrage', triplerocket: '🚀 Triple Rocket', mega: '💥 Mega Rocket' };
-    // Rocket-family powerups run on a 10-trigger-pull budget instead of a
-    // timer — Triple (laser) is the only one that stays timer-based.
-    var SHOT_BASED_POWERUPS = { rocket: true, triplerocket: true, mega: true };
+    var POWERUP_LABELS = { triple: '⚡ Triple Laser', triplerocket: '🚀 Triple Rocket', mega: '💥 Mega Rocket' };
+    // All three powerups now run on a 10-trigger-pull shot budget instead
+    // of a timer (Triple Laser used to be timer-based, but that made it
+    // behave differently from the rocket-family powerups for no real
+    // reason — this brings it in line).
+    var SHOT_BASED_POWERUPS = { triple: true, triplerocket: true, mega: true };
     var POWERUP_SHOTS = 10;
     // Generous backstop so a shot-based powerup can't sit uncollected/unused
     // forever if the player stops firing — not meant to ever bind in normal play.
@@ -2641,10 +2727,12 @@
       S.snow = { x: fromLeft ? -20 : W + 20, y: y, vx: (fromLeft ? 1 : -1) * rand(34, 46), vy: rand(-4, 4), r: 11, wob: rand(0, Math.PI * 2) };
     }
     // Weapon powerups float through in a bubble, picked at random each time
-    // (not a fixed rotation) from the same 4 pickups in both scenes: Triple
-    // (laser), Rocket, Triple Rocket, Mega Rocket. Laser itself is the
-    // default weapon, not a pickup — nothing powers up "into" it.
-    var POWERUP_TYPES = ['triple', 'rocket', 'triplerocket', 'mega'];
+    // (not a fixed rotation) from the same 3 pickups in both scenes: Triple
+    // Laser, Triple Rocket, Mega Rocket. Laser itself is the default
+    // weapon, not a pickup — nothing powers up "into" it. Standalone
+    // single-rocket "Rocket Barrage" was removed from the pool — Triple
+    // Rocket and Mega Rocket cover that weapon family now.
+    var POWERUP_TYPES = ['triple', 'triplerocket', 'mega'];
     function spawnPowerupBubble() {
       var fromLeft = Math.random() < 0.5;
       var y = rand(H * 0.14, H * 0.42);
@@ -2692,6 +2780,9 @@
       if (now - S.lastFireAt < FIRE_COOLDOWN) return;
       S.lastFireAt = now;
       var active = (S.powerup && now < S.powerupUntil && (!SHOT_BASED_POWERUPS[S.powerup] || S.powerupShotsLeft > 0)) ? S.powerup : null;
+      // 'rocket' is no longer a pickable powerup (removed from POWERUP_TYPES)
+      // but this check stays defensive in case any stale saved state still
+      // has it — costs nothing and avoids a dead-weapon edge case.
       var weaponKey = (active === 'mega') ? 'mega' : (active === 'rocket' || active === 'triplerocket') ? 'rocket' : 'laser';
       playSound(weaponKey === 'laser' ? 'laser' : 'squish');
       var eye = getEyePos();
@@ -2787,7 +2878,7 @@
       playSound(destroyed ? 'hit' : 'explosion');
       spawnMegaBlast(x, y, radius);
       triggerShake(11, 340);
-      triggerVibration();
+      triggerImpactVibration();
     }
     function spawnMegaBlast(x, y, radius) {
       S.blasts.push({ x: x, y: y, radius: radius, born: performance.now(), white: S.cfg.blizzard });
@@ -2856,8 +2947,8 @@
     }
 
     // Weapon powerup bubble: grants whichever effect it's currently showing
-    // (Triple Laser / Rocket / Mega Rocket), independent of lives — works in
-    // Casual Mode too, same as the old triple-blast pickup did.
+    // (Triple Laser / Triple Rocket / Mega Rocket), independent of lives —
+    // works in Casual Mode too, same as the old triple-blast pickup did.
     function onPowerupBubbleHit() {
       spawnBurst(S.bubble.x, S.bubble.y, '#9de6ff');
       S.powerup = S.bubble.type;
@@ -3505,7 +3596,7 @@
       boardInlineNote.hidden = true;
       submitError.textContent = '';
       initialInputs.forEach(function (inp) { inp.value = ''; });
-      var canSubmit = !S.cfg.kidMode && isSignedIn();
+      var canSubmit = !S.cfg.kidMode && isSignedIn() && S.melted >= MIN_LEADERBOARD_SCORE;
       scoreSubmitBlock.hidden = !canSubmit;
       kidNote.hidden = !S.cfg.kidMode;
       signinNote.hidden = S.cfg.kidMode || isSignedIn();
@@ -3513,7 +3604,10 @@
       resetRestartConfirm();
       showScreen('gameover');
       gameoverLockUntil = Date.now() + GAMEOVER_INPUT_LOCK_MS;
-      if (canSubmit) setTimeout(function () { initialInputs[0].focus(); }, 50);
+      // Deliberately NOT auto-focusing the initials input here — that pops
+      // the on-screen keyboard open the instant this screen appears, which
+      // isn't always wanted right after a run ends. Player taps a box to
+      // type, same as any other field.
     }
 
     // ---------- initials input UX ----------
@@ -3537,7 +3631,7 @@
       fetch(BASE + '/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device: IDENTITY, initials: initials, tier: submitTier, score: S.melted, accuracy: S.accuracy, character: S.cfg.character })
+        body: JSON.stringify({ device: IDENTITY, initials: initials, tier: submitTier, score: S.melted, accuracy: S.accuracy, gameLength: Math.round(S.elapsed || 0), character: S.cfg.character })
       })
         .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
         .then(function (res) {
@@ -3569,11 +3663,10 @@
           toast('Signed in!');
           restoreGooglePlayPurchases();
           renderCharGrid();
-          if (!S.cfg.kidMode) {
+          if (!S.cfg.kidMode && S.melted >= MIN_LEADERBOARD_SCORE) {
             signinNote.hidden = true;
             scoreSubmitBlock.hidden = false;
             scoreSaved = false;
-            setTimeout(function () { initialInputs[0].focus(); }, 50);
           }
         });
       });
