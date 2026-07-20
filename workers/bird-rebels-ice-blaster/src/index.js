@@ -31,6 +31,8 @@
 
 const TIERS = ['easy', 'medium', 'hard', 'easy-blizzard', 'medium-blizzard', 'hard-blizzard'];
 const MAX_SCORE = 100000; // sanity ceiling, not a real gameplay cap
+const MIN_LEADERBOARD_SCORE = 5; // runs below this don't register — keeps zero/near-zero taps off the board
+const MAX_GAME_LENGTH_SECONDS = 36000; // 10hr sanity ceiling, not a real gameplay cap
 const LB_MAX = 1000;
 
 function corsHeaders() {
@@ -308,10 +310,20 @@ async function postLeaderboard(request, env) {
   if (!Number.isFinite(score) || score < 0 || score > MAX_SCORE) {
     return json({ error: 'invalid score' }, 400);
   }
+  if (score < MIN_LEADERBOARD_SCORE) {
+    return json({ error: 'score too low to register' }, 400);
+  }
 
   let accuracy = Number(body && body.accuracy);
   if (!Number.isFinite(accuracy)) accuracy = 0;
   accuracy = Math.max(0, Math.min(1, accuracy));
+
+  // Run length in whole seconds. Sanity-capped rather than strictly
+  // required — older clients that haven't been updated yet just won't send
+  // this field, and we don't want that to break submission.
+  let gameLength = Math.floor(Number(body && body.gameLength));
+  if (!Number.isFinite(gameLength) || gameLength < 0) gameLength = 0;
+  gameLength = Math.min(gameLength, MAX_GAME_LENGTH_SECONDS);
 
   const key = 'board:' + tier;
   // Simple read-modify-write. KV is eventually consistent globally, but for a
@@ -321,7 +333,7 @@ async function postLeaderboard(request, env) {
   const raw = await env.LEADERBOARD.get(key);
   const arr = raw ? JSON.parse(raw) : [];
   const submittedTs = Date.now();
-  arr.push({ initials: normalized, character, score, accuracy, ts: submittedTs });
+  arr.push({ initials: normalized, character, score, accuracy, gameLength, ts: submittedTs });
   arr.sort((a, b) => b.score - a.score);
   const top = arr.slice(0, LB_MAX);
   await env.LEADERBOARD.put(key, JSON.stringify(top));
