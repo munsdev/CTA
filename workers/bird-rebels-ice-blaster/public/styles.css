@@ -640,19 +640,31 @@
   flex:1 1 auto; max-height:none; min-height:0;
 }
 .rl-board-row{
-  display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
-  font-size:13px; border-bottom:1px solid var(--rl-panel-line);
+  display:flex; align-items:center; justify-content:space-between; padding:11px 16px;
+  font-size:18px; border-bottom:1px solid var(--rl-panel-line);
 }
 .rl-board-row:last-child{ border-bottom:none; }
-.rl-board-row .rl-rank{ color:var(--rl-dim); width:22px; flex:none; font-family:var(--rl-font-display); }
+.rl-board-row .rl-rank{ color:var(--rl-dim); width:26px; flex:none; font-family:var(--rl-font-display); }
 .rl-board-row .rl-char-tag{
-  flex:none; font-size:9.5px; font-weight:800; letter-spacing:.04em; color:var(--row-accent, var(--rl-accent));
-  border:1px solid var(--row-accent, var(--rl-accent)); border-radius:5px; padding:2px 5px; margin-right:8px;
+  flex:none; font-size:12.5px; font-weight:800; letter-spacing:.04em; color:var(--row-accent, var(--rl-accent));
+  border:1px solid var(--row-accent, var(--rl-accent)); border-radius:5px; padding:3px 6px; margin-right:10px;
   font-family:var(--rl-font-display);
 }
 .rl-board-row .rl-init{ flex:1; font-family:var(--rl-font-display); font-weight:800; letter-spacing:.08em; color:var(--rl-accent); }
 .rl-board-row .rl-pts{ color:var(--rl-ink); font-weight:700; }
 .rl-board-row.rl-me{ background:rgba(255,207,77,.08); }
+/* Header row — reuses .rl-board-row's flex layout so its columns line up
+   with the data rows below it, just relabeled and de-emphasized. Rank and
+   character-tag cells are left empty (no header text makes sense for
+   either) but still present so the flex slots stay aligned. */
+.rl-board-row.rl-board-head{
+  font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--rl-dim);
+  border-bottom:1px solid var(--rl-panel-line); padding-top:6px; padding-bottom:6px;
+}
+.rl-board-row.rl-board-head .rl-init,
+.rl-board-row.rl-board-head .rl-acc-num,
+.rl-board-row.rl-board-head .rl-length,
+.rl-board-row.rl-board-head .rl-pts{ color:var(--rl-dim); font-weight:700; }
 .rl-board-empty{ padding:18px 12px; text-align:center; color:var(--rl-dim); font-size:12.5px; }
 .rl-lb-set-note{ text-align:center; font-size:11px; color:var(--rl-dim); margin:0 0 10px; letter-spacing:.02em; }
 .rl-lb-filter-row{ display:flex; gap:8px; margin:0 0 10px; }
@@ -667,15 +679,14 @@
   background:var(--rl-panel); color:var(--rl-ink); border:1px solid var(--rl-panel-line); border-radius:7px;
   padding:5px 8px; font-family:var(--rl-font-body); font-size:12px;
 }
-.rl-board-row .rl-acc-bar{
-  flex:none; width:36px; height:6px; border-radius:3px; background:rgba(255,255,255,.12);
-  overflow:hidden; margin:0 8px;
+/* Accuracy is a plain number now (was a filled bar) — easier to read at a
+   glance and to compare across rows. */
+.rl-board-row .rl-acc-num{
+  flex:none; width:46px; text-align:right; margin:0 8px; color:var(--rl-ink); font-variant-numeric:tabular-nums;
 }
-/* Accuracy fill is always the flat brand accent — the per-character
-   theming lives on the state badge only now (see .rl-char-tag above),
-   which is the more sensible place for a "themed per state" idea since the
-   badge is literally the state name. */
-.rl-board-row .rl-acc-fill{ display:block; height:100%; background:var(--rl-accent); border-radius:3px; }
+.rl-board-row .rl-length{
+  flex:none; width:48px; text-align:right; margin:0 8px; color:var(--rl-dim); font-variant-numeric:tabular-nums;
+}
 
 /* ---------- pause overlay ---------- */
 .rl-pause-panel{ width:100%; max-width:280px; margin:0 auto; text-align:center; }
