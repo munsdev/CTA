@@ -137,16 +137,13 @@
     <div class="panel">
       <h2>All scenes</h2>
       <div class="hint">
-        Loads the full <code>scenes.json</code> from GitHub. <b>Active</b> controls whether a scene is meant to be public.
-        Note: the live game doesn't read <code>scenes.json</code> yet — that wiring is still pending on the engine side — so
-        toggling Active here won't yet affect what's playable on the site. It's ready for when that lands.
-        Planned convention for that future preview mode: the game will honor <code>?kyrPreview=all</code> in its URL to show
-        inactive scenes for testing.
+        Loads scenes live from <code>kyr-content-db</code> via the Worker API. <b>Active</b> controls whether a
+        scene is served to the game. Toggling active or deleting a scene writes immediately — there's no
+        separate "push" step, unlike layer/NPC art which still lives on GitHub.
       </div>
       <div class="row" style="margin-bottom:10px;">
-        <button class="secondary small" id="btnLoadScenes">Load scenes from GitHub</button>
+        <button class="secondary small" id="btnLoadScenes">Load scenes</button>
         <button class="small" id="btnNewScene">+ New scene</button>
-        <button class="small danger" id="btnPushSceneIndex" disabled>Push scene list changes</button>
       </div>
       <div id="sceneList"></div>
     </div>
@@ -197,8 +194,8 @@
   <button class="small" id="btnExport">Export JSON</button>
   <button class="small" id="btnImport">Import JSON</button>
   <input type="file" id="importFile" accept="application/json" style="display:none;">
-  <button class="small secondary" id="btnPush">Push scene to GitHub</button>
-  <button class="small ghost" id="btnPat" style="margin-left:auto;">GitHub token</button>
+  <button class="small secondary" id="btnPush">Save scene to database</button>
+  <button class="small ghost" id="btnPat" style="margin-left:auto;">Keys</button>
 </footer>
 
 <div id="log"></div>
@@ -206,8 +203,16 @@
 <div id="pat-modal">
   <div class="box">
     <span class="close-x" id="patClose">✕</span>
-    <h2 style="font-size:14px;">GitHub token</h2>
-    <p>Paste a fine-grained PAT with Contents Read/Write on <b>munsdev/CTA</b>. Stored only in this browser's local storage — never sent anywhere but api.github.com.</p>
+    <h2 style="font-size:14px;">Keys</h2>
+    <div id="d1auth-row">
+      <p><b>D1 builder key</b> — required to save scenes/cards to the live database. Ask Casey for this or set it as the <code>KYR_BUILDER_SECRET</code> Worker secret. Stored only in this browser's local storage, sent only to <code>kyr-content.casey-945.workers.dev</code> as an <code>X-KYR-Auth</code> header.</p>
+      <input type="password" id="d1authInput" placeholder="paste D1 builder key">
+      <div class="row" style="margin-top:6px;margin-bottom:14px;">
+        <button class="primary small" id="d1authSave">Save</button>
+        <button class="small ghost danger" id="d1authClear">Clear</button>
+      </div>
+    </div>
+    <p><b>GitHub token</b> — only needed when uploading new layer/NPC art. Paste a fine-grained PAT with Contents Read/Write on <b>munsdev/CTA</b>. Stored only in this browser's local storage — never sent anywhere but api.github.com.</p>
     <input type="password" id="patInput" placeholder="github_pat_...">
     <div class="row" style="margin-top:10px;">
       <button class="primary small" id="patSave">Save</button>
@@ -231,6 +236,8 @@ const SCENES_PATH = BASE_PATH + "/scenes.json";
 const PLACEHOLDER_FILE = "_placeholder.png";
 const LS_KEY = "kyr_builder_state_v1";
 const LS_PAT = "kyr_builder_pat_v1";
+const LS_D1AUTH = "kyr_builder_d1auth_v1";
+const API_BASE = "https://kyr-content.casey-945.workers.dev";
 
 function uid(prefix){ return prefix + "-" + Math.random().toString(36).slice(2,7); }
 function log(msg, cls){
@@ -285,8 +292,7 @@ function defaultState(){
 }
 
 let state = loadLocal() || defaultState();
-let sceneIndexCache = null;       // full scenes.json collection once loaded, keyed by slug
-let sceneIndexDirty = false;      // true when manager has staged toggle/delete changes not yet pushed
+let sceneIndexCache = null;       // scene index once loaded, keyed by slug
 
 // ---------------------------------------------------------------------------
 // Persistence (autosave to localStorage) — split into "structural" (re-render)
@@ -818,12 +824,12 @@ function renderSceneList(){
   const wrap = document.getElementById("sceneList");
   wrap.innerHTML = "";
   if (!sceneIndexCache){
-    wrap.innerHTML = `<div class="empty-note">Nothing loaded yet — hit "Load scenes from GitHub".</div>`;
+    wrap.innerHTML = `<div class="empty-note">Nothing loaded yet — hit "Load scenes".</div>`;
     return;
   }
   const slugs = Object.keys(sceneIndexCache).sort();
   if (slugs.length === 0){
-    wrap.innerHTML = `<div class="empty-note">scenes.json exists but has no scenes in it yet.</div>`;
+    wrap.innerHTML = `<div class="empty-note">No scenes in the database yet.</div>`;
     return;
   }
   slugs.forEach(slug=>{
@@ -835,7 +841,6 @@ function renderSceneList(){
       <div class="meta">
         <div class="slug">${escapeHtml(slug)}${isCurrent ? '<span class="current-badge">open in editor</span>' : ""}</div>
         <div class="title">${escapeHtml(sc.title || "(untitled)")}</div>
-        <div class="count">${(sc.cards||[]).length} card${(sc.cards||[]).length!==1?"s":""}</div>
       </div>
       <div class="active-toggle ${sc.active ? "is-active" : ""}">
         <div class="switch ${sc.active ? "on" : ""}" data-slug="${escapeAttr(slug)}"><div class="knob"></div></div>
@@ -847,11 +852,27 @@ function renderSceneList(){
     wrap.appendChild(row);
   });
   wrap.querySelectorAll(".switch").forEach(sw=>{
-    sw.addEventListener("click", ()=>{
+    sw.addEventListener("click", async ()=>{
       const slug = sw.dataset.slug;
-      sceneIndexCache[slug].active = !sceneIndexCache[slug].active;
-      sceneIndexDirty = true;
-      document.getElementById("btnPushSceneIndex").disabled = false;
+      const next = !sceneIndexCache[slug].active;
+      sw.style.pointerEvents = "none";
+      try{
+        const body = slug === state.slug ? stateToSceneBody() : {
+          title: sceneIndexCache[slug].title, teaches: sceneIndexCache[slug].teaches || "",
+          floor: sceneIndexCache[slug].floor ?? 0, exitAt: sceneIndexCache[slug].exitAt ?? null,
+          exitDeny: sceneIndexCache[slug].exitDeny || null, open: sceneIndexCache[slug].open || "",
+          law: sceneIndexCache[slug].law || ""
+        };
+        body.active = next;
+        await apiPutScene(slug, body);
+        sceneIndexCache[slug].active = next;
+        if (slug === state.slug) state.active = next;
+        log((next?"Activated ":"Deactivated ") + slug + ".", "ok");
+      }catch(err){
+        log("Toggle failed: " + err.message, "err");
+        alert("Couldn't update active state: " + err.message);
+      }
+      sw.style.pointerEvents = "";
       renderSceneList();
     });
   });
@@ -865,29 +886,36 @@ function renderSceneList(){
     });
   });
   wrap.querySelectorAll(".del-scene").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
+    btn.addEventListener("click", async ()=>{
       const slug = btn.dataset.slug;
-      if (!confirm("Delete scene '" + slug + "'? This cannot be undone from here.")) return;
+      if (!confirm("Delete scene '" + slug + "'? This cannot be undone.")) return;
       const typed = prompt("Type the scene slug to confirm permanent deletion:\n\n" + slug);
       if (typed !== slug){ alert("Slug didn't match — deletion cancelled."); return; }
-      delete sceneIndexCache[slug];
-      sceneIndexDirty = true;
-      document.getElementById("btnPushSceneIndex").disabled = false;
-      if (state.slug === slug){ state = defaultState(); render(); }
-      renderSceneList();
-      log("Staged deletion of '" + slug + "' — click 'Push scene list changes' to make it permanent.", "ok");
+      try{
+        await apiDeleteScene(slug);
+        delete sceneIndexCache[slug];
+        if (state.slug === slug){ state = defaultState(); render(); }
+        renderSceneList();
+        log("Deleted '" + slug + "' from the database.", "ok");
+      }catch(err){
+        log("Delete failed: " + err.message, "err");
+        alert("Delete failed: " + err.message);
+      }
     });
   });
 }
 
-function loadSceneForEditing(slug){
-  const raw = sceneIndexCache[slug];
-  const loaded = JSON.parse(JSON.stringify(raw));
-  if (!loaded.effects) loaded.effects = defaultEffects();
-  if (typeof loaded.active !== "boolean") loaded.active = true;
-  loaded.layers = (loaded.layers||[]).map(l=>({...l, dataUrl:null, dirty:false}));
-  loaded.npcs = (loaded.npcs||[]).map(n=>({...n, dataUrl:null, dirty:false}));
-  state = loaded;
+async function loadSceneForEditing(slug){
+  try{
+    log("Loading '" + slug + "' from the database...");
+    const graph = await apiGetScene(slug);
+    state = graphToState(graph);
+    sceneIndexCache[slug] = JSON.parse(JSON.stringify(state));
+  }catch(err){
+    log("Load failed: " + err.message, "err");
+    alert("Couldn't load '" + slug + "': " + err.message);
+    return;
+  }
   openCardIds = new Set(["start"]);
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
@@ -906,47 +934,16 @@ document.getElementById("btnNewScene").addEventListener("click", ()=>{
 });
 
 document.getElementById("btnLoadScenes").addEventListener("click", async ()=>{
-  if (!getPat()){ alert("Add a GitHub token first (bottom right button)."); document.getElementById("pat-modal").classList.add("open"); return; }
   try{
-    log("Loading scenes.json from GitHub...");
-    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${SCENES_PATH}`, {
-      headers: { "Authorization": "Bearer " + getPat(), "Accept": "application/vnd.github+json" }
-    });
-    if (res.status === 404){
-      sceneIndexCache = {};
-      log("No scenes.json exists yet on GitHub — starts empty.", "ok");
-    } else if (!res.ok){
-      throw new Error("GET scenes.json -> " + res.status);
-    } else {
-      const data = await res.json();
-      sceneIndexCache = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,"")))));
-      log("Loaded " + Object.keys(sceneIndexCache).length + " scene(s).", "ok");
-    }
-    sceneIndexDirty = false;
-    document.getElementById("btnPushSceneIndex").disabled = true;
+    log("Loading scene list from the database...");
+    const { scenes } = await apiListScenes();
+    sceneIndexCache = {};
+    for (const s of scenes) sceneIndexCache[s.id] = { title: s.title, active: s.active };
+    log("Loaded " + scenes.length + " scene(s).", "ok");
     renderSceneList();
   }catch(err){
     log("Load failed: " + err.message, "err");
-    alert("Couldn't load scenes.json: " + err.message);
-  }
-});
-
-document.getElementById("btnPushSceneIndex").addEventListener("click", async ()=>{
-  if (!sceneIndexCache) return;
-  const btn = document.getElementById("btnPushSceneIndex");
-  btn.disabled = true; btn.textContent = "Pushing…";
-  try{
-    const jsonStr = JSON.stringify(sceneIndexCache, null, 2);
-    const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
-    await ghPut(SCENES_PATH, b64, "KYR builder: scene list changes (active toggles / deletions)");
-    sceneIndexDirty = false;
-    log("Pushed scene list changes to GitHub.", "ok");
-  }catch(err){
-    log("Push failed: " + err.message, "err");
-    alert("Push failed: " + err.message);
-  }finally{
-    btn.textContent = "Push scene list changes";
-    btn.disabled = !sceneIndexDirty;
+    alert("Couldn't load scene list: " + err.message);
   }
 });
 
@@ -1021,7 +1018,18 @@ document.getElementById("importFile").addEventListener("change", async e=>{
 function getPat(){ return localStorage.getItem(LS_PAT) || ""; }
 document.getElementById("btnPat").addEventListener("click", ()=>{
   document.getElementById("patInput").value = getPat();
+  document.getElementById("d1authInput").value = getD1Auth();
   document.getElementById("pat-modal").classList.add("open");
+});
+document.getElementById("d1authSave").addEventListener("click", ()=>{
+  const v = document.getElementById("d1authInput").value.trim();
+  if (v) setD1Auth(v);
+  log("D1 builder key saved to this browser.", "ok");
+});
+document.getElementById("d1authClear").addEventListener("click", ()=>{
+  localStorage.removeItem(LS_D1AUTH);
+  document.getElementById("d1authInput").value = "";
+  log("D1 builder key cleared.", "ok");
 });
 document.getElementById("patClose").addEventListener("click", ()=>document.getElementById("pat-modal").classList.remove("open"));
 document.getElementById("patSave").addEventListener("click", ()=>{
@@ -1071,56 +1079,123 @@ function stripDataUrlPrefix(dataUrl){
   return dataUrl.split(",")[1];
 }
 
+// ---------------------------------------------------------------------------
+// D1 content API (scene/card graph — replaces scenes.json on GitHub)
+// ---------------------------------------------------------------------------
+function getD1Auth(){ return localStorage.getItem(LS_D1AUTH) || ""; }
+function setD1Auth(v){ if (v) localStorage.setItem(LS_D1AUTH, v); }
+async function apiCall(path, method, body){
+  const auth = getD1Auth();
+  if (method !== "GET" && !auth){
+    document.getElementById("pat-modal").classList.add("open");
+    document.getElementById("d1auth-row").scrollIntoView({block:"nearest"});
+    throw new Error("Add a D1 builder key first (bottom right button).");
+  }
+  const headers = { "Content-Type": "application/json" };
+  if (auth) headers["X-KYR-Auth"] = auth;
+  const res = await fetch(API_BASE + path, {
+    method, headers, body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error((data && data.error) ? data.error : (method + " " + path + " -> " + res.status));
+  return data;
+}
+async function apiListScenes(){ return apiCall("/api/kyr/graph/scenes", "GET"); }
+async function apiGetScene(slug){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug), "GET"); }
+async function apiPutScene(slug, body){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug), "PUT", body); }
+async function apiDeleteScene(slug){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug), "DELETE"); }
+async function apiPutCard(slug, cardId, body){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug) + "/cards/" + encodeURIComponent(cardId), "PUT", body); }
+async function apiDeleteCard(slug, cardId){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug) + "/cards/" + encodeURIComponent(cardId), "DELETE"); }
+async function apiPutLayer(slug, body){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug) + "/layers", "POST", body); }
+async function apiPutNpc(slug, body){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug) + "/npcs", "POST", body); }
+async function apiPutEffects(slug, body){ return apiCall("/api/kyr/graph/scenes/" + encodeURIComponent(slug) + "/effects", "PUT", body); }
+
+// Translate the builder's in-memory `state` shape into the wire shape the
+// Worker expects, and back. Kept as two small pure functions so the rest of
+// the builder's editing UI (which reads/writes `state` directly) needs no
+// other changes.
+function stateToSceneBody(){
+  return {
+    title: state.title, teaches: state.teaches || "", floor: state.floor ?? 0,
+    exitAt: state.exitAt ?? null, exitDeny: state.exitDeny || null,
+    open: state.open || "", law: state.law || "", active: !!state.active
+  };
+}
+function graphToState(graph){
+  return {
+    slug: graph.slug, title: graph.title, active: !!graph.active,
+    teaches: graph.teaches || "", floor: graph.floor ?? 0,
+    exitAt: graph.exitAt ?? null, exitDeny: graph.exitDeny || null,
+    open: graph.open || "", law: graph.law || "",
+    layers: (graph.layers||[]).map(l=>({ id:l.id, label:l.label, file:l.file, dataUrl:null, dirty:false })),
+    npcs: (graph.npcs||[]).map(n=>({ id:n.id, label:n.label, file:n.file, dataUrl:null, dirty:false, noImage:!n.file })),
+    effects: {
+      meters: (graph.effects && graph.effects.meters) || defaultEffects().meters,
+      credits: (graph.effects && graph.effects.credits) || defaultEffects().credits
+    },
+    cards: (graph.cards||[]).map(c=>({
+      id: c.id, type: c.type, layers: c.layers||[], layerRules: c.layerRules||[],
+      responses: (c.responses||[]).map(r=>({ speaker: r.speaker, texts: r.texts||[""], variantMode: r.variantMode||"sequence" })),
+      answers: (c.answers||[]).map(a=>({ id:a.id, text:a.text, goto:a.goto, effects:a.effects||{meters:{},credits:{}} }))
+    }))
+  };
+}
+
 document.getElementById("btnPush").addEventListener("click", async ()=>{
-  if (!getPat()){
-    alert("Add a GitHub token first (bottom right button).");
+  if (!getD1Auth()){
+    alert("Add a D1 builder key first (bottom right button).");
     document.getElementById("pat-modal").classList.add("open");
     return;
   }
   if (!state.slug){ alert("Set a scene slug first."); return; }
   const btn = document.getElementById("btnPush");
-  btn.disabled = true; btn.textContent = "Pushing…";
+  btn.disabled = true; btn.textContent = "Saving…";
   try{
-    for (const l of state.layers){
-      if (l.dirty && l.dataUrl){
-        log("Uploading layer " + l.file + "...");
-        await ghPut(LAYER_DIR + "/" + l.file, stripDataUrlPrefix(l.dataUrl), "KYR builder: upload layer " + l.file);
-        l.dirty = false;
-        log("Uploaded " + l.file, "ok");
-      }
+    // Art (layer/NPC images) still lives on GitHub/jsDelivr — only upload
+    // if a GitHub token is configured and something's actually dirty.
+    const dirtyLayers = state.layers.filter(l=>l.dirty && l.dataUrl);
+    const dirtyNpcs = state.npcs.filter(n=>n.dirty && n.dataUrl);
+    if ((dirtyLayers.length || dirtyNpcs.length) && !getPat()){
+      throw new Error("New layer/NPC art needs a GitHub token too (bottom right) — art files still live in the repo, not D1.");
     }
-    for (const n of state.npcs){
-      if (n.dirty && n.dataUrl){
-        log("Uploading NPC " + n.file + "...");
-        await ghPut(NPC_DIR + "/" + n.file, stripDataUrlPrefix(n.dataUrl), "KYR builder: upload npc " + n.file);
-        n.dirty = false;
-        log("Uploaded " + n.file, "ok");
-      }
+    for (const l of dirtyLayers){
+      log("Uploading layer " + l.file + " to GitHub...");
+      await ghPut(LAYER_DIR + "/" + l.file, stripDataUrlPrefix(l.dataUrl), "KYR builder: upload layer " + l.file);
+      l.dirty = false;
+      log("Uploaded " + l.file, "ok");
     }
-    log("Fetching current scenes.json...");
-    let sceneCollection = {};
-    const shaCheck = await ghGetSha(SCENES_PATH);
-    if (shaCheck){
-      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${SCENES_PATH}`, {
-        headers: { "Authorization": "Bearer " + getPat(), "Accept": "application/vnd.github+json" }
+    for (const n of dirtyNpcs){
+      log("Uploading NPC " + n.file + " to GitHub...");
+      await ghPut(NPC_DIR + "/" + n.file, stripDataUrlPrefix(n.dataUrl), "KYR builder: upload npc " + n.file);
+      n.dirty = false;
+      log("Uploaded " + n.file, "ok");
+    }
+
+    log("Saving scene '" + state.slug + "' to the database...");
+    await apiPutScene(state.slug, stateToSceneBody());
+
+    for (const l of state.layers) await apiPutLayer(state.slug, { id: l.id, label: l.label, file: l.file });
+    for (const n of state.npcs) await apiPutNpc(state.slug, { id: n.id, label: n.label, file: n.file || null });
+    await apiPutEffects(state.slug, { meters: state.effects.meters, credits: state.effects.credits });
+
+    for (const c of state.cards){
+      await apiPutCard(state.slug, c.id, {
+        type: c.type, layers: c.layers, layerRules: c.layerRules || [],
+        responses: c.responses, answers: c.answers
       });
-      const data = await res.json();
-      try{ sceneCollection = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,""))))); }catch(e){ sceneCollection = {}; }
     }
-    sceneCollection[state.slug] = buildExportJson();
-    const jsonStr = JSON.stringify(sceneCollection, null, 2);
-    const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
-    await ghPut(SCENES_PATH, b64, "KYR builder: update scene '" + state.slug + "'");
-    log("Pushed scenes.json (scene: " + state.slug + ")", "ok");
-    sceneIndexCache = sceneCollection;
+
+    log("Saved " + state.cards.length + " card(s) for '" + state.slug + "'.", "ok");
+    sceneIndexCache = sceneIndexCache || {};
+    sceneIndexCache[state.slug] = JSON.parse(JSON.stringify(state));
     saveLocal();
     render();
-    alert("Pushed to GitHub: " + REPO + "/" + SCENES_PATH);
+    alert("Saved '" + state.slug + "' to the live database.");
   }catch(err){
-    log("Push failed: " + err.message, "err");
-    alert("Push failed — see log at bottom of page.\n\n" + err.message);
+    log("Save failed: " + err.message, "err");
+    alert("Save failed — see log at bottom of page.\n\n" + err.message);
   }finally{
-    btn.disabled = false; btn.textContent = "Push scene to GitHub";
+    btn.disabled = false; btn.textContent = "Save scene to database";
   }
 });
 
