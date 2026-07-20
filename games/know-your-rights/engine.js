@@ -665,12 +665,12 @@ window.KnowYourRights.init = function (root, base) {
   }
   function paintGraphLayers(card){
     var g = GRAPHS[S.sc.id]; if (!g) return;
-    var show = {}; (card.layers||[]).forEach(function(k){ show[k]=true; });
-    (card.layerRules||[]).forEach(function(rule){ if (ruleMatches(rule.if)) show[rule.show]=true; });
+    var showSet = {}; (card.layers||[]).forEach(function(k){ showSet[k]=true; });
+    (card.layerRules||[]).forEach(function(rule){ if (ruleMatches(rule.if)) showSet[rule.show]=true; });
     /* Reuse the door art system's existing show()/doorImgs — same 10
        committed SVGs, just driven by rule evaluation instead of the
        old paintDoor()'s three hand-written if/else branches. */
-    if (S.sc.art === 'door'){ buildDoorLayers(); elLayers.hidden=false; visCanvas.style.display='none'; show(Object.keys(show)); }
+    if (S.sc.art === 'door'){ buildDoorLayers(); elLayers.hidden=false; visCanvas.style.display='none'; show(Object.keys(showSet)); }
   }
   function curGraphCard(){ var g=GRAPHS[S.sc.id]; return g ? g.cardsById[S.cardId] : null; }
   function renderGraphCard(){
