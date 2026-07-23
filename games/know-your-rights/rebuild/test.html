@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KYR v2 — door test harness</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  html,body{height:100%;margin:0;background:#05070d;}
+  #host{width:520px;max-width:100%;height:100vh;margin:0 auto;}
+</style>
+</head>
+<body>
+<div id="host" data-know-your-rights></div>
+
+<script>
+/* Markup mirrors loader.js MARKUP so the greenfield engine binds the same
+   data-el contract. Base points one dir up, where the door SVGs live. */
+var MARKUP = `<div class="pr-frame">
+  <div class="pr-screen" data-el="title">
+    <div class="pr-titlecard">
+      <div class="pr-big" data-el="titleTap">K&#8202;N&#8202;O&#8202;W</div>
+      <div class="pr-eyebrow">your rights</div>
+      <div class="pr-sub">Learn the lines. Know when to use them.</div>
+    </div>
+    <div class="pr-difflabel">Timer</div>
+    <div class="pr-diff" data-el="diffRow">
+      <button type="button" data-diff="easy">Easy<i>20s</i></button>
+      <button type="button" data-diff="medium">Medium<i>10s</i></button>
+      <button type="button" data-diff="hard">Hard<i>5s</i></button>
+      <button type="button" data-diff="practice">Practice<i>off</i></button>
+    </div>
+    <div class="pr-menulist" data-el="menuList"></div>
+    <div class="pr-menufoot">Educational. Not legal advice.</div>
+  </div>
+  <div class="pr-screen" data-el="game" hidden>
+    <div class="pr-hud">
+      <button class="pr-rec" data-el="btnRec" type="button"><i class="dot"></i><span>REC</span></button>
+      <span class="pr-scene" data-el="sceneName"></span>
+      <span class="pr-dots" data-el="beatDots"></span>
+      <button class="pr-hud-btn" data-el="btnHint" type="button">Hint</button>
+      <button class="pr-x" data-el="btnQuit" type="button" aria-label="Back to title">&#215;</button>
+    </div>
+    <div class="pr-view"><canvas data-el="canvas" width="160" height="144" aria-hidden="true"></canvas><div class="pr-layers" data-el="layers" hidden aria-hidden="true"></div></div>
+    <div class="pr-timer">
+      <span class="pr-count" data-el="count"></span>
+      <div class="pr-bar-track"><div class="pr-bar" data-el="bar"></div></div>
+    </div>
+    <div class="pr-box" data-el="box">
+      <div class="pr-line">
+        <span class="pr-speaker" data-el="speaker">IMMIGRATION</span>
+        <p class="pr-text" data-el="text"></p>
+        <span class="pr-more" data-el="more" hidden>&#9660;</span>
+      </div>
+      <div class="pr-opts" data-el="opts" hidden></div>
+    </div>
+  </div>
+  <div class="pr-screen pr-end" data-el="result" hidden>
+    <div class="gm-stamp" data-el="stamp"></div>
+    <div class="gm-truth" data-el="truth"></div>
+    <div class="pr-card">
+      <div class="pr-cardhead">What you could have done</div>
+      <ul class="pr-list" data-el="list"></ul>
+    </div>
+    <div class="gm-plain" data-el="plain"></div>
+    <div class="gm-reward" data-el="reward" hidden></div>
+    <div class="pr-endbtns">
+      <button class="gm-btn" data-el="btnReplay" type="button">Play it again</button>
+      <button class="gm-btn ghost" data-el="btnTitle" type="button">Title</button>
+    </div>
+  </div>
+</div>`;
+</script>
+<script src="./engine.js"></script>
+<script>
+(async function(){
+  var host=document.getElementById('host');
+  host.classList.add('gm-root','pr','pr-ready');
+  host.innerHTML=MARKUP;
+  var door=await fetch('./door.json').then(function(r){return r.json();});
+  window.KnowYourRights.init(host, '../', { scenes: { door: door } });
+  window.__ready=true;
+})();
+</script>
+</body>
+</html>

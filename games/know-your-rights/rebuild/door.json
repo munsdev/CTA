@@ -1,0 +1,168 @@
+{
+  "slug": "door",
+  "schema": 2,
+  "meta": {
+    "name": "At the door",
+    "art": "door",
+    "teaches": "Consent is the whole game.",
+    "floor": 0,
+    "exitAt": null,
+    "exitDeny": null,
+    "open": "Someone is knocking. You are on the inside of your own front door.",
+    "law": "A warrant signed by an immigration officer does not let anyone in. Only a judge can sign one that does — and they almost never do.",
+    "active": true,
+    "sortOrder": 0,
+    "forcedEntry": {
+      "chance": 0.20,
+      "setFlags": { "door": "open" },
+      "text": "They came through the door. You never opened it, you never consented, and the paper they carried was signed by an immigration officer, not a judge. Write down the time. Write down what it said. A lawyer starts there."
+    }
+  },
+  "art": {
+    "layers": [
+      { "key": "sky", "file": "0-sky.svg" },
+      { "key": "floor", "file": "1-floor.svg" },
+      { "key": "agentDoor1", "file": "2-agent-1-at-door.svg" },
+      { "key": "agentDoor2", "file": "3-agent-2-at-door.svg" },
+      { "key": "agentWin", "file": "2-agent-4-looking-in-window.svg" },
+      { "key": "agentWarrant", "file": "2-agent-3-papers-at-window.svg" },
+      { "key": "walls", "file": "4-walls.svg" },
+      { "key": "doorClosed", "file": "5-door-closed.svg" },
+      { "key": "doorCracked", "file": "5-door-cracked.svg" },
+      { "key": "doorOpen", "file": "5-door-open.svg" }
+    ],
+    "base": ["sky", "floor", "walls"],
+    "rules": [
+      { "if": { "flags": { "door": "closed", "warrantShown": false } }, "show": "agentWin" },
+      { "if": { "flags": { "door": "closed", "warrantShown": true } }, "show": "agentWarrant" },
+      { "if": { "flags": { "door": { "not": "closed" } } }, "show": "agentDoor1" },
+      { "if": { "flags": { "door": { "not": "closed" } }, "meters": { "detain": { "gte": 30 } } }, "show": "agentDoor2" },
+      { "if": { "flags": { "door": "closed" } }, "show": "doorClosed" },
+      { "if": { "flags": { "door": "cracked" } }, "show": "doorCracked" },
+      { "if": { "flags": { "door": "open" } }, "show": "doorOpen" }
+    ]
+  },
+  "npcs": [
+    { "id": "agent", "label": "Agent", "file": null }
+  ],
+  "meters": [
+    { "key": "detain", "label": "Detainment risk", "max": 100, "fatalAt": 100, "primary": true }
+  ],
+  "flags": {
+    "door": "closed",
+    "warrantShown": false
+  },
+  "credits": [
+    { "key": "record", "label": "Started recording" },
+    { "key": "closed", "label": "Kept the door closed" },
+    { "key": "judge", "label": "Asked if a judge signed it" },
+    { "key": "slide", "label": "Asked them to slide it under the door" },
+    { "key": "read", "label": "Read the paper before deciding" },
+    { "key": "refused", "label": "Said “I do not consent”" },
+    { "key": "silent", "label": "Stayed silent" },
+    { "key": "lawyer", "label": "Asked for a lawyer" }
+  ],
+  "start": "door-r1",
+  "cards": {
+    "door-r1": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["Federal agents. Open the door.", "We know you are in there. Open up."] }
+      ],
+      "answers": [
+        { "text": "Stay where you are. Talk through the door.", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"] },
+        { "text": "Open it a crack, just to see who it is.", "goto": "door-ruse1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true, "flags": { "door": "cracked" } },
+        { "text": "Open the door. Refusing looks guilty.", "goto": "end-fatal", "grade": "fatal", "why": "You let them in. Nothing after that was a search. It was a visit you agreed to." }
+      ]
+    },
+    "door-ruse1": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["He puts a boot in the gap. “Since it is already open—”", "A hand is on the door now. “Just step back, we will come to you.”"] }
+      ],
+      "answers": [
+        { "text": "Push it shut. “I did not consent to that.”", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"], "flags": { "door": "closed" } },
+        { "text": "Step back and let him follow you in.", "goto": "end-fatal", "grade": "fatal", "why": "A boot in a doorway is not a search warrant. But you treated it like an invitation, and that is all it takes." }
+      ]
+    },
+    "door-r2": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["We have a warrant.", "There is a warrant. Open up."] }
+      ],
+      "answers": [
+        { "text": "“Is it signed by a judge?”", "goto": "door-r3", "grade": "shield", "meters": { "detain": 0 }, "credits": ["judge"] },
+        { "text": "Ask who they are looking for.", "goto": "door-r3", "grade": "soft", "meters": { "detain": 12 } },
+        { "text": "“Then come in.”", "goto": "end-fatal", "grade": "fatal", "why": "You said yes. Consent is the only key they needed." }
+      ]
+    },
+    "door-r3": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["I told you. It has your name on it.", "It is a federal warrant. That is all you need to know."] }
+      ],
+      "answers": [
+        { "text": "“Slide it under the door, or show me in the window.”", "goto": "door-r4", "grade": "shield", "meters": { "detain": 0 }, "credits": ["slide"], "flags": { "warrantShown": true } },
+        { "text": "Tell them your name so they can check.", "goto": "door-name1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
+        { "text": "Open the door far enough to look at it.", "goto": "end-fatal", "grade": "fatal", "why": "The door came open. From there it was never going to close." }
+      ]
+    },
+    "door-name1": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["“Thank you. Now open the door, this is easier for you.”", "“Good. Confirmed. Open up.”"] }
+      ],
+      "answers": [
+        { "text": "“Confirming a name is not consent. I still do not consent.”", "goto": "door-r4", "grade": "shield", "meters": { "detain": 0 }, "credits": ["refused"] },
+        { "text": "“Fine. You have my name, open up.”", "goto": "end-fatal", "grade": "fatal", "why": "You gave them a fact and then gave them the door. The name was never the leverage — your next word was." }
+      ]
+    },
+    "door-r4": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["Last chance. Open it or we open it for you. Do not make this hard.", "Every minute you stall goes in the report. Open the door."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["He holds the paper up to the window. The header reads DEPARTMENT OF HOMELAND SECURITY. At the bottom: Field Office Director. No judge ever saw it."] }
+      ],
+      "answers": [
+        { "text": "“I do not consent to entry.”", "goto": "door-r5", "grade": "shield", "meters": { "detain": 0 }, "credits": ["refused"] },
+        { "text": "Tell them nobody is home.", "goto": "door-bluff1", "grade": "severe", "meters": { "detain": 45 }, "damaged": true },
+        { "text": "Unlock it. They said they would break it.", "goto": "end-fatal", "grade": "fatal", "why": "They did not break it. You opened it." }
+      ]
+    },
+    "door-bluff1": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["“We can hear the TV. Open the door.”", "“Someone is in there. Open it now.”"] }
+      ],
+      "answers": [
+        { "text": "Say nothing further.", "goto": "door-r5", "grade": "shield", "meters": { "detain": 0 }, "credits": ["silent"] },
+        { "text": "“Okay, fine, I am home.” Open the door.", "goto": "end-fatal", "grade": "fatal", "why": "The lie bought you nothing and cost you credibility. Silence would have cost you nothing either — and given them nothing to catch." }
+      ]
+    },
+    "door-r5": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["There. Warrant. Now open the door.", "You have seen it. Open the door."] }
+      ],
+      "answers": [
+        { "text": "“That is not signed by a judge. I do not consent.”", "goto": "door-r6", "grade": "shield", "meters": { "detain": 0 }, "credits": ["read", "refused"] },
+        { "text": "“That is my name. I am the one you want.”", "goto": "door-r6", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
+        { "text": "It looks official. Unlock the door.", "goto": "end-fatal", "grade": "fatal", "why": "It said Department of Homeland Security at the top. A judge never saw it." }
+      ]
+    },
+    "door-r6": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["Where were you born?", "You got papers in there? Just tell me where you were born."] }
+      ],
+      "answers": [
+        { "text": "Say nothing.", "goto": "door-r7", "grade": "shield", "meters": { "detain": 0 }, "credits": ["silent"] },
+        { "text": "“I have lived here twelve years.”", "goto": "door-r7", "grade": "soft", "meters": { "detain": 12 } },
+        { "text": "Answer the question.", "goto": "door-r7", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true }
+      ]
+    },
+    "door-r7": {
+      "responses": [
+        { "speaker": "agent", "mode": "random", "texts": ["Come out here and we will clear this up in five minutes.", "Step outside. It is easier for everyone."] }
+      ],
+      "answers": [
+        { "text": "“I want a lawyer. I am not opening the door.”", "goto": "end", "grade": "shield", "meters": { "detain": 0 }, "credits": ["lawyer"] },
+        { "text": "“Come back with a warrant a judge signed.”", "goto": "end", "grade": "steady", "meters": { "detain": -8 } },
+        { "text": "Step outside.", "goto": "end-fatal", "grade": "fatal", "why": "On the porch you are not in your home. The porch was the whole plan." }
+      ]
+    },
+    "end": { "type": "end" },
+    "end-fatal": { "type": "end", "fatal": true, "setFlags": { "door": "open" } }
+  }
+}
