@@ -4,10 +4,11 @@
 
    ONE engine. Every scene is a graph of cards (schema v2, see
    rebuild/ARCHITECTURE.md + door.json). No legacy beats[], no procedural
-   canvas, no per-scene special-casing. Art is SVG layers composited by
-   rules evaluated against generic scene state (meters + flags). Content is
-   one JSON object per scene, fetched whole from the kyr-content Worker,
-   cached then refreshed.
+   canvas, no per-scene special-casing. Art is backdrops: each scene has a
+   library of complete pre-made images, and every card names the one it
+   shows — no layer compositing, no rules, no scene flags. Content is one
+   JSON object per scene, fetched whole from the kyr-content Worker, cached
+   then refreshed.
 
    MECHANIC (unchanged from the original build):
    - Two outcomes: "do they take you?" (the primary meter, hidden, rolled
@@ -104,35 +105,23 @@ window.KnowYourRights.init = function (root, base, opts) {
       var card=curCard(); if(card && card.answers && card.answers.length) return chooseAnswer(card.answers[0]); return; }
     say(pick(['“I am not going to ask again.”','“Answer me. Now.”','“You are running out of time.”']), false, renderCard); }
 
-  /* ============================ ART LAYERS ========================== */
-  /* Build one <img> per declared layer, keyed by layer.key; show/hide by
-     the current card's base layers + matching rules. Scene-agnostic. */
-  var layerImgs={}, layerBuiltFor=null;
-  function buildLayers(scene){
-    if (layerBuiltFor === scene.slug) return;
-    layerBuiltFor = scene.slug; layerImgs = {}; elLayers.innerHTML='';
+  /* ============================ BACKDROPS =========================== */
+  /* One <img> per declared backdrop, keyed by backdrop.id; each is a
+     complete pre-made picture. A card names one backdrop and we show it.
+     No compositing, no layer rules, no scene flags — a card = a picture. */
+  var bdImgs={}, bdBuiltFor=null;
+  function buildBackdrops(scene){
+    if (bdBuiltFor === scene.slug) return;
+    bdBuiltFor = scene.slug; bdImgs = {}; elLayers.innerHTML='';
     var stack=document.createElement('div'); stack.className='pr-stack';
-    (scene.art.layers||[]).forEach(function(l){
-      var im=document.createElement('img'); im.src=base + l.file; im.alt=''; im.decoding='async';
-      im.className='hide'; stack.appendChild(im); layerImgs[l.key]=im;
+    (scene.backdrops||[]).forEach(function(bd){
+      var im=document.createElement('img'); im.src=base + bd.file; im.alt=''; im.decoding='async';
+      im.className='hide'; stack.appendChild(im); bdImgs[bd.id]=im;
     });
     elLayers.appendChild(stack);
   }
-  function ruleMatch(cond){
-    if (cond.flags) for (var f in cond.flags){ var want=cond.flags[f], have=S.flags[f];
-      if (want && typeof want==='object' && 'not' in want){ if (have===want.not) return false; }
-      else if (have!==want) return false; }
-    if (cond.meters) for (var m in cond.meters){ var c=cond.meters[m], v=S.meters[m]||0;
-      if ('gte' in c && !(v>=c.gte)) return false; if ('lte' in c && !(v<=c.lte)) return false; }
-    return true;
-  }
-  function paintLayers(card){
-    var art=S.scene.art, show={};
-    (card.layers || art.base || []).forEach(function(k){ show[k]=true; });
-    (art.rules || []).forEach(function(r){ if (ruleMatch(r.if)) show[r.show]=true; });
-    (card.rules || []).forEach(function(r){ if (ruleMatch(r.if)) show[r.show]=true; });
-    for (var k in layerImgs) layerImgs[k].classList.toggle('hide', !show[k]);
-  }
+  function showBackdrop(id){ for (var k in bdImgs) bdImgs[k].classList.toggle('hide', k!==id); }
+  function showBackdropFor(card){ if (card && card.backdrop) showBackdrop(card.backdrop); }
 
   /* ============================ GAMEPLAY ============================ */
   function curCard(){ return S ? S.scene.cards[S.cardId] : null; }
@@ -153,13 +142,12 @@ window.KnowYourRights.init = function (root, base, opts) {
   function startScene(slug){
     var scene=SCENES[slug]; if (!scene){ return toTitle(); }   // not loaded yet — fail open to title
     var meters={}; (scene.meters||[]).forEach(function(m){ meters[m.key] = m.primary ? (scene.meta.floor||0) : 0; });
-    var flags={}; for (var f in (scene.flags||{})) flags[f]=scene.flags[f];
-    S = { scene:scene, slug:slug, cardId:scene.start, meters:meters, flags:flags,
+    S = { scene:scene, slug:slug, cardId:scene.start, meters:meters,
           credits:{}, damaged:false, recording:false, over:false, pathLen:0, cardsSeen:{} };
     elTitle.hidden=true; elResult.hidden=true; elGame.hidden=false;
     elSceneName.textContent=scene.meta.name; elRec.className='pr-rec';
-    buildLayers(scene); elLayers.hidden=false;
-    var first=curCard(); if (first) paintLayers(first);   // paint before the opening line, no black flash
+    buildBackdrops(scene); elLayers.hidden=false;
+    var first=curCard(); if (first) showBackdropFor(first);   // show before the opening line, no black flash
     drawDots();
     say(scene.meta.open, true, renderCard);
   }
@@ -168,7 +156,7 @@ window.KnowYourRights.init = function (root, base, opts) {
     var card=curCard();
     if (!card){ return finish(); }
     if (card.type==='end'){ return finish(!!card.fatal); }
-    paintLayers(card);
+    showBackdropFor(card);
     S.cardsSeen[S.cardId]=true; S.pathLen++; drawDots();
     var resp=(card.responses||[])[0];
     if (!resp){ return showChoices(card); }
@@ -200,21 +188,18 @@ window.KnowYourRights.init = function (root, base, opts) {
     // effects
     (a.credits||[]).forEach(function(k){ S.credits[k]=true; });
     if (a.damaged) S.damaged=true;
-    if (a.flags) for (var f in a.flags) S.flags[f]=a.flags[f];
     if (a.meters) applyMeters(a.meters);
-    // fatal ends immediately
+    // fatal ends immediately — show the end card's backdrop (e.g. door open)
+    // behind the `why` line, then finish detained.
     if (a.grade==='fatal'){ var pk2=primaryKey(); S.meters[pk2]=maxOf(pk2);
       S.cardId = a.goto || S.cardId;
-      var endCard = curCard();
-      if (endCard && endCard.setFlags) for (var g in endCard.setFlags) S.flags[g]=endCard.setFlags[g];
-      paintLayers({});                      // recomposite base+rules under the fatal end-state (e.g. door open)
+      showBackdropFor(curCard());
       return say(a.why||'', true, function(){ finish(true); }); }
     if (!a.goto){ return finish(); }
-    S.cardId=a.goto; repaintCurrent();
+    S.cardId=a.goto; showBackdropFor(curCard());
     if (a.why){ return say(a.why, true, renderCard); }
     renderCard();
   }
-  function repaintCurrent(){ var c=curCard(); if (c && c.type!=='end') paintLayers(c); }
 
   function drawDots(){ elDots.innerHTML='';
     var n=Math.min(S.pathLen||0, 12);
@@ -241,7 +226,6 @@ window.KnowYourRights.init = function (root, base, opts) {
     }
     var key = detained ? (S.damaged?'damaged':'intact') : (S.damaged?'lucky':'clean');
     var e = ENDINGS[key] || ENDINGS.clean;
-    if (forced){ if (fe.setFlags) for (var f in fe.setFlags) S.flags[f]=fe.setFlags[f]; paintLayers({}); }
     elGame.hidden=true; elResult.hidden=false;
     elStamp.textContent=e.stamp; elStamp.className='gm-stamp '+(detained?'bad':'ok');
     var truth = forced ? fe.text : e.truth; if (S.recording) truth += '\n\n' + CONFIG.recordedNote;

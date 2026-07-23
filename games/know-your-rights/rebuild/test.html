@@ -78,7 +78,7 @@ var MARKUP = `<div class="pr-frame">
   host.classList.add('gm-root','pr','pr-ready');
   host.innerHTML=MARKUP;
   var door=await fetch('./door.json').then(function(r){return r.json();});
-  window.KnowYourRights.init(host, '../', { scenes: { door: door } });
+  window.KnowYourRights.init(host, '', { scenes: { door: door } });
   window.__ready=true;
 })();
 </script>

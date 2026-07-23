@@ -92,13 +92,11 @@ await backToTitle();
 await startDoor();
 await pickAnswer('Open it a crack');             // r1 harmful (damaged, door cracked) -> ruse1
 {
-  // after the crack, the door art should be the cracked door + agent at door
+  // after the crack, exactly one backdrop shows: the cracked-two-agents look
   const mid = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-el="layers"] img'))
       .filter(im => !im.classList.contains('hide')).map(im => im.getAttribute('src').split('/').pop()));
-  ok('CRACK shows cracked door art', mid.includes('5-door-cracked.svg'), mid.join(','));
-  ok('CRACK shows agent-at-door (agentDoor1)', mid.includes('2-agent-1-at-door.svg'), mid.join(','));
-  ok('CRACK risk>=30 pulls agentDoor2', mid.includes('3-agent-2-at-door.svg'), mid.join(','));
+  ok('CRACK shows the cracked-two-agents backdrop', mid.length === 1 && mid[0] === 'cracked-two-agents.png', mid.join(','));
 }
 await pickAnswer('Push it shut');                // ruse1 shield -> r2 (door closed again)
 await pickAnswer('“Then come in.”');             // r2 fatal -> end-fatal
@@ -106,7 +104,7 @@ await pickAnswer('“Then come in.”');             // r2 fatal -> end-fatal
   const e = await readEnd();
   ok('DAMAGED+FATAL stamp = DETAINED', e.stamp === 'DETAINED', e.stamp);
   ok('DAMAGED truth is damaged line', e.truth.startsWith('They took you, and they took what you gave'), e.truth.slice(0,40));
-  ok('FATAL door swings open (art)', e.layers.includes('5-door-open.svg'), e.layers.join(','));
+  ok('FATAL shows the open-two-agents backdrop', e.layers.length === 1 && e.layers[0] === 'open-two-agents.png', e.layers.join(','));
 }
 await backToTitle();
 

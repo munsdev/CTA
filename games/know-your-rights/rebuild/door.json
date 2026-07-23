@@ -14,44 +14,22 @@
     "sortOrder": 0,
     "forcedEntry": {
       "chance": 0.20,
-      "setFlags": { "door": "open" },
+      "backdrop": "open-two-agents",
       "text": "They came through the door. You never opened it, you never consented, and the paper they carried was signed by an immigration officer, not a judge. Write down the time. Write down what it said. A lawyer starts there."
     }
   },
-  "art": {
-    "layers": [
-      { "key": "sky", "file": "0-sky.svg" },
-      { "key": "floor", "file": "1-floor.svg" },
-      { "key": "agentDoor1", "file": "2-agent-1-at-door.svg" },
-      { "key": "agentDoor2", "file": "3-agent-2-at-door.svg" },
-      { "key": "agentWin", "file": "2-agent-4-looking-in-window.svg" },
-      { "key": "agentWarrant", "file": "2-agent-3-papers-at-window.svg" },
-      { "key": "walls", "file": "4-walls.svg" },
-      { "key": "doorClosed", "file": "5-door-closed.svg" },
-      { "key": "doorCracked", "file": "5-door-cracked.svg" },
-      { "key": "doorOpen", "file": "5-door-open.svg" }
-    ],
-    "base": ["sky", "floor", "walls"],
-    "rules": [
-      { "if": { "flags": { "door": "closed", "warrantShown": false } }, "show": "agentWin" },
-      { "if": { "flags": { "door": "closed", "warrantShown": true } }, "show": "agentWarrant" },
-      { "if": { "flags": { "door": { "not": "closed" } } }, "show": "agentDoor1" },
-      { "if": { "flags": { "door": { "not": "closed" } }, "meters": { "detain": { "gte": 30 } } }, "show": "agentDoor2" },
-      { "if": { "flags": { "door": "closed" } }, "show": "doorClosed" },
-      { "if": { "flags": { "door": "cracked" } }, "show": "doorCracked" },
-      { "if": { "flags": { "door": "open" } }, "show": "doorOpen" }
-    ]
-  },
+  "backdrops": [
+    { "id": "closed-window", "title": "Door shut, agent at window", "file": "backdrops/closed-window.png" },
+    { "id": "closed-warrant", "title": "Door shut, agent holding papers", "file": "backdrops/closed-warrant.png" },
+    { "id": "cracked-two-agents", "title": "Door cracked, two agents", "file": "backdrops/cracked-two-agents.png" },
+    { "id": "open-two-agents", "title": "Door open, two agents", "file": "backdrops/open-two-agents.png" }
+  ],
   "npcs": [
-    { "id": "agent", "label": "Agent", "file": null }
+    { "id": "agent", "label": "Agent" }
   ],
   "meters": [
     { "key": "detain", "label": "Detainment risk", "max": 100, "fatalAt": 100, "primary": true }
   ],
-  "flags": {
-    "door": "closed",
-    "warrantShown": false
-  },
   "credits": [
     { "key": "record", "label": "Started recording" },
     { "key": "closed", "label": "Kept the door closed" },
@@ -65,25 +43,28 @@
   "start": "door-r1",
   "cards": {
     "door-r1": {
+      "backdrop": "closed-window",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["Federal agents. Open the door.", "We know you are in there. Open up."] }
       ],
       "answers": [
         { "text": "Stay where you are. Talk through the door.", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"] },
-        { "text": "Open it a crack, just to see who it is.", "goto": "door-ruse1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true, "flags": { "door": "cracked" } },
+        { "text": "Open it a crack, just to see who it is.", "goto": "door-ruse1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
         { "text": "Open the door. Refusing looks guilty.", "goto": "end-fatal", "grade": "fatal", "why": "You let them in. Nothing after that was a search. It was a visit you agreed to." }
       ]
     },
     "door-ruse1": {
+      "backdrop": "cracked-two-agents",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["He puts a boot in the gap. “Since it is already open—”", "A hand is on the door now. “Just step back, we will come to you.”"] }
       ],
       "answers": [
-        { "text": "Push it shut. “I did not consent to that.”", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"], "flags": { "door": "closed" } },
+        { "text": "Push it shut. “I did not consent to that.”", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"] },
         { "text": "Step back and let him follow you in.", "goto": "end-fatal", "grade": "fatal", "why": "A boot in a doorway is not a search warrant. But you treated it like an invitation, and that is all it takes." }
       ]
     },
     "door-r2": {
+      "backdrop": "closed-window",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["We have a warrant.", "There is a warrant. Open up."] }
       ],
@@ -94,16 +75,18 @@
       ]
     },
     "door-r3": {
+      "backdrop": "closed-window",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["I told you. It has your name on it.", "It is a federal warrant. That is all you need to know."] }
       ],
       "answers": [
-        { "text": "“Slide it under the door, or show me in the window.”", "goto": "door-r4", "grade": "shield", "meters": { "detain": 0 }, "credits": ["slide"], "flags": { "warrantShown": true } },
+        { "text": "“Slide it under the door, or show me in the window.”", "goto": "door-r4", "grade": "shield", "meters": { "detain": 0 }, "credits": ["slide"] },
         { "text": "Tell them your name so they can check.", "goto": "door-name1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
         { "text": "Open the door far enough to look at it.", "goto": "end-fatal", "grade": "fatal", "why": "The door came open. From there it was never going to close." }
       ]
     },
     "door-name1": {
+      "backdrop": "closed-window",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["“Thank you. Now open the door, this is easier for you.”", "“Good. Confirmed. Open up.”"] }
       ],
@@ -113,6 +96,7 @@
       ]
     },
     "door-r4": {
+      "backdrop": "closed-warrant",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["Last chance. Open it or we open it for you. Do not make this hard.", "Every minute you stall goes in the report. Open the door."] },
         { "speaker": null, "mode": "narration-on-shield", "texts": ["He holds the paper up to the window. The header reads DEPARTMENT OF HOMELAND SECURITY. At the bottom: Field Office Director. No judge ever saw it."] }
@@ -124,6 +108,7 @@
       ]
     },
     "door-bluff1": {
+      "backdrop": "closed-warrant",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["“We can hear the TV. Open the door.”", "“Someone is in there. Open it now.”"] }
       ],
@@ -133,6 +118,7 @@
       ]
     },
     "door-r5": {
+      "backdrop": "closed-warrant",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["There. Warrant. Now open the door.", "You have seen it. Open the door."] }
       ],
@@ -143,6 +129,7 @@
       ]
     },
     "door-r6": {
+      "backdrop": "closed-warrant",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["Where were you born?", "You got papers in there? Just tell me where you were born."] }
       ],
@@ -153,6 +140,7 @@
       ]
     },
     "door-r7": {
+      "backdrop": "closed-warrant",
       "responses": [
         { "speaker": "agent", "mode": "random", "texts": ["Come out here and we will clear this up in five minutes.", "Step outside. It is easier for everyone."] }
       ],
@@ -163,6 +151,6 @@
       ]
     },
     "end": { "type": "end" },
-    "end-fatal": { "type": "end", "fatal": true, "setFlags": { "door": "open" } }
+    "end-fatal": { "type": "end", "fatal": true, "backdrop": "open-two-agents" }
   }
 }

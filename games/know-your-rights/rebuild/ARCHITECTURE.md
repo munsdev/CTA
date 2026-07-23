@@ -32,19 +32,18 @@ The old stack carried three structural problems, none of them in the *mechanic*
 
 ## 1. The frame (decided)
 
-- **One engine. Graph-only. SVG-only. Repo = source of truth.**
+- **One engine. Graph-only. Backdrop art. Repo = source of truth.**
 - **Legacy scenes cut.** car/street/store/site removed from the engine. Their
   writing is preserved (D1 + old `engine.js` history) and each will be rebuilt as
-  a proper graph+SVG scene when its art is drawn and its legal claims verified.
-  Door is the only ship-quality scene and ships alone, clean.
+  a proper graph scene, with its own backdrops, when its art is drawn and its
+  legal claims verified. Door is the only ship-quality scene and ships alone, clean.
 - **Content is one JSON object per scene** (`schema: 2`), stored as a single
   `scene_json` row in D1, served whole in one query, consumed directly by the
   engine, edited as one object by the builder. See `door.json` for the canonical
   shape and `#3`.
 - **Engine is greenfield.** New `engine.js` written from scratch against schema
   v2 — no `beats[]`, no `pixelize`/LUT/palette/`officer()` canvas machinery, no
-  `if (S.sc.art==='door')` special-casing. Meters and scene-flags are generic so
-  scene #2 needs zero engine edits.
+  `if (S.sc.art==='door')` special-casing.
 - **Preserved from the old build (mechanic + plumbing, not architecture):**
   the four endings (`clean`/`lucky`/`intact`/`damaged`), risk floor + case-intact
   split, fatal-as-the-reasonable-choice, the escape hatch, RECORD/timer/hint HUD,
@@ -52,36 +51,70 @@ The old stack carried three structural problems, none of them in the *mechanic*
   cache-then-refresh content load, the day/night title choice **as a palette axis
   only** (no gameplay effect).
 
-## 2. What generalized (the door-specific hacks that are now engine-generic)
+## 2. Art model: backdrops, not layer compositing (revised after first pass)
 
-| Old (door-hardcoded) | New (generic) |
+The first pass of this rebuild generalized the door's layer/rules/flags system
+(full-frame SVG layers, toggled by conditions evaluated against scene state)
+into engine-generic primitives. That worked, but Casey's read on it was right:
+composing a picture out of conditional logic is a programming task, not an
+authoring one. **Replaced wholesale** with a flat model:
+
+- A scene declares a **backdrop library** — a handful of complete, pre-made
+  images (SVG or PNG), each with an id and a title.
+- Every **card** names exactly **one backdrop**. That's the whole art story for
+  that moment. No compositing, no conditions, no scene state driving what's
+  on screen.
+- The engine's entire art responsibility is: build one `<img>` per backdrop,
+  show the one the current card names, hide the rest.
+
+This removes `art.layers`/`art.base`/`art.rules`, per-card `layers`/`rules`
+overrides, and **scene `flags` entirely** — nothing in schema v2 reads or
+writes scene state to decide what's drawn anymore. `warrantShown` and
+`doorState`, the two things flags existed for, are now just which backdrop a
+card points at (`closed-warrant`, `cracked-two-agents`, etc.) — decided once,
+by hand, when the card is authored.
+
+**Consequence for the door specifically:** the two moments that used to be
+*reactive* (the second agent appearing once risk climbs past 30, the warrant
+swap) are now **fixed per card** — each door card was assigned the backdrop
+that matches what actually happens on that path. Four backdrops cover the
+whole scene: `closed-window`, `closed-warrant`, `cracked-two-agents`,
+`open-two-agents`. The first three were composited from the original layered
+SVGs (`rebuild/backdrops/*.png`) as a one-time bridge so the door keeps working
+under the new model without new art; any *new* scene just uploads its own
+backdrop images directly — no compositing step required.
+
+**Nomenclature (binding — use these terms everywhere: code, UI, docs):**
+
+| Term | Means |
 |---|---|
-| `S.doorState`, `S.warrantShown` baked into the loop | scene-declared `flags` map with initial values; answers set `flags`; rules read `flags` |
-| `S.risk` aliased to a fake `detain` meter | first-class `meters[]`; the one marked `primary:true` is the end-of-scene roll |
-| layer rules duplicated on every card | `art.base` + `art.rules` at scene level; a card may override with its own `layers`/`rules` but the door needs none |
-| `paintGraphLayers` gated on `art==='door'` | any scene with an `art.layers` set renders through the same SVG compositor |
-| `door:'warrant'` pseudo-state | just `flags:{ warrantShown:true }` |
-| no-op `start` "Begin" bridge card | scene declares `start` card id directly |
+| **Scene** | One whole situation (e.g. "At the door"). |
+| **Backdrop** | One complete picture belonging to a scene, in its picture library. |
+| **Card** | One moment in a scene — the line(s) + answer options. Names one backdrop. |
+| **Answer** | A player choice on a card. |
+| **Meter** | Hidden number, rolled at the end (e.g. `detain`). |
+| **Credit** | A result-screen checklist item. |
 
 ## 3. Scene-graph schema v2 (the contract)
 
 One object per scene. Full worked example: `door.json` (validated: 12 cards, all
-reachable, all `goto`s resolve, all keys declared).
+reachable, all `goto`s resolve, all backdrop/credit/meter references resolve).
 
 ```
 {
   slug, schema:2,
-  meta:   { name, art, teaches, floor, exitAt, exitDeny, open, law, active, sortOrder },
-  art:    { layers:[{key,file}], base:[key…], rules:[{ if, show }] },
-  npcs:   [{ id, label, file }],
-  meters: [{ key, label, max, fatalAt, primary }],
-  flags:  { <name>: <initialValue> },
-  credits:[{ key, label }],                // = end-screen checklist keys
-  start:  <cardId>,
-  cards:  { <cardId>: Card }
+  meta:      { name, art, teaches, floor, exitAt, exitDeny, open, law, active, sortOrder,
+               forcedEntry?: { chance, backdrop, text } },
+  backdrops: [{ id, title, file }],
+  npcs:      [{ id, label }],
+  meters:    [{ key, label, max, fatalAt, primary }],
+  credits:   [{ key, label }],             // = end-screen checklist keys
+  start:     <cardId>,
+  cards:     { <cardId>: Card }
 }
 
 Card = { type?:'end', fatal?:true,          // omit type for a normal card
+         backdrop?: <backdropId>,           // the picture shown while this card plays
          responses:[{ speaker, mode, texts:[…] }],
          answers:[ Answer ] }
 
@@ -89,19 +122,19 @@ Answer = { text, goto,
            grade,                            // shield|steady|soft|harmful|severe|fatal (hint + semantics)
            meters:{ <key>:delta },           // applied, floored at scene floor, capped at meter max
            credits:[key…],                   // ticked on the end-screen checklist
-           flags:{ <name>:value },           // mutate scene state
            damaged?:true,                    // marks the case damaged
            why? }                            // narration line (required on fatal)
 ```
 
-**Rule predicate** (`art.rules[].if`): `{ flags:{ name:value | {not:value} }, meters:{ key:{gte,lte} } }`.
-All clauses AND together; a rule with a matching `if` adds its `show` layer on
-top of `base`. Same predicate grammar the door already used, generalized off the
-hardcoded `door`/`door_not`/`warrantShown` keys.
-
 **Fatal flow:** an answer with `grade:'fatal'` sets the primary meter to its max,
-applies any `flags`, jumps to its `goto` (an `end` card with `fatal:true`), prints
-`why` as narration, then finishes as detained.
+jumps to its `goto` (an `end` card, `fatal:true`, usually with its own `backdrop`
+— e.g. the door swinging open), prints `why` as narration, then finishes as
+detained.
+
+**Forced entry** (`meta.forcedEntry`): on a floor-0, undamaged, zero-risk clean
+run, a `chance` roll can still detain the player — the scene's `backdrop` is
+shown (typically the same "door open" look as the fatal end) and `text` replaces
+the normal ending truth line.
 
 ## 4. Backend (schema v2)
 
@@ -127,20 +160,29 @@ deployed Worker's real source is committed to the repo **as part of this rebuild
 
 ## 5. Migration & cutover (safe order — live game never breaks mid-flight)
 
-1. **Contract + engine, offline.** `door.json` (done) + greenfield `engine.js`
-   tested against the local fixture via a Playwright harness. Prod untouched.
-2. **Backend.** New Worker source in repo; `scene_graphs` table created; door
-   migrated (its live D1 graph → one `scene_json` row); `/v2` endpoints verified.
-3. **Wire + verify.** Engine points at `/v2`; full Playwright pass (all four
-   endings, recovery loops, hatch N/A for door, RECORD note, timer, hint).
-4. **Cut over.** Push all three files; repin the jsDelivr embed to the new commit
-   SHA; bump `content_meta.version`. Confirm live.
-5. **Reconcile & clean.** Delete stale `scenes.json`; retire the legacy
-   `beats/rounds/options/checklist_items` tables and `/graph`+`/scenes` routes
-   once nothing reads them. Rework the builder to the single-object `/v2` shape.
+1. **Contract + engine, offline. Done.** `door.json` (backdrop model) +
+   greenfield `engine.js`, tested against the local fixture via Playwright
+   (11/11: all four endings, both recovery loops, RECORD note, correct
+   backdrop per card incl. the fatal door-swing). Prod untouched.
+2. **Builder, offline. Done.** `builder.html` rebuilt around the backdrop
+   model — a Backdrops panel (upload + title), a per-card backdrop picker with
+   live thumbnail, "Check graph" validator. Proven by round-trip: `importV2`
+   then `buildSceneV2()` deep-equals `door.json`. Prod untouched — still
+   pointed at endpoints that don't exist yet.
+3. **Backend (not started).** New Worker source in repo (fixes problem #2 —
+   the deployed Worker's real routes aren't in git); `scene_graphs` table
+   created; door migrated (live D1 graph → one `scene_json` row in the new
+   backdrop shape); `/v2` endpoints built and verified against the builder.
+4. **Wire + verify.** Engine and builder point at `/v2` for real; full
+   Playwright pass against the live Worker.
+5. **Cut over.** Push all three game files; repin the jsDelivr embed to the
+   new commit SHA; bump `content_meta.version`. Confirm live.
+6. **Reconcile & clean.** Delete stale `scenes.json`; retire the legacy
+   `beats/rounds/options/cards/answers/card_responses/layers/checklist_items`
+   tables and the `/graph`+legacy `/scenes` routes once nothing reads them.
 
-Nothing in steps 1–3 touches what production serves; production only moves at
-step 4, behind a deliberate SHA repin.
+Nothing in steps 1–2 touches what production serves; production only moves at
+step 5, behind a deliberate SHA repin.
 
 ## 6. Unchanged commitments (from the Design Bible, still binding)
 
