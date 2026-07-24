@@ -14,3 +14,11 @@ compatibility_date = "2026-07-01"
 binding = "KYR_DB"
 database_name = "kyr-content-db"
 database_id = "fa82b7ca-a3c3-4ce4-9739-d96345895395"
+
+# Static assets — the v2 rebuild's game (play.html) and scene builder
+# (builder.html), hosted directly off this Worker. Cloudflare serves any
+# request that matches a file here BEFORE the Worker's fetch() runs, so
+# /api/kyr/* (no matching file) still falls through to src/index.js exactly
+# as before — this is additive, no routing changes needed in the Worker code.
+[assets]
+directory = "./public"

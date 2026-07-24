@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>KYR Scene Builder — v2</title>
+<style>
+  :root{
+    --bg:#141416; --panel:#1c1c1f; --panel2:#232327; --line:#33333a;
+    --text:#e8e8ea; --dim:#9a9aa2; --accent:#c9302c; --accent2:#4a7fd6;
+    --ok:#3fa66a; --warn:#d69a3f; --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.4;}
+  header{position:sticky;top:0;z-index:50;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 12px;}
+  header h1{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin:0 0 8px;font-weight:600;}
+  header h1 .v2{color:var(--accent2);}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .field{display:flex;flex-direction:column;gap:2px;flex:1;min-width:110px;}
+  .field label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;}
+  input[type=text],input[type=number],input[type=password],textarea,select{
+    background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:7px 8px;border-radius:6px;font-size:14px;font-family:inherit;width:100%;
+  }
+  textarea{resize:vertical;min-height:36px;}
+  button{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;}
+  button:hover{border-color:#555;}
+  button:disabled{opacity:.4;cursor:default;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  button.secondary{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+  button.ghost{background:transparent;}
+  button.small{padding:4px 8px;font-size:12px;}
+  button.danger{color:#ff7a7a;}
+  .tabs{display:flex;gap:4px;margin-top:8px;}
+  .tab{padding:7px 12px;border-radius:6px 6px 0 0;background:var(--panel2);color:var(--dim);cursor:pointer;font-size:13px;border:1px solid var(--line);border-bottom:none;}
+  .tab.active{color:var(--text);background:var(--bg);font-weight:600;}
+  main{padding:14px 10px 130px;max-width:900px;margin:0 auto;}
+  .view{display:none;} .view.active{display:block;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;}
+  .panel h2{font-size:14px;margin:0 0 10px;color:var(--text);}
+  .panel h3{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px;}
+  .hint{font-size:12px;color:var(--dim);margin:4px 0 10px;}
+  code{font-family:var(--mono);font-size:12px;background:var(--panel2);padding:1px 4px;border-radius:3px;}
+  .grid-cards{display:flex;flex-direction:column;gap:0;}
+  .card-block{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:2px;overflow:hidden;}
+  .card-block.is-start{border-color:var(--ok);}
+  .card-block.is-end{border-color:var(--accent);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer;background:var(--panel2);}
+  .card-head .tag{font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:2px 6px;border-radius:4px;background:var(--line);color:var(--dim);margin-right:6px;}
+  .card-block.is-start .card-head .tag.start-tag{background:var(--ok);color:#062;}
+  .card-block.is-end .card-head .tag.end-tag{background:var(--accent);color:#fff;}
+  .card-id{font-family:var(--mono);font-size:13px;}
+  .card-summary{font-size:12px;color:var(--dim);margin-top:2px;}
+  .card-body{padding:12px;border-top:1px solid var(--line);display:none;}
+  .card-body.open{display:block;}
+  .insert-row{display:flex;justify-content:center;padding:4px 0;}
+  .beat-block,.answer-block{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:6px;}
+  .beat-block{border-left:3px solid var(--accent2);}
+  .beat-head{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .variant-row{display:flex;gap:6px;margin-bottom:4px;align-items:flex-start;}
+  .variant-row textarea{flex:1;}
+  .answer-block{border-left:3px solid var(--accent);}
+  .answer-block.is-fatal{border-left-color:var(--warn);}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+  .chip{display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 9px;font-size:12px;cursor:pointer;user-select:none;}
+  .chip.on{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+  .subrow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:8px;}
+  .mini{display:flex;flex-direction:column;gap:2px;}
+  .mini label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;}
+  .mini input,.mini select{padding:5px 6px;font-size:13px;}
+  .meter-effect{display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:120px;}
+  .meter-effect .presets{display:flex;gap:3px;flex-wrap:wrap;}
+  .meter-effect .presets button{padding:2px 6px;font-size:10px;}
+  .bd-grid{display:flex;flex-wrap:wrap;gap:10px;}
+  .bd{width:150px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px;}
+  .bd img{width:100%;height:118px;object-fit:cover;border-radius:5px;border:1px solid var(--line);background:#000;display:block;}
+  .bd .avatar-fallback{width:100%;height:118px;border-radius:5px;border:1px solid var(--line);background:#0c0c0e;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--dim);}
+  .bd input{margin-top:5px;font-size:12px;padding:4px 6px;}
+  .bd .bd-id{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px;word-break:break-all;}
+  .bd .del{margin-top:5px;}
+  .card-bd-preview{width:64px;height:50px;object-fit:cover;border-radius:4px;border:1px solid var(--line);background:#000;}
+  .upload-btn{border:1px dashed #555;border-radius:6px;padding:12px;text-align:center;color:var(--dim);cursor:pointer;font-size:12px;}
+  .config-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;flex-wrap:wrap;}
+  .config-row input[type=text]{flex:1;min-width:90px;}
+  .config-row input[type=number]{width:70px;}
+  .config-row .radio{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim);white-space:nowrap;}
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);padding:8px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;z-index:60;}
+  #log{font-family:var(--mono);font-size:11px;color:var(--dim);max-height:70px;overflow-y:auto;background:#0e0e10;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:8px 0 0;white-space:pre-wrap;}
+  #log .err{color:#ff7a7a;} #log .ok{color:var(--ok);}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);display:inline-block;margin-right:5px;}
+  .status-dot.saved{background:var(--ok);}
+  #pat-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
+  #pat-modal.open{display:flex;}
+  #pat-modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;max-width:420px;width:100%;}
+  #pat-modal p{font-size:13px;color:var(--dim);}
+  .close-x{float:right;cursor:pointer;color:var(--dim);}
+  .empty-note{font-size:12px;color:var(--dim);font-style:italic;padding:8px 0;}
+  .scene-row{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .scene-row .meta{flex:1;min-width:160px;}
+  .scene-row .meta .slug{font-family:var(--mono);font-size:13px;}
+  .scene-row .meta .title{font-size:12px;color:var(--dim);}
+  .switch{position:relative;width:36px;height:20px;background:#3a3a40;border-radius:20px;cursor:pointer;flex-shrink:0;}
+  .switch.on{background:var(--ok);}
+  .switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .15s;}
+  .switch.on .knob{left:18px;}
+  .current-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;background:var(--accent2);color:#fff;margin-left:6px;}
+  .del-x{color:var(--dim);cursor:pointer;font-size:15px;padding:0 3px;}
+  .del-x:hover{color:#ff7a7a;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Know Your Rights — Scene Builder <span class="v2">· schema v2 · backdrops</span>
+    <a href="/play.html" style="float:right;font-size:11px;color:var(--dim);">&rarr; play</a></h1>
+  <div class="row">
+    <div class="field"><label>Scene slug</label><input type="text" id="sceneSlug" placeholder="door"></div>
+    <div class="field"><label>Scene name</label><input type="text" id="sceneName" placeholder="At the door"></div>
+    <div class="field" style="max-width:120px;"><label>Active</label><div class="switch" id="sceneActiveSwitch"><div class="knob"></div></div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-view="scenes">Scenes</div>
+    <div class="tab" data-view="cards">Cards</div>
+    <div class="tab" data-view="settings">Scene Settings</div>
+  </div>
+</header>
+
+<main>
+  <!-- SCENES MANAGER -->
+  <div class="view active" id="view-scenes">
+    <div class="panel">
+      <h2>All scenes</h2>
+      <div class="hint">Loads live from <code>kyr-content-db</code> via the v2 Worker. Each scene is one JSON object
+        (<code>GET/PUT /api/kyr/v2/scenes/{slug}</code>) — saving writes the whole scene at once. <b>Active</b> controls what the game serves.</div>
+      <div class="row" style="margin-bottom:10px;">
+        <button class="secondary small" id="btnLoadScenes">Load scenes</button>
+        <button class="small" id="btnNewScene">+ New scene</button>
+      </div>
+      <div id="sceneList"></div>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="view" id="view-cards">
+    <div class="hint">Flow is driven by each answer's <b>goto</b>, not list order. The <b>start</b> card (Scene Settings)
+      begins play; <b>end</b> cards finish it. Each card picks <b>one backdrop</b> — the picture shown while it plays.</div>
+    <div class="grid-cards" id="cardList"></div>
+    <div class="insert-row"><button id="btnAddCard">+ Add card</button></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <div class="panel">
+      <h2>Scene</h2>
+      <div class="row">
+        <div class="field"><label>Art id</label><input type="text" id="metaArt" placeholder="door"></div>
+        <div class="field"><label>Start card</label><select id="metaStart"></select></div>
+        <div class="field" style="max-width:90px;"><label>Sort order</label><input type="number" id="metaSort"></div>
+      </div>
+      <div class="field" style="margin-top:8px;"><label>Teaches (one line)</label><input type="text" id="metaTeaches"></div>
+      <div class="field" style="margin-top:8px;"><label>Opening line (narration)</label><textarea id="metaOpen"></textarea></div>
+      <div class="field" style="margin-top:8px;"><label>Law text (result screen)</label><textarea id="metaLaw"></textarea></div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field" style="max-width:90px;"><label>Floor</label><input type="number" id="metaFloor"></div>
+        <div class="field" style="max-width:110px;"><label>Exit-at (blank = none)</label><input type="number" id="metaExitAt" placeholder="none"></div>
+        <div class="field"><label>Exit-deny line</label><input type="text" id="metaExitDeny" placeholder="(hatch scenes only)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Backdrops</h2>
+      <div class="hint">The scene's picture library. Upload a complete image (SVG/PNG) for each look, give it a title.
+        Every card picks one of these. Build a few, reuse them across cards.</div>
+      <div class="bd-grid" id="backdropGrid"></div>
+      <div class="upload-btn" id="addBackdropBtn" style="margin-top:8px;">+ Upload backdrop image(s)</div>
+      <input type="file" id="backdropFileInput" accept="image/*" multiple style="display:none;">
+    </div>
+
+    <div class="panel">
+      <h2>Forced entry <span class="hint" style="font-weight:400;">— floor-0 scenes only (they come in even on a clean run)</span></h2>
+      <label class="radio" style="font-size:13px;color:var(--text);"><input type="checkbox" id="feEnabled"> Enable forced entry</label>
+      <div id="feBody" style="margin-top:8px;">
+        <div class="row">
+          <div class="field" style="max-width:120px;"><label>Chance (0–1)</label><input type="number" id="feChance" step="0.05" min="0" max="1"></div>
+          <div class="field"><label>Backdrop shown</label><select id="feBackdrop"></select></div>
+        </div>
+        <div class="field" style="margin-top:8px;"><label>Truth line shown</label><textarea id="feText"></textarea></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>NPCs <span class="hint" style="font-weight:400;">— speaker labels (the picture is in the backdrop)</span></h2>
+      <div id="npcConfig"></div>
+      <button class="small ghost" id="addNpcBtn">+ Add NPC</button>
+    </div>
+
+    <div class="panel">
+      <h2>Meters</h2>
+      <div class="hint">Numeric, hidden in-game. Exactly one is <b>primary</b> — the end-of-scene detainment roll, floored at the scene floor.</div>
+      <div id="meterConfig"></div>
+      <button class="small ghost" id="addMeterBtn">+ Add meter</button>
+    </div>
+
+    <div class="panel">
+      <h2>Credits (result checklist)</h2>
+      <div class="hint">The end-screen checklist, in this order. Answers tick credits.</div>
+      <div id="creditConfig"></div>
+      <button class="small ghost" id="addCreditBtn">+ Add credit</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span><span class="status-dot" id="saveDot"></span><span id="saveLabel" style="font-size:11px;color:var(--dim);">not saved</span></span>
+  <button class="small" id="btnCheck">Check graph</button>
+  <button class="small" id="btnExport">Export JSON</button>
+  <button class="small" id="btnImport">Import JSON</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none;">
+  <button class="small secondary" id="btnPush">Save scene to database</button>
+  <button class="small ghost" id="btnPat" style="margin-left:auto;">Keys</button>
+</footer>
+
+<div id="log"></div>
+
+<div id="pat-modal">
+  <div class="box">
+    <span class="close-x" id="patClose">✕</span>
+    <h2 style="font-size:14px;">Keys</h2>
+    <div id="d1auth-row">
+      <p><b>D1 builder key</b> — required to save scenes. Set as the <code>KYR_BUILDER_SECRET</code> Worker secret.
+        Stored only in this browser, sent only to the Worker as <code>X-KYR-Auth</code>.</p>
+      <input type="password" id="d1authInput" placeholder="paste D1 builder key">
+      <div class="row" style="margin-top:6px;margin-bottom:14px;">
+        <button class="primary small" id="d1authSave">Save</button>
+        <button class="small ghost danger" id="d1authClear">Clear</button>
+      </div>
+    </div>
+    <p><b>GitHub token</b> — only for uploading backdrop images. Fine-grained PAT with Contents Read/Write on
+      <b>munsdev/CTA</b>. Stored only in this browser, sent only to api.github.com.</p>
+    <input type="password" id="patInput" placeholder="github_pat_...">
+    <div class="row" style="margin-top:10px;">
+      <button class="primary small" id="patSave">Save</button>
+      <button class="small ghost danger" id="patClear">Clear stored token</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const REPO = "munsdev/CTA";
+const BASE_PATH = "games/know-your-rights";
+const BACKDROP_DIR = BASE_PATH + "/backdrops";
+const LS_KEY = "kyr_builder_v2_state";
+const LS_PAT = "kyr_builder_pat_v1";
+const LS_D1AUTH = "kyr_builder_d1auth_v1";
+const API_BASE = "https://kyr-content.casey-945.workers.dev";
+const GRADES = ["shield","steady","soft","harmful","severe","fatal"];
+const GRADE_DELTA = { shield:0, steady:-8, soft:12, harmful:30, severe:45, fatal:100 };
+
+function uid(p){ return p + "-" + Math.random().toString(36).slice(2,7); }
+function log(msg, cls){ const el=document.getElementById("log"); const l=document.createElement("div");
+  if(cls)l.className=cls; l.textContent="["+new Date().toLocaleTimeString()+"] "+msg; el.appendChild(l); el.scrollTop=el.scrollHeight; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function num(v,d){ const n=Number(v); return isNaN(n)?d:n; }
+function $(id){ return document.getElementById(id); }
+
+// ===========================================================================
+// State — the builder's model IS schema v2 (backdrops). Cards are kept as an
+// ordered array for editing; backdrops carry _dataUrl/_dirty for pending
+// uploads. buildSceneV2() strips those and emits cards-as-object.
+// ===========================================================================
+function defaultState(){
+  return {
+    slug:"", schema:2,
+    meta:{ name:"", art:"", teaches:"", floor:0, exitAt:null, exitDeny:null, open:"", law:"", active:true, sortOrder:0, forcedEntry:null },
+    backdrops:[],       // [{id,title,file,_dataUrl,_dirty}]
+    npcs:[],            // [{id,label}]
+    meters:[ { key:"detain", label:"Detainment risk", max:100, fatalAt:100, primary:true } ],
+    credits:[],         // [{key,label}]
+    start:"",
+    cards:[]            // [{id,type?,fatal?,backdrop?,responses[],answers[]}]
+  };
+}
+let state = loadLocal() || defaultState();
+let openCardIds = new Set();
+let sceneIndexCache = null;
+
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state));
+  $("saveDot").classList.add("saved"); $("saveLabel").textContent="saved locally "+new Date().toLocaleTimeString(); }
+  catch(e){ log("Local autosave failed: "+e.message,"err"); } }
+function loadLocal(){ try{ const r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function touch(){ saveLocal(); render(); }
+function touchSilent(){ saveLocal(); }
+
+// ---- schema v2 <-> internal ----------------------------------------------
+function importV2(o){
+  const s = defaultState();
+  s.slug = o.slug||""; s.schema = 2;
+  const m = o.meta||{};
+  s.meta = {
+    name:m.name||"", art:m.art||"", teaches:m.teaches||"", floor:m.floor??0,
+    exitAt:(m.exitAt===undefined?null:m.exitAt), exitDeny:(m.exitDeny===undefined?null:m.exitDeny),
+    open:m.open||"", law:m.law||"", active:m.active!==false, sortOrder:m.sortOrder??0,
+    forcedEntry: m.forcedEntry ? { chance:m.forcedEntry.chance??0.2, backdrop:m.forcedEntry.backdrop||"", text:m.forcedEntry.text||"" } : null
+  };
+  s.backdrops = (o.backdrops||[]).map(b=>({ id:b.id, title:b.title||"", file:b.file||"", _dataUrl:null, _dirty:false }));
+  s.npcs = (o.npcs||[]).map(n=>({ id:n.id, label:n.label||"" }));
+  s.meters = (o.meters||[]).map(mt=>({ key:mt.key, label:mt.label, max:mt.max??100, fatalAt:mt.fatalAt??null, primary:!!mt.primary }));
+  if (!s.meters.length) s.meters = defaultState().meters;
+  s.credits = (o.credits||[]).map(c=>({ key:c.key, label:c.label }));
+  s.start = o.start||"";
+  s.cards = Object.entries(o.cards||{}).map(([id,c])=>({
+    id, type:c.type||"normal", fatal:!!c.fatal, backdrop:c.backdrop||"",
+    responses:(c.responses||[]).map(r=>({ speaker:(r.speaker===undefined?null:r.speaker), mode:r.mode||"random", texts:r.texts||[""] })),
+    answers:(c.answers||[]).map(a=>({ text:a.text||"", goto:a.goto||"", grade:a.grade||"shield",
+      meters:a.meters?{...a.meters}:{}, credits:(a.credits||[]).slice(), damaged:!!a.damaged, why:a.why||"" }))
+  }));
+  return s;
+}
+function buildSceneV2(){
+  const meta = {
+    name:state.meta.name, art:state.meta.art, teaches:state.meta.teaches, floor:num(state.meta.floor,0),
+    exitAt:(state.meta.exitAt===null||state.meta.exitAt==="")?null:num(state.meta.exitAt,0),
+    exitDeny:state.meta.exitDeny||null, open:state.meta.open, law:state.meta.law,
+    active:!!state.meta.active, sortOrder:num(state.meta.sortOrder,0)
+  };
+  if (state.meta.forcedEntry){
+    meta.forcedEntry = { chance:num(state.meta.forcedEntry.chance,0.2), backdrop:state.meta.forcedEntry.backdrop||"", text:state.meta.forcedEntry.text };
+  }
+  const cards = {};
+  state.cards.forEach(c=>{
+    const out = {};
+    if (c.type==="end"){ out.type="end"; if(c.fatal) out.fatal=true; if(c.backdrop) out.backdrop=c.backdrop; cards[c.id]=out; return; }
+    if (c.backdrop) out.backdrop = c.backdrop;
+    out.responses = c.responses.map(r=>({ speaker:r.speaker===undefined?null:r.speaker, mode:r.mode||"random", texts:r.texts.slice() }));
+    out.answers = c.answers.map(a=>{
+      const ans = { text:a.text, goto:a.goto, grade:a.grade };
+      if (a.grade!=="fatal"){ const mt={}; Object.keys(a.meters||{}).forEach(k=>mt[k]=num(a.meters[k],0)); ans.meters=mt; }
+      if (a.credits && a.credits.length) ans.credits=a.credits.slice();
+      if (a.damaged) ans.damaged=true;
+      if (a.why) ans.why=a.why;
+      return ans;
+    });
+    cards[c.id]=out;
+  });
+  return {
+    slug:state.slug, schema:2, meta,
+    backdrops:state.backdrops.map(b=>({ id:b.id, title:b.title, file:b.file })),
+    npcs:state.npcs.map(n=>({ id:n.id, label:n.label })),
+    meters:state.meters.map(m=>{ const o={ key:m.key, label:m.label, max:num(m.max,100), fatalAt:(m.fatalAt===null||m.fatalAt===""?null:num(m.fatalAt,null)) }; if(m.primary)o.primary=true; return o; }),
+    credits:state.credits.map(c=>({ key:c.key, label:c.label })),
+    start:state.start, cards
+  };
+}
+
+// ===========================================================================
+// Render
+// ===========================================================================
+function primaryMeterKey(){ const m=state.meters.find(x=>x.primary)||state.meters[0]; return m?m.key:"detain"; }
+function cardIds(){ return state.cards.map(c=>c.id); }
+function bdSrc(bd){ return bd._dataUrl || (bd.file ? cdn(BACKDROP_DIR+"/"+bd.file) : ""); }
+function bdById(id){ return state.backdrops.find(b=>b.id===id); }
+function backdropOptions(sel){ return `<option value="">(none)</option>`+state.backdrops.map(b=>`<option value="${esc(b.id)}"${sel===b.id?" selected":""}>${esc(b.title||b.id)}</option>`).join(""); }
+
+function render(){
+  $("sceneSlug").value = state.slug||"";
+  $("sceneName").value = state.meta.name||"";
+  $("sceneActiveSwitch").classList.toggle("on", !!state.meta.active);
+  renderCards(); renderSettings();
+}
+
+function renderSettings(){
+  const m = state.meta;
+  $("metaArt").value=m.art||""; $("metaSort").value=m.sortOrder??0;
+  $("metaTeaches").value=m.teaches||""; $("metaOpen").value=m.open||""; $("metaLaw").value=m.law||"";
+  $("metaFloor").value=m.floor??0; $("metaExitAt").value=(m.exitAt===null||m.exitAt===undefined)?"":m.exitAt; $("metaExitDeny").value=m.exitDeny||"";
+  $("metaStart").innerHTML = state.cards.map(c=>`<option value="${esc(c.id)}"${c.id===state.start?" selected":""}>${esc(c.id)}</option>`).join("");
+  const fe=m.forcedEntry;
+  $("feEnabled").checked=!!fe; $("feBody").style.display=fe?"block":"none";
+  $("feChance").value=fe?fe.chance:0.2; $("feText").value=fe?fe.text:"";
+  $("feBackdrop").innerHTML=backdropOptions(fe?fe.backdrop:"");
+  renderBackdrops(); renderNpcs(); renderMeters(); renderCredits();
+}
+
+function renderBackdrops(){
+  const wrap=$("backdropGrid"); wrap.innerHTML="";
+  if(!state.backdrops.length){ wrap.innerHTML='<div class="empty-note">No backdrops yet. Upload a complete scene image to begin.</div>'; return; }
+  state.backdrops.forEach((b,i)=>{
+    const d=document.createElement("div"); d.className="bd"; const src=bdSrc(b);
+    d.innerHTML =
+      (src?`<img src="${esc(src)}" alt="" onerror="this.outerHTML='&lt;div class=&quot;avatar-fallback&quot;&gt;▦&lt;/div&gt;'">`:`<div class="avatar-fallback">▦</div>`) +
+      `<input type="text" data-bdtitle="${i}" value="${esc(b.title)}" placeholder="title">` +
+      `<input type="text" data-bdid="${i}" value="${esc(b.id)}" placeholder="id" style="font-family:var(--mono);">` +
+      `<div class="bd-id">${esc(b.file||"(no file)")}</div>` +
+      `<button class="small danger del" data-bddel="${i}">delete</button>`;
+    wrap.appendChild(d);
+  });
+  wrap.querySelectorAll("[data-bdtitle]").forEach(el=>el.addEventListener("input",e=>{ state.backdrops[+e.target.dataset.bdtitle].title=e.target.value; touchSilent(); }));
+  wrap.querySelectorAll("[data-bdid]").forEach(el=>el.addEventListener("change",e=>renameBackdrop(+e.target.dataset.bdid, e.target.value.trim())));
+  wrap.querySelectorAll("[data-bddel]").forEach(b=>b.addEventListener("click",e=>{ state.backdrops.splice(+e.target.dataset.bddel,1); touch(); }));
+}
+function renameBackdrop(i, newId){
+  const old=state.backdrops[i].id;
+  if(!newId||newId===old){ render(); return; }
+  if(state.backdrops.some((b,j)=>j!==i&&b.id===newId)){ alert("A backdrop with id '"+newId+"' already exists."); render(); return; }
+  state.backdrops[i].id=newId;
+  state.cards.forEach(c=>{ if(c.backdrop===old) c.backdrop=newId; });
+  if(state.meta.forcedEntry && state.meta.forcedEntry.backdrop===old) state.meta.forcedEntry.backdrop=newId;
+  touch();
+}
+
+function renderNpcs(){
+  const wrap=$("npcConfig"); wrap.innerHTML="";
+  if(!state.npcs.length){ wrap.innerHTML='<div class="empty-note">No NPCs. Add a speaker label (e.g. Agent).</div>'; }
+  state.npcs.forEach((n,i)=>{
+    const row=document.createElement("div"); row.className="config-row";
+    row.innerHTML=`<input type="text" data-nid="${i}" value="${esc(n.id)}" placeholder="id" style="max-width:130px;font-family:var(--mono);">`+
+      `<input type="text" data-nl="${i}" value="${esc(n.label)}" placeholder="label">`+
+      `<span class="del-x" data-ndel="${i}">✕</span>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll("[data-nid]").forEach(el=>el.addEventListener("input",e=>{ state.npcs[+e.target.dataset.nid].id=e.target.value.trim(); touchSilent(); }));
+  wrap.querySelectorAll("[data-nl]").forEach(el=>el.addEventListener("input",e=>{ state.npcs[+e.target.dataset.nl].label=e.target.value; touchSilent(); }));
+  wrap.querySelectorAll("[data-ndel]").forEach(el=>el.addEventListener("click",e=>{ state.npcs.splice(+e.target.dataset.ndel,1); touch(); }));
+}
+
+function renderMeters(){
+  const wrap=$("meterConfig"); wrap.innerHTML="";
+  state.meters.forEach((m,i)=>{
+    const row=document.createElement("div"); row.className="config-row";
+    row.innerHTML=`<input type="text" data-mk="${i}" value="${esc(m.key)}" placeholder="key" style="max-width:120px;">`+
+      `<input type="text" data-ml="${i}" value="${esc(m.label)}" placeholder="label">`+
+      `<label class="radio">max <input type="number" data-mmax="${i}" value="${m.max}"></label>`+
+      `<label class="radio">fatal@ <input type="number" data-mfa="${i}" value="${m.fatalAt==null?"":m.fatalAt}" style="width:60px;"></label>`+
+      `<label class="radio"><input type="radio" name="primaryMeter" data-mp="${i}" ${m.primary?"checked":""}> primary</label>`+
+      `<span class="del-x" data-mdel="${i}">✕</span>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll("[data-mk]").forEach(el=>el.addEventListener("input",e=>{ state.meters[+e.target.dataset.mk].key=e.target.value.trim(); touchSilent(); }));
+  wrap.querySelectorAll("[data-ml]").forEach(el=>el.addEventListener("input",e=>{ state.meters[+e.target.dataset.ml].label=e.target.value; touchSilent(); }));
+  wrap.querySelectorAll("[data-mmax]").forEach(el=>el.addEventListener("input",e=>{ state.meters[+e.target.dataset.mmax].max=num(e.target.value,100); touchSilent(); }));
+  wrap.querySelectorAll("[data-mfa]").forEach(el=>el.addEventListener("input",e=>{ state.meters[+e.target.dataset.mfa].fatalAt=e.target.value===""?null:num(e.target.value,null); touchSilent(); }));
+  wrap.querySelectorAll("[data-mp]").forEach(el=>el.addEventListener("change",e=>{ state.meters.forEach((m,j)=>m.primary=(j===+e.target.dataset.mp)); touchSilent(); }));
+  wrap.querySelectorAll("[data-mdel]").forEach(el=>el.addEventListener("click",e=>{ state.meters.splice(+e.target.dataset.mdel,1); touch(); }));
+}
+
+function renderCredits(){
+  const wrap=$("creditConfig"); wrap.innerHTML="";
+  state.credits.forEach((c,i)=>{
+    const row=document.createElement("div"); row.className="config-row";
+    row.innerHTML=`<input type="text" data-ck="${i}" value="${esc(c.key)}" placeholder="key" style="max-width:160px;">`+
+      `<input type="text" data-cl="${i}" value="${esc(c.label)}" placeholder="label">`+
+      `<span class="del-x" data-cdel="${i}">✕</span>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll("[data-ck]").forEach(el=>el.addEventListener("input",e=>{ state.credits[+e.target.dataset.ck].key=e.target.value.trim(); touchSilent(); }));
+  wrap.querySelectorAll("[data-cl]").forEach(el=>el.addEventListener("input",e=>{ state.credits[+e.target.dataset.cl].label=e.target.value; touchSilent(); }));
+  wrap.querySelectorAll("[data-cdel]").forEach(el=>el.addEventListener("click",e=>{ state.credits.splice(+e.target.dataset.cdel,1); touch(); }));
+}
+
+// ---- Cards ----------------------------------------------------------------
+function renderCards(){
+  const wrap=$("cardList"); wrap.innerHTML="";
+  if(!state.cards.length){ wrap.innerHTML='<div class="empty-note">No cards. Add one to begin.</div>'; return; }
+  state.cards.forEach((card,ci)=>wrap.appendChild(cardBlock(card,ci)));
+}
+function cardBlock(card, ci){
+  const isStart=card.id===state.start, isEnd=card.type==="end";
+  const block=document.createElement("div");
+  block.className="card-block"+(isStart?" is-start":"")+(isEnd?" is-end":"");
+  const open=openCardIds.has(card.id);
+  const summary=isEnd?(card.fatal?"fatal end":"end"):`${(card.responses||[]).length} line(s), ${(card.answers||[]).length} answer(s) · ${card.backdrop||"no backdrop"}`;
+  const head=document.createElement("div"); head.className="card-head";
+  head.innerHTML=`<div><span class="card-id">${esc(card.id)}</span>`+
+    (isStart?`<span class="tag start-tag">start</span>`:``)+
+    (isEnd?`<span class="tag end-tag">${card.fatal?"fatal":"end"}</span>`:``)+
+    `<div class="card-summary">${esc(summary)}</div></div><span style="color:var(--dim);">${open?"▾":"▸"}</span>`;
+  head.addEventListener("click",()=>{ if(open)openCardIds.delete(card.id); else openCardIds.add(card.id); render(); });
+  block.appendChild(head);
+  const body=document.createElement("div"); body.className="card-body"+(open?" open":"");
+  if(open) buildCardBody(body,card,ci);
+  block.appendChild(body);
+  return block;
+}
+function buildCardBody(body, card, ci){
+  const top=document.createElement("div"); top.className="row";
+  top.innerHTML=`<div class="mini"><label>card id</label><input type="text" data-cid value="${esc(card.id)}"></div>`+
+    `<div class="mini"><label>type</label><select data-ctype><option value="normal"${card.type!=="end"?" selected":""}>normal</option><option value="end"${card.type==="end"?" selected":""}>end</option></select></div>`+
+    `<button class="small danger" data-cardDel style="align-self:flex-end;">delete card</button>`;
+  body.appendChild(top);
+  top.querySelector("[data-cid]").addEventListener("change",e=>renameCard(ci,e.target.value.trim()));
+  top.querySelector("[data-ctype]").addEventListener("change",e=>{ card.type=e.target.value; if(card.type==="end"){ card.answers=[]; card.responses=[]; } touch(); });
+  top.querySelector("[data-cardDel]").addEventListener("click",()=>{ if(confirm("Delete card "+card.id+"?")){ state.cards.splice(ci,1); touch(); } });
+
+  // backdrop picker (with preview)
+  const bdRow=document.createElement("div"); bdRow.className="subrow"; bdRow.style.marginTop="10px";
+  const bd=bdById(card.backdrop); const src=bd?bdSrc(bd):"";
+  bdRow.innerHTML=`<div class="mini" style="flex:1;"><label>backdrop shown on this card</label><select data-cbd>${backdropOptions(card.backdrop)}</select></div>`+
+    (src?`<img class="card-bd-preview" src="${esc(src)}" alt="" onerror="this.style.display='none'">`:``);
+  body.appendChild(bdRow);
+  bdRow.querySelector("[data-cbd]").addEventListener("change",e=>{ card.backdrop=e.target.value; touch(); });
+
+  if(card.type==="end"){
+    const fe=document.createElement("div"); fe.style.marginTop="8px";
+    fe.innerHTML=`<label class="radio" style="font-size:13px;color:var(--text);"><input type="checkbox" data-cfatal ${card.fatal?"checked":""}> fatal end (forces the primary meter to max → detained)</label>`;
+    body.appendChild(fe);
+    fe.querySelector("[data-cfatal]").addEventListener("change",e=>{ card.fatal=e.target.checked; touch(); });
+    return;
+  }
+
+  const rh=document.createElement("h3"); rh.textContent="NPC / narration lines"; body.appendChild(rh);
+  (card.responses||[]).forEach((resp,ri)=>body.appendChild(responseBlock(card,resp,ri)));
+  const addResp=document.createElement("button"); addResp.className="small ghost"; addResp.textContent="+ Add line";
+  addResp.addEventListener("click",()=>{ card.responses.push({ speaker:state.npcs[0]?state.npcs[0].id:null, mode:"random", texts:[""] }); touch(); });
+  body.appendChild(addResp);
+
+  const ah=document.createElement("h3"); ah.textContent="Answers"; body.appendChild(ah);
+  (card.answers||[]).forEach((ans,ai)=>body.appendChild(answerBlock(card,ans,ai)));
+  const addAns=document.createElement("button"); addAns.className="small ghost"; addAns.textContent="+ Add answer";
+  addAns.addEventListener("click",()=>{ card.answers.push({ text:"", goto:"", grade:"shield", meters:{[primaryMeterKey()]:0}, credits:[], damaged:false, why:"" }); touch(); });
+  body.appendChild(addAns);
+}
+function responseBlock(card, resp, ri){
+  const b=document.createElement("div"); b.className="beat-block";
+  const npcOpts=`<option value="">(narration)</option>`+state.npcs.map(n=>`<option value="${esc(n.id)}"${resp.speaker===n.id?" selected":""}>${esc(n.label||n.id)}</option>`).join("");
+  let html=`<div class="beat-head">
+    <div class="mini"><label>speaker</label><select data-rspeaker>${npcOpts}</select></div>
+    <div class="mini"><label>variant</label><select data-rmode>
+      <option value="random"${resp.mode==="random"?" selected":""}>random</option>
+      <option value="sequence"${resp.mode==="sequence"?" selected":""}>sequence</option>
+      <option value="narration-on-shield"${resp.mode==="narration-on-shield"?" selected":""}>narration-on-shield</option>
+    </select></div><span class="del-x" data-rdel style="margin-left:auto;">✕</span></div>`;
+  resp.texts.forEach((t,ti)=>{ html+=`<div class="variant-row"><textarea data-rtext="${ti}">${esc(t)}</textarea><span class="del-x" data-rtdel="${ti}">✕</span></div>`; });
+  html+=`<button class="small ghost" data-rtadd>+ variant</button>`;
+  b.innerHTML=html;
+  b.querySelector("[data-rspeaker]").addEventListener("change",e=>{ resp.speaker=e.target.value===""?null:e.target.value; touchSilent(); });
+  b.querySelector("[data-rmode]").addEventListener("change",e=>{ resp.mode=e.target.value; touchSilent(); });
+  b.querySelector("[data-rdel]").addEventListener("click",()=>{ card.responses.splice(ri,1); touch(); });
+  b.querySelectorAll("[data-rtext]").forEach(el=>el.addEventListener("input",e=>{ resp.texts[+e.target.dataset.rtext]=e.target.value; touchSilent(); }));
+  b.querySelectorAll("[data-rtdel]").forEach(el=>el.addEventListener("click",e=>{ resp.texts.splice(+e.target.dataset.rtdel,1); if(!resp.texts.length)resp.texts=[""]; touch(); }));
+  b.querySelector("[data-rtadd]").addEventListener("click",()=>{ resp.texts.push(""); touch(); });
+  return b;
+}
+function answerBlock(card, ans, ai){
+  const b=document.createElement("div"); b.className="answer-block"+(ans.grade==="fatal"?" is-fatal":"");
+  const gotoOpts=`<option value="">(finish)</option>`+cardIds().map(id=>`<option value="${esc(id)}"${ans.goto===id?" selected":""}>${esc(id)}</option>`).join("");
+  const gradeOpts=GRADES.map(g=>`<option value="${g}"${ans.grade===g?" selected":""}>${g}</option>`).join("");
+  let html=`<div class="subrow">
+    <div class="mini" style="flex:1;min-width:180px;"><label>answer text</label><input type="text" data-atext value="${esc(ans.text)}"></div>
+    <span class="del-x" data-adel>✕</span></div>
+    <div class="subrow">
+      <div class="mini"><label>grade</label><select data-agrade>${gradeOpts}</select></div>
+      <div class="mini"><label>goto</label><select data-agoto>${gotoOpts}</select></div>
+      <div class="mini"><label><input type="checkbox" data-adamaged ${ans.damaged?"checked":""}> damages case</label></div>
+    </div>`;
+  if(ans.grade!=="fatal"){
+    html+=`<div class="subrow">`;
+    state.meters.forEach(mt=>{ const v=(ans.meters&&ans.meters[mt.key]!==undefined)?ans.meters[mt.key]:0;
+      html+=`<div class="meter-effect"><label style="font-size:10px;color:var(--dim);">${esc(mt.key)} Δ</label>
+        <input type="number" data-ameter="${esc(mt.key)}" value="${v}">
+        <div class="presets">${GRADES.map(g=>`<button data-apreset="${esc(mt.key)}" data-g="${g}">${g[0].toUpperCase()}</button>`).join("")}</div></div>`; });
+    html+=`</div>`;
+  }
+  html+=`<div><div style="font-size:11px;color:var(--dim);margin-top:8px;">credits ticked</div><div class="chips">`;
+  state.credits.forEach(c=>{ const on=(ans.credits||[]).includes(c.key); html+=`<div class="chip${on?" on":""}" data-ac="${esc(c.key)}">${esc(c.key)}</div>`; });
+  if(!state.credits.length) html+=`<span class="empty-note">no credits defined</span>`;
+  html+=`</div></div>`;
+  html+=`<div class="mini" style="margin-top:8px;"><label>why (narration; required for fatal)</label><textarea data-awhy>${esc(ans.why||"")}</textarea></div>`;
+  b.innerHTML=html;
+  b.querySelector("[data-atext]").addEventListener("input",e=>{ ans.text=e.target.value; touchSilent(); });
+  b.querySelector("[data-adel]").addEventListener("click",()=>{ card.answers.splice(ai,1); touch(); });
+  b.querySelector("[data-agrade]").addEventListener("change",e=>{ ans.grade=e.target.value; if(ans.grade!=="fatal"){ ans.meters=ans.meters||{}; ans.meters[primaryMeterKey()]=GRADE_DELTA[ans.grade]; } touch(); });
+  b.querySelector("[data-agoto]").addEventListener("change",e=>{ ans.goto=e.target.value; touchSilent(); });
+  b.querySelector("[data-adamaged]").addEventListener("change",e=>{ ans.damaged=e.target.checked; touchSilent(); });
+  b.querySelectorAll("[data-ameter]").forEach(el=>el.addEventListener("input",e=>{ ans.meters=ans.meters||{}; ans.meters[e.target.dataset.ameter]=num(e.target.value,0); touchSilent(); }));
+  b.querySelectorAll("[data-apreset]").forEach(btn=>btn.addEventListener("click",e=>{ ans.meters=ans.meters||{}; ans.meters[e.target.dataset.apreset]=GRADE_DELTA[e.target.dataset.g]; touch(); }));
+  b.querySelectorAll("[data-ac]").forEach(chip=>chip.addEventListener("click",e=>{ const k=e.target.dataset.ac; ans.credits=ans.credits||[];
+    if(ans.credits.includes(k)) ans.credits=ans.credits.filter(x=>x!==k); else ans.credits.push(k); touch(); }));
+  b.querySelector("[data-awhy]").addEventListener("input",e=>{ ans.why=e.target.value; touchSilent(); });
+  return b;
+}
+function renameCard(ci, newId){
+  const old=state.cards[ci].id;
+  if(!newId||newId===old){ render(); return; }
+  if(cardIds().includes(newId)){ alert("A card with id '"+newId+"' already exists."); render(); return; }
+  state.cards[ci].id=newId;
+  state.cards.forEach(c=>(c.answers||[]).forEach(a=>{ if(a.goto===old)a.goto=newId; }));
+  if(state.start===old) state.start=newId;
+  if(openCardIds.has(old)){ openCardIds.delete(old); openCardIds.add(newId); }
+  touch();
+}
+
+// ---- graph check ----------------------------------------------------------
+function checkGraph(){
+  const scene=buildSceneV2(); const ids=new Set(Object.keys(scene.cards)); const errs=[];
+  const bd=new Set(scene.backdrops.map(b=>b.id)), cred=new Set(scene.credits.map(c=>c.key)), meter=new Set(scene.meters.map(m=>m.key));
+  if(!scene.start) errs.push("no start card set (Scene Settings → Start card)");
+  else if(!ids.has(scene.start)) errs.push("start card '"+scene.start+"' does not exist");
+  if(scene.meta.forcedEntry && scene.meta.forcedEntry.backdrop && !bd.has(scene.meta.forcedEntry.backdrop)) errs.push("forced-entry backdrop '"+scene.meta.forcedEntry.backdrop+"' is not defined");
+  const reach=new Set();
+  (function w(id){ if(!id||reach.has(id))return; reach.add(id); const c=scene.cards[id]; if(!c||c.type==="end")return;
+    (c.answers||[]).forEach(a=>{ if(a.goto){ if(!ids.has(a.goto))errs.push("card '"+id+"' → missing goto '"+a.goto+"'"); else w(a.goto); } }); })(scene.start);
+  Object.entries(scene.cards).forEach(([id,c])=>{
+    if(c.backdrop && !bd.has(c.backdrop)) errs.push("card '"+id+"' uses undefined backdrop '"+c.backdrop+"'");
+    if(c.type==="end") return;
+    (c.answers||[]).forEach((a,i)=>{
+      if(a.grade==="fatal"&&!a.why) errs.push(id+" answer "+(i+1)+": fatal without a why line");
+      (a.credits||[]).forEach(k=>{ if(!cred.has(k))errs.push(id+" answer "+(i+1)+": unknown credit '"+k+"'"); });
+      Object.keys(a.meters||{}).forEach(k=>{ if(!meter.has(k))errs.push(id+" answer "+(i+1)+": unknown meter '"+k+"'"); });
+    });
+  });
+  ids.forEach(id=>{ if(!reach.has(id)&&scene.cards[id].type!=="end")errs.push("card '"+id+"' is unreachable from start"); });
+  if(errs.length){ errs.forEach(e=>log("✗ "+e,"err")); log(errs.length+" problem(s) found.","err"); alert(errs.length+" problem(s) — see log."); }
+  else { log("✓ graph valid — "+ids.size+" cards, all reachable, backdrops/gotos/keys resolve.","ok"); alert("Graph valid ✓  ("+ids.size+" cards)"); }
+}
+
+// ===========================================================================
+// Art upload + D1 v2 API
+// ===========================================================================
+function cdn(path){ return "https://cdn.jsdelivr.net/gh/"+REPO+"@main/"+path; }
+function getPat(){ return localStorage.getItem(LS_PAT)||""; }
+function getD1Auth(){ return localStorage.getItem(LS_D1AUTH)||""; }
+function setD1Auth(v){ if(v) localStorage.setItem(LS_D1AUTH,v); }
+async function ghGetSha(path){ const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{headers:{Authorization:"Bearer "+getPat(),Accept:"application/vnd.github+json"}});
+  if(r.status===404)return null; if(!r.ok)throw new Error("GET "+path+" -> "+r.status); return (await r.json()).sha; }
+async function ghPut(path, base64, message){ const sha=await ghGetSha(path); const body={message,content:base64,branch:"main"}; if(sha)body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{method:"PUT",headers:{Authorization:"Bearer "+getPat(),Accept:"application/vnd.github+json","Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error("PUT "+path+" -> "+r.status+" "+(await r.text()).slice(0,160)); return r.json(); }
+async function apiCall(path, method, body){ const auth=getD1Auth();
+  if(method!=="GET"&&!auth){ $("pat-modal").classList.add("open"); throw new Error("Add a D1 builder key first (Keys button)."); }
+  const headers={"Content-Type":"application/json"}; if(auth)headers["X-KYR-Auth"]=auth;
+  const r=await fetch(API_BASE+path,{method,headers,body:body!==undefined?JSON.stringify(body):undefined});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&d.error)?d.error:(method+" "+path+" -> "+r.status)); return d; }
+const apiListScenes=()=>apiCall("/api/kyr/v2/scenes","GET");
+const apiGetScene=s=>apiCall("/api/kyr/v2/scenes/"+encodeURIComponent(s),"GET");
+const apiPutScene=(s,b)=>apiCall("/api/kyr/v2/scenes/"+encodeURIComponent(s),"PUT",b);
+const apiDeleteScene=s=>apiCall("/api/kyr/v2/scenes/"+encodeURIComponent(s),"DELETE");
+
+// ---- scene manager --------------------------------------------------------
+async function loadSceneList(){ try{ log("Loading scenes…"); const d=await apiListScenes(); sceneIndexCache=d.scenes||[]; renderSceneList(); log("Loaded "+sceneIndexCache.length+" scene(s).","ok"); }catch(e){ log("Load scenes failed: "+e.message,"err"); } }
+function renderSceneList(){
+  const wrap=$("sceneList"); wrap.innerHTML="";
+  if(!sceneIndexCache||!sceneIndexCache.length){ wrap.innerHTML='<div class="empty-note">No scenes loaded. Click “Load scenes”.</div>'; return; }
+  sceneIndexCache.forEach(s=>{ const meta=s.meta||s;
+    const row=document.createElement("div"); row.className="scene-row";
+    row.innerHTML=`<div class="meta"><div class="slug">${esc(s.slug)}${s.slug===state.slug?'<span class="current-badge">editing</span>':''}</div>
+      <div class="title">${esc(meta.name||"")} — ${esc(meta.teaches||"")}</div></div>
+      <div class="switch${meta.active!==false?" on":""}" data-toggle="${esc(s.slug)}"><div class="knob"></div></div>
+      <button class="small secondary" data-edit="${esc(s.slug)}">Edit</button>
+      <button class="small danger ghost" data-del="${esc(s.slug)}">Delete</button>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",e=>editScene(e.target.dataset.edit)));
+  wrap.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>deleteScene(e.target.dataset.del)));
+  wrap.querySelectorAll("[data-toggle]").forEach(sw=>sw.addEventListener("click",e=>toggleActive(e.currentTarget.dataset.toggle)));
+}
+async function editScene(slug){ try{ log("Loading '"+slug+"'…"); const o=await apiGetScene(slug);
+  state=importV2(o); openCardIds=new Set(); if(state.start)openCardIds.add(state.start); touch(); switchView("cards"); log("Editing '"+slug+"'.","ok"); }
+  catch(e){ log("Load '"+slug+"' failed: "+e.message,"err"); alert("Load failed: "+e.message); } }
+async function toggleActive(slug){ try{ const o=await apiGetScene(slug); o.meta=o.meta||{}; o.meta.active=!(o.meta.active!==false); await apiPutScene(slug,o);
+  log("'"+slug+"' active = "+o.meta.active,"ok"); if(slug===state.slug){ state.meta.active=o.meta.active; touchSilent(); render(); } loadSceneList(); }
+  catch(e){ log("Toggle failed: "+e.message,"err"); } }
+async function deleteScene(slug){ if(!confirm("Delete scene '"+slug+"' from the live database?"))return;
+  try{ await apiDeleteScene(slug); log("Deleted '"+slug+"'.","ok"); loadSceneList(); }catch(e){ log("Delete failed: "+e.message,"err"); } }
+
+// ---- save -----------------------------------------------------------------
+async function saveScene(){
+  if(!getD1Auth()){ alert("Add a D1 builder key first (Keys button)."); $("pat-modal").classList.add("open"); return; }
+  if(!state.slug){ alert("Set a scene slug first (top of page)."); return; }
+  const btn=$("btnPush"); btn.disabled=true; btn.textContent="Saving…";
+  try{
+    const dirty=state.backdrops.filter(b=>b._dirty&&b._dataUrl);
+    if(dirty.length&&!getPat()) throw new Error("New backdrop art needs a GitHub token too (Keys) — images live in the repo, not D1.");
+    for(const b of dirty){ log("Uploading backdrop "+b.file+"…"); await ghPut(BACKDROP_DIR+"/"+b.file, b._dataUrl.split(",")[1], "KYR builder: backdrop "+b.file); b._dirty=false; log("Uploaded "+b.file,"ok"); }
+    log("Saving scene '"+state.slug+"' (one object)…");
+    await apiPutScene(state.slug, buildSceneV2());
+    log("Saved '"+state.slug+"' to the live database.","ok"); saveLocal(); alert("Saved '"+state.slug+"' ✓");
+  }catch(e){ log("Save failed: "+e.message,"err"); alert("Save failed — see log.\n\n"+e.message); }
+  finally{ btn.disabled=false; btn.textContent="Save scene to database"; }
+}
+function fileToDataUrl(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+function slugifyFile(name){ return name.toLowerCase().replace(/[^a-z0-9.]+/g,"-").replace(/^-+|-+$/g,""); }
+
+// ===========================================================================
+// Wire up
+// ===========================================================================
+function switchView(v){ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
+  document.querySelectorAll(".view").forEach(el=>el.classList.toggle("active",el.id==="view-"+v)); }
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>switchView(t.dataset.view)));
+
+$("sceneSlug").addEventListener("input",e=>{ state.slug=e.target.value.trim(); touchSilent(); });
+$("sceneName").addEventListener("input",e=>{ state.meta.name=e.target.value; touchSilent(); });
+$("sceneActiveSwitch").addEventListener("click",()=>{ state.meta.active=!state.meta.active; render(); saveLocal(); });
+
+$("metaArt").addEventListener("input",e=>{ state.meta.art=e.target.value.trim(); touchSilent(); });
+$("metaStart").addEventListener("change",e=>{ state.start=e.target.value; touchSilent(); renderCards(); });
+$("metaSort").addEventListener("input",e=>{ state.meta.sortOrder=num(e.target.value,0); touchSilent(); });
+$("metaTeaches").addEventListener("input",e=>{ state.meta.teaches=e.target.value; touchSilent(); });
+$("metaOpen").addEventListener("input",e=>{ state.meta.open=e.target.value; touchSilent(); });
+$("metaLaw").addEventListener("input",e=>{ state.meta.law=e.target.value; touchSilent(); });
+$("metaFloor").addEventListener("input",e=>{ state.meta.floor=num(e.target.value,0); touchSilent(); });
+$("metaExitAt").addEventListener("input",e=>{ state.meta.exitAt=e.target.value===""?null:num(e.target.value,0); touchSilent(); });
+$("metaExitDeny").addEventListener("input",e=>{ state.meta.exitDeny=e.target.value||null; touchSilent(); });
+
+$("feEnabled").addEventListener("change",e=>{ if(e.target.checked){ state.meta.forcedEntry=state.meta.forcedEntry||{chance:0.2,backdrop:"",text:""}; } else state.meta.forcedEntry=null; touch(); });
+$("feChance").addEventListener("input",e=>{ if(state.meta.forcedEntry){ state.meta.forcedEntry.chance=num(e.target.value,0.2); touchSilent(); } });
+$("feBackdrop").addEventListener("change",e=>{ if(state.meta.forcedEntry){ state.meta.forcedEntry.backdrop=e.target.value; touchSilent(); } });
+$("feText").addEventListener("input",e=>{ if(state.meta.forcedEntry){ state.meta.forcedEntry.text=e.target.value; touchSilent(); } });
+
+$("addMeterBtn").addEventListener("click",()=>{ state.meters.push({ key:uid("m"), label:"", max:100, fatalAt:null, primary:false }); touch(); });
+$("addCreditBtn").addEventListener("click",()=>{ state.credits.push({ key:"", label:"" }); touch(); });
+$("addNpcBtn").addEventListener("click",()=>{ state.npcs.push({ id:uid("npc"), label:"" }); touch(); });
+$("btnAddCard").addEventListener("click",()=>{ const id=uid("card"); state.cards.push({ id, type:"normal", backdrop:"", responses:[], answers:[] }); openCardIds.add(id); if(!state.start)state.start=id; touch(); });
+
+$("addBackdropBtn").addEventListener("click",()=>$("backdropFileInput").click());
+$("backdropFileInput").addEventListener("change",async e=>{
+  for(const file of e.target.files){ const dataUrl=await fileToDataUrl(file); const fname=slugifyFile(file.name);
+    state.backdrops.push({ id:fname.replace(/\.[a-z0-9]+$/,""), title:file.name.replace(/\.[a-z0-9]+$/i,""), file:fname, _dataUrl:dataUrl, _dirty:true }); }
+  e.target.value=""; touch();
+});
+
+$("btnLoadScenes").addEventListener("click",loadSceneList);
+$("btnNewScene").addEventListener("click",()=>{ if(confirm("Start a new blank scene? Unsaved local edits stay until you overwrite them.")){ state=defaultState(); openCardIds=new Set(); touch(); switchView("settings"); } });
+
+$("btnCheck").addEventListener("click",checkGraph);
+$("btnExport").addEventListener("click",()=>{ const data=buildSceneV2(); const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(state.slug||"scene")+".json"; a.click(); URL.revokeObjectURL(a.href); log("Exported "+a.download,"ok"); });
+$("btnImport").addEventListener("click",()=>$("importFile").click());
+$("importFile").addEventListener("change",async e=>{ const file=e.target.files[0]; if(!file)return;
+  try{ const o=JSON.parse(await file.text()); if(o.schema!==2&&!o.cards)throw new Error("not a schema-v2 scene");
+    state=importV2(o); openCardIds=new Set(); if(state.start)openCardIds.add(state.start); touch(); log("Imported "+file.name,"ok"); }
+  catch(err){ log("Import failed: "+err.message,"err"); alert("Import failed: "+err.message); } e.target.value=""; });
+$("btnPush").addEventListener("click",saveScene);
+
+$("btnPat").addEventListener("click",()=>{ $("patInput").value=getPat(); $("d1authInput").value=getD1Auth(); $("pat-modal").classList.add("open"); });
+$("patClose").addEventListener("click",()=>$("pat-modal").classList.remove("open"));
+$("patSave").addEventListener("click",()=>{ const v=$("patInput").value.trim(); if(v)localStorage.setItem(LS_PAT,v); $("pat-modal").classList.remove("open"); log("GitHub token saved.","ok"); });
+$("patClear").addEventListener("click",()=>{ localStorage.removeItem(LS_PAT); $("patInput").value=""; log("GitHub token cleared.","ok"); });
+$("d1authSave").addEventListener("click",()=>{ const v=$("d1authInput").value.trim(); if(v)setD1Auth(v); log("D1 builder key saved.","ok"); });
+$("d1authClear").addEventListener("click",()=>{ localStorage.removeItem(LS_D1AUTH); $("d1authInput").value=""; log("D1 builder key cleared.","ok"); });
+
+// expose for headless round-trip test
+window.__kyr = { get state(){return state;}, set state(v){state=v;}, importV2, buildSceneV2, render, defaultState };
+
+render();
+log("Builder ready (schema v2 · backdrops).");
+})();
+</script>
+</body>
+</html>
