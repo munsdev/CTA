@@ -1,0 +1,623 @@
+/* ===========================================================================
+   ABUELA — console styling
+   Target: 2002 ops console. Not Hollywood-hacker.
+
+   The canon constraint that shapes all of this: the system was built by a
+   Florida electrician who taught himself to code, for his own private use.
+   So the look is homebrew and functional, not designed — hard 1px borders,
+   Win2k-era bevels, no rounded corners, no shadows, no blur, no easing
+   curves. Animation is stepped (`steps()`); smooth easing reads as 2015.
+
+   Deliberate imperfections are marked inline. They are not bugs. A console
+   one person built over years is not uniform, and the unevenness is most of
+   what separates this from a template.
+   =========================================================================== */
+
+:root {
+  --bg:        #060a06;
+  --bg-panel:  #0a0f0a;
+  --bg-inset:  #050805;
+  --p:         #33ff33;   /* phosphor */
+  --p-dim:     #1f9d1f;
+  --p-faint:   #124f12;
+  --amber:     #ffb000;
+  --red:       #ff3b30;
+  --line:      #1a3a1a;
+  --line-hi:   #2f6b2f;
+  --mono: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--p);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  /* Kill subpixel smoothing — 2002 monitors did not antialias. */
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  text-shadow: 0 0 2px rgba(51, 255, 51, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   CRT overlays
+   -------------------------------------------------------------------------- */
+
+.crt-scan {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.28) 3px,
+    rgba(0, 0, 0, 0.28) 4px
+  );
+  animation: scanroll 8s steps(60) infinite;
+}
+
+@keyframes scanroll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(4px); }
+}
+
+.crt-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 91;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  /* Flicker you can barely see. If you can see it clearly, it's too much. */
+  animation: flicker 4.7s steps(24) infinite;
+}
+
+@keyframes flicker {
+  0%, 96%  { opacity: 1; }
+  97%      { opacity: 0.94; }
+  98%      { opacity: 1; }
+  99%      { opacity: 0.97; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-scan, .crt-vignette { animation: none; }
+  .cursor { animation: none; }
+  .tape-run { animation-duration: 240s; }
+}
+
+/* --------------------------------------------------------------------------
+   Boot
+   -------------------------------------------------------------------------- */
+
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: var(--bg);
+  padding: 6vh 6vw;
+  overflow: hidden;
+}
+
+.boot pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--p);
+  white-space: pre-wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Layout
+   -------------------------------------------------------------------------- */
+
+.console {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  background: #0d150d;
+  border-bottom: 1px solid var(--line-hi);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--p-dim);
+  flex: none;
+}
+
+.strip b { color: var(--p); font-weight: normal; }
+.strip .ok { color: var(--p); }
+.strip-brand { color: var(--p); letter-spacing: 0.22em; }
+.sep { color: var(--p-faint); }
+
+.strip-right {
+  margin-left: auto;
+  /* Two pixels off the baseline of everything else in this bar. Deliberate. */
+  position: relative;
+  top: 1px;
+}
+
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 6px;
+  padding: 6px;
+  min-height: 0;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Panels — Win2k-era inset chrome. Hard edges only.
+   -------------------------------------------------------------------------- */
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--line-hi);
+  /* Bevel via borders rather than box-shadow: shadows didn't exist here. */
+  border-top-color: #2f6b2f;
+  border-left-color: #2f6b2f;
+  border-right-color: #0f2a0f;
+  border-bottom-color: #0f2a0f;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel h2 {
+  margin: 0;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: normal;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0a0f0a;
+  background: var(--p-dim);
+  text-shadow: none;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: none;
+}
+
+.h2-dim {
+  color: #0a3a0a;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.panel-body {
+  padding: 6px;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.dim  { color: var(--p-faint); }
+.warn { color: var(--amber); }
+.bad  { color: var(--red); }
+
+.note {
+  margin: 6px 0 0;
+  font-size: 10px;
+  color: var(--p-faint);
+  line-height: 1.4;
+}
+
+/* Panel scrollbars — chunky, square, era-correct. */
+.panel-body::-webkit-scrollbar,
+.term::-webkit-scrollbar { width: 10px; }
+.panel-body::-webkit-scrollbar-track,
+.term::-webkit-scrollbar-track { background: var(--bg-inset); }
+.panel-body::-webkit-scrollbar-thumb,
+.term::-webkit-scrollbar-thumb {
+  background: var(--p-faint);
+  border: 1px solid var(--line-hi);
+}
+
+/* --------------------------------------------------------------------------
+   Flags
+   -------------------------------------------------------------------------- */
+
+.flag {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 2px;
+  border-bottom: 1px dotted var(--line);
+  font-size: 11px;
+}
+
+.flag-id { color: var(--p-faint); }
+.flag-label { flex: 1; color: var(--p-faint); }
+
+.flag.on .flag-label { color: var(--p); }
+.flag.on .flag-id { color: var(--amber); }
+
+.flag-state {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--p-faint);
+}
+.flag.on .flag-state {
+  color: var(--amber);
+  animation: blink 1.6s steps(2) infinite;
+}
+
+.flag.sealed .flag-label {
+  color: var(--p-faint);
+  letter-spacing: -0.05em;
+}
+.flag.sealed .flag-state { color: var(--red); }
+
+@keyframes blink { 50% { opacity: 0.35; } }
+
+/* --------------------------------------------------------------------------
+   Gauges
+   -------------------------------------------------------------------------- */
+
+.gauge { margin-bottom: 8px; }
+
+.gauge-track {
+  height: 12px;
+  background: var(--bg-inset);
+  border: 1px solid var(--line-hi);
+  border-top-color: #0f2a0f;
+  border-left-color: #0f2a0f;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Stepped fill: the bar advances in blocks, not a smooth sweep. */
+.gauge-fill {
+  height: 100%;
+  width: 0;
+  background: repeating-linear-gradient(
+    to right,
+    var(--p) 0px, var(--p) 4px,
+    transparent 4px, transparent 6px
+  );
+  transition: width 0.4s steps(12);
+}
+
+.gauge-fill.high { background: repeating-linear-gradient(
+    to right, var(--amber) 0px, var(--amber) 4px, transparent 4px, transparent 6px); }
+.gauge-fill.crit { background: repeating-linear-gradient(
+    to right, var(--red) 0px, var(--red) 4px, transparent 4px, transparent 6px); }
+
+.gauge-label {
+  font-size: 10px;
+  color: var(--p-dim);
+  text-align: right;
+  margin-top: 2px;
+}
+
+.meter-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  margin-top: 8px;
+  color: var(--p-dim);
+}
+
+.meter-val { color: var(--p); }
+
+/* Variance track. The danger band sits at the LEFT — at zero — because
+   perfect conservation is the tell, not sloppiness. */
+.var-track {
+  position: relative;
+  height: 10px;
+  margin-top: 3px;
+  background: var(--bg-inset);
+  border: 1px solid var(--line-hi);
+}
+
+.var-danger {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 18%;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 59, 48, 0.5) 0px, rgba(255, 59, 48, 0.5) 3px,
+    transparent 3px, transparent 6px
+  );
+}
+
+.var-marker {
+  position: absolute;
+  top: -2px;
+  width: 3px;
+  height: 14px;
+  background: var(--p);
+  left: 0;
+  transition: left 0.3s steps(10);
+}
+
+.var-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Mode + reserves
+   -------------------------------------------------------------------------- */
+
+.mode-row { display: flex; gap: 4px; margin-bottom: 8px; }
+
+.mode-chip {
+  flex: 1;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 3px 2px;
+  border: 1px solid var(--line-hi);
+  color: var(--p-faint);
+  background: var(--bg-inset);
+}
+
+.mode-chip.on { color: #0a0f0a; background: var(--p-dim); text-shadow: none; }
+
+.res-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--line);
+}
+.res-tier { color: var(--p-dim); text-transform: uppercase; font-size: 10px; }
+
+/* --------------------------------------------------------------------------
+   Terminal
+   -------------------------------------------------------------------------- */
+
+.panel-term { min-height: 0; }
+
+.term-flags { margin-left: auto; color: #0a3a0a; }
+
+.term {
+  flex: 1;
+  padding: 8px;
+  background: var(--bg-inset);
+  overflow-y: auto;
+  min-height: 0;
+  cursor: text;
+  outline: none;
+}
+
+.term-out { white-space: pre-wrap; word-break: break-word; }
+
+.term-line { margin: 0; min-height: 1.35em; }
+.term-line.echo   { color: var(--p-dim); }
+.term-line.ack    { color: var(--amber); }
+.term-line.system { color: var(--p); }
+.term-line.err    { color: var(--red); }
+
+.term-input-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.prompt { color: var(--p-dim); flex: none; }
+
+#term-in {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--p);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-shadow: inherit;
+  padding: 0;
+  caret-color: transparent;   /* the block cursor below replaces it */
+}
+
+.cursor {
+  color: var(--p);
+  animation: blink 1s steps(2) infinite;
+  flex: none;
+}
+
+.hintbar {
+  flex: none;
+  padding: 3px 6px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--p-faint);
+  white-space: nowrap;
+  overflow-x: auto;
+  letter-spacing: 0.06em;
+}
+
+.hintbar b { color: var(--p-dim); font-weight: normal; }
+
+/* --------------------------------------------------------------------------
+   Paper / investigators / glossary
+   -------------------------------------------------------------------------- */
+
+.panel-paper { border-color: var(--amber); border-top-color: #ffcc55; }
+.panel-paper h2 { background: var(--amber); color: #1a1000; }
+.panel-paper .h2-dim { color: #6b4a00; }
+
+.paper-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 4px 3px;
+  margin-bottom: 2px;
+  background: var(--bg-inset);
+  border: 1px solid var(--line);
+  color: var(--p);
+  font-family: var(--mono);
+  font-size: 10px;
+  cursor: pointer;
+  line-height: 1.3;
+}
+.paper-item:hover { border-color: var(--amber); color: var(--amber); }
+.paper-item .pk { color: var(--amber); letter-spacing: 0.1em; }
+
+.inv-card {
+  border-bottom: 1px dotted var(--line);
+  padding: 4px 2px;
+  font-size: 10px;
+}
+.inv-card .inv-id { color: var(--amber); }
+.inv-card .inv-note { color: var(--p-faint); }
+
+.gloss { font-size: 10px; }
+.gloss-row {
+  display: flex;
+  gap: 6px;
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--line);
+}
+.gloss-es { color: var(--p); min-width: 76px; }
+.gloss-en { color: var(--p-faint); }
+
+/* --------------------------------------------------------------------------
+   Tape
+   -------------------------------------------------------------------------- */
+
+.tape {
+  flex: none;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--line-hi);
+  background: #0d150d;
+  height: 22px;
+  overflow: hidden;
+}
+
+.tape-label {
+  flex: none;
+  padding: 0 8px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: #0a0f0a;
+  background: var(--p-dim);
+  line-height: 22px;
+  text-shadow: none;
+}
+
+.tape-window { flex: 1; overflow: hidden; position: relative; }
+
+.tape-run {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--p-dim);
+  line-height: 22px;
+  will-change: transform;
+  animation: tapescroll 120s linear infinite;
+}
+
+@keyframes tapescroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.tape-run .d  { color: var(--p-faint); }
+.tape-run .hi { color: var(--p); }
+
+/* --------------------------------------------------------------------------
+   Lightbox
+   -------------------------------------------------------------------------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4vh 4vw;
+}
+
+.lightbox-inner {
+  max-width: 900px;
+  width: 100%;
+  border: 1px solid var(--amber);
+  background: var(--bg-panel);
+}
+
+.lightbox-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  background: var(--amber);
+  color: #1a1000;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-shadow: none;
+}
+
+.lightbox-bar button {
+  margin-left: auto;
+  background: #1a1000;
+  color: var(--amber);
+  border: 1px solid #1a1000;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+#lb-img { display: block; width: 100%; height: auto; }
+
+/* --------------------------------------------------------------------------
+   Narrow screens: the side columns stack under the terminal rather than
+   compressing into unreadable slivers.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(320px, 1fr) auto auto;
+    overflow-y: auto;
+  }
+  .panel-term { order: -1; min-height: 340px; }
+  .col { flex-direction: row; flex-wrap: wrap; overflow: visible; }
+  .col .panel { flex: 1 1 240px; max-height: 240px; }
+  body { overflow: auto; }
+  .console { height: auto; min-height: 100%; }
+}
+
+@media (max-width: 560px) {
+  body { font-size: 12px; }
+  .strip-right { display: none; }
+  .col .panel { flex: 1 1 100%; }
+}

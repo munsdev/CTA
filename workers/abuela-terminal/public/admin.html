@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abuela — content admin</title>
+<meta name="robots" content="noindex">
+<style>
+  /* Deliberately plain. The console is the styled artifact; this is a tool
+     for editing rows, and the KYR builder's chrome is the house pattern. */
+  :root {
+    --bg:#141416; --panel:#1c1c1f; --panel2:#232327; --line:#33333a;
+    --text:#e8e8ea; --dim:#9a9aa2; --accent:#3fa66a; --accent2:#4a7fd6;
+    --warn:#d69a3f; --danger:#c9302c;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  header{position:sticky;top:0;z-index:20;background:var(--panel);
+         border-bottom:1px solid var(--line);padding:10px 12px;}
+  h1{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);
+     margin:0 0 8px;font-weight:600;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  input,textarea,select{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:6px 8px;border-radius:6px;font-size:13px;font-family:inherit;width:100%;}
+  textarea{font-family:var(--mono);resize:vertical;min-height:60px;}
+  button{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:6px 11px;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;}
+  button:hover{border-color:#555;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#04180c;font-weight:600;}
+  button.secondary{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+  button.danger{color:#ff8a84;}
+  button.small{padding:3px 8px;font-size:12px;}
+  .tabs{display:flex;gap:3px;margin-top:8px;flex-wrap:wrap;}
+  .tab{padding:6px 11px;border-radius:6px 6px 0 0;background:var(--panel2);color:var(--dim);
+       cursor:pointer;font-size:12px;border:1px solid var(--line);border-bottom:none;}
+  .tab.active{color:var(--text);background:var(--bg);font-weight:600;}
+  main{padding:14px 12px 120px;max-width:1200px;margin:0 auto;}
+  .hint{font-size:12px;color:var(--dim);margin:0 0 12px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{color:var(--dim);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em;}
+  td.mono{font-family:var(--mono);white-space:pre-wrap;max-width:380px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+        padding:12px;margin-bottom:12px;}
+  .field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+  .field label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;}
+  .log{position:fixed;right:10px;bottom:10px;background:var(--panel);border:1px solid var(--line);
+       border-radius:6px;padding:8px 10px;font-size:12px;max-width:340px;display:none;}
+  .log.show{display:block;}
+  .n{display:inline-block;min-width:28px;color:var(--warn);font-family:var(--mono);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Abuela — content admin</h1>
+  <div class="row">
+    <input id="token" type="password" placeholder="ADMIN_TOKEN" style="max-width:280px">
+    <button id="save-token">Save token</button>
+    <button id="bump" class="secondary">Bump content version</button>
+    <span class="hint" style="margin:0">Token is stored in this browser only, sent as a bearer header.</span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<main>
+  <p class="hint" id="tab-hint"></p>
+  <div id="editor"></div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <strong id="list-title">Rows</strong>
+      <button id="reload" class="small">Reload</button>
+    </div>
+    <div style="overflow-x:auto;margin-top:8px"><table id="list"></table></div>
+  </div>
+</main>
+
+<div class="log" id="log"></div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Generic row editor over /api/admin/<table>. Deliberately schema-driven:
+   adding a column to the Worker's ADMIN_TABLES map is enough to expose it
+   here, so this file doesn't need touching every time content grows.
+   --------------------------------------------------------------------------- */
+
+var TABLES = {
+  misses: {
+    label: 'Misses',
+    readonly: true,
+    hint: 'What people actually typed that nothing answered, most frequent first. ' +
+          'This is the point of the admin: turn the top rows into authored responses ' +
+          'and the coverage gap closes where it actually is, not where you guessed.',
+    cols: ['input', 'n', 'last_at'],
+  },
+  responses: {
+    label: 'Responses',
+    key: 'id',
+    hint: 'match_mode: command (bound to a command) · exact · contains · regex · fallback. ' +
+          'ack is the flat second beat ("Acknowledged.") — leave blank for most rows.',
+    cols: ['id', 'command_id', 'trigger', 'match_mode', 'priority', 'body_en', 'body_es', 'ack', 'variants', 'requires_flag', 'sets_flag', 'active'],
+    form: ['command_id', 'trigger', 'match_mode', 'priority', 'body_en', 'body_es', 'ack', 'variants', 'typing_ms', 'requires_flag', 'sets_flag', 'asset_key', 'active'],
+    big: ['body_en', 'body_es', 'variants'],
+  },
+  commands: {
+    label: 'Commands',
+    key: 'id',
+    hint: 'unlocked_at_flag gates what the client is even told exists — command names are plot. ' +
+          'handler: static · state · ledger · asset · action.',
+    cols: ['id', 'name', 'aliases', 'handler', 'help_en', 'unlocked_at_flag', 'sort_order', 'active'],
+    form: ['name', 'aliases', 'args_spec', 'handler', 'help_en', 'help_es', 'unlocked_at_flag', 'sort_order', 'active'],
+  },
+  glossary: {
+    label: 'Glossary',
+    key: 'id',
+    hint: 'Terms accumulate in the console as players meet them.',
+    cols: ['id', 'term_es', 'gloss_en', 'note', 'first_seen_in', 'unlocked_at_flag'],
+    form: ['term_es', 'gloss_en', 'note', 'first_seen_in', 'unlocked_at_flag'],
+  },
+  assets: {
+    label: 'Paper',
+    key: 'key',
+    hint: 'r2_key points into the abuela-terminal-assets bucket. A row with no object behind it ' +
+          'reports as "indexed, not digitized" rather than erroring, so content can land before scans do.',
+    cols: ['key', 'r2_key', 'kind', 'caption_en', 'unlocked_at_flag'],
+    form: ['key', 'r2_key', 'kind', 'caption_en', 'caption_es', 'unlocked_at_flag'],
+  },
+  suppliers: {
+    label: 'Suppliers',
+    key: 'id',
+    hint: 'The authored spine. thread: marcus · rose · root. Procedural filler generates around these.',
+    cols: ['id', 'code', 'name', 'tier', 'region', 'thread', 'active'],
+    form: ['code', 'name', 'tier', 'region', 'thread', 'note_en', 'active'],
+  },
+  ledger_entries: {
+    label: 'Ledger',
+    key: 'id',
+    hint: 'Marcus’s five flagged deltas sum to $262,144. Editing them breaks the easter egg.',
+    cols: ['id', 'supplier_id', 'period', 'amount', 'delta', 'mode', 'flagged'],
+    form: ['supplier_id', 'period', 'amount', 'delta', 'mode', 'flagged', 'note_en'],
+  },
+  flags: {
+    label: 'Flags',
+    key: 'key',
+    hint: 'spoiler=1 withholds the label from the client until a book code is redeemed.',
+    cols: ['key', 'label_en', 'label_es', 'sort_order', 'spoiler'],
+    form: ['key', 'label_en', 'label_es', 'sort_order', 'trigger_note', 'spoiler'],
+  },
+  unlock_codes: {
+    label: 'Codes',
+    key: 'code',
+    hint: 'Printed in the back matter near the glossary. Replace the placeholder before the edition ships.',
+    cols: ['code', 'grants', 'note', 'redeemed', 'active'],
+    form: ['code', 'grants', 'note', 'active'],
+  },
+};
+
+var current = 'misses';
+var rows = [];
+
+function tok() { return localStorage.getItem('abuela.admin') || ''; }
+
+function log(msg, bad) {
+  var el = document.getElementById('log');
+  el.textContent = msg;
+  el.style.borderColor = bad ? '#c9302c' : '#33333a';
+  el.classList.add('show');
+  clearTimeout(log._t);
+  log._t = setTimeout(function () { el.classList.remove('show'); }, 3200);
+}
+
+function api(path, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, opts.headers || {});
+  return fetch('/api/admin/' + path, opts).then(function (r) {
+    if (r.status === 401) throw new Error('Unauthorized — check the token');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  });
+}
+
+function renderTabs() {
+  var host = document.getElementById('tabs');
+  host.innerHTML = '';
+  Object.keys(TABLES).forEach(function (k) {
+    var b = document.createElement('div');
+    b.className = 'tab' + (k === current ? ' active' : '');
+    b.textContent = TABLES[k].label;
+    b.onclick = function () { current = k; renderTabs(); load(); };
+    host.appendChild(b);
+  });
+}
+
+function load() {
+  var def = TABLES[current];
+  document.getElementById('tab-hint').textContent = def.hint || '';
+  document.getElementById('list-title').textContent = def.label;
+  renderForm();
+  api(current)
+    .then(function (d) { rows = d.rows || []; renderList(); })
+    .catch(function (e) { log(e.message, true); });
+}
+
+function renderList() {
+  var def = TABLES[current];
+  var t = document.getElementById('list');
+  t.innerHTML = '';
+
+  var head = t.insertRow();
+  def.cols.forEach(function (c) {
+    var th = document.createElement('th');
+    th.textContent = c;
+    head.appendChild(th);
+  });
+  if (!def.readonly) head.appendChild(document.createElement('th'));
+
+  rows.forEach(function (r) {
+    var tr = t.insertRow();
+    def.cols.forEach(function (c) {
+      var td = tr.insertCell();
+      var v = r[c];
+      if (c === 'n') { td.innerHTML = '<span class="n">' + v + '</span>'; return; }
+      if (c === 'last_at' && v) { td.textContent = new Date(v).toLocaleString(); return; }
+      td.className = 'mono';
+      td.textContent = v == null ? '' : String(v).slice(0, 260);
+    });
+
+    if (def.readonly) {
+      // Misses are the promotion queue: one click drops the phrase into the
+      // response editor so a real gap becomes an authored line immediately.
+      var td = tr.insertCell();
+      var b = document.createElement('button');
+      b.className = 'small secondary';
+      b.textContent = 'Author →';
+      b.onclick = function () {
+        current = 'responses';
+        renderTabs();
+        load();
+        setTimeout(function () {
+          var f = document.querySelector('[data-f="trigger"]');
+          var m = document.querySelector('[data-f="match_mode"]');
+          if (f) f.value = r.input;
+          if (m) m.value = 'exact';
+        }, 250);
+      };
+      td.appendChild(b);
+      return;
+    }
+
+    var td2 = tr.insertCell();
+    var edit = document.createElement('button');
+    edit.className = 'small';
+    edit.textContent = 'Edit';
+    edit.onclick = function () { fillForm(r); };
+    var del = document.createElement('button');
+    del.className = 'small danger';
+    del.textContent = 'Del';
+    del.onclick = function () {
+      if (!confirm('Delete this row?')) return;
+      api(current + '/' + encodeURIComponent(r[def.key]), { method: 'DELETE' })
+        .then(function () { log('Deleted'); load(); })
+        .catch(function (e) { log(e.message, true); });
+    };
+    td2.appendChild(edit);
+    td2.appendChild(del);
+  });
+}
+
+function renderForm() {
+  var def = TABLES[current];
+  var host = document.getElementById('editor');
+  if (def.readonly) { host.innerHTML = ''; return; }
+
+  host.innerHTML = '<div class="card"><strong>New / edit row</strong>' +
+    '<div class="grid2" id="form-grid" style="margin-top:10px"></div>' +
+    '<div class="row" style="margin-top:8px">' +
+      '<button class="primary" id="save">Save</button>' +
+      '<button id="clear">Clear</button>' +
+      '<span class="hint" style="margin:0">Leaving the key field blank creates a new row.</span>' +
+    '</div></div>';
+
+  var grid = document.getElementById('form-grid');
+  var keyField = def.key === 'id' ? null : def.key;
+
+  if (def.key === 'id') {
+    grid.appendChild(field('id', false));
+  }
+  (def.form || def.cols).forEach(function (c) {
+    if (c === 'id') return;
+    grid.appendChild(field(c, (def.big || []).indexOf(c) !== -1));
+  });
+
+  document.getElementById('clear').onclick = function () {
+    grid.querySelectorAll('[data-f]').forEach(function (i) { i.value = ''; });
+  };
+
+  document.getElementById('save').onclick = function () {
+    var data = {};
+    grid.querySelectorAll('[data-f]').forEach(function (i) {
+      if (i.value !== '') data[i.dataset.f] = i.value;
+    });
+    var idVal = def.key === 'id' ? data.id : data[def.key];
+    var existing = def.key === 'id'
+      ? !!data.id
+      : rows.some(function (r) { return String(r[def.key]) === String(idVal); });
+
+    delete data.id;
+    var path = existing ? current + '/' + encodeURIComponent(idVal) : current;
+    api(path, { method: existing ? 'PUT' : 'POST', body: JSON.stringify(data) })
+      .then(function () { log(existing ? 'Updated' : 'Created'); load(); })
+      .catch(function (e) { log(e.message, true); });
+  };
+}
+
+function field(name, big) {
+  var wrap = document.createElement('div');
+  wrap.className = 'field';
+  if (big) wrap.style.gridColumn = '1 / -1';
+  var label = document.createElement('label');
+  label.textContent = name;
+  var input = document.createElement(big ? 'textarea' : 'input');
+  input.dataset.f = name;
+  wrap.appendChild(label);
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function fillForm(r) {
+  document.querySelectorAll('[data-f]').forEach(function (i) {
+    var v = r[i.dataset.f];
+    i.value = v == null ? '' : v;
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('save-token').onclick = function () {
+  localStorage.setItem('abuela.admin', document.getElementById('token').value.trim());
+  log('Token saved');
+  load();
+};
+
+document.getElementById('bump').onclick = function () {
+  api('bump', { method: 'GET' })
+    .then(function (d) { log('Content version now ' + d.version); })
+    .catch(function (e) { log(e.message, true); });
+};
+
+document.getElementById('reload').onclick = load;
+
+document.getElementById('token').value = tok();
+renderTabs();
+load();
+</script>
+</body>
+</html>
