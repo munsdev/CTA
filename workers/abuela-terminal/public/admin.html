@@ -259,7 +259,21 @@ function renderList() {
     del.className = 'small danger';
     del.textContent = 'Del';
     del.onclick = function () {
-      if (!confirm('Delete this row?')) return;
+      // No browser confirm() popup — arm on first click, fire on the second
+      // within 3s. Disarms itself so a stray later click can't slip through.
+      if (!del.dataset.armed) {
+        del.dataset.armed = '1';
+        del.textContent = 'Sure?';
+        clearTimeout(del._disarm);
+        del._disarm = setTimeout(function () {
+          delete del.dataset.armed;
+          del.textContent = 'Del';
+        }, 3000);
+        return;
+      }
+      clearTimeout(del._disarm);
+      delete del.dataset.armed;
+      del.textContent = 'Del';
       api(current + '/' + encodeURIComponent(r[def.key]), { method: 'DELETE' })
         .then(function () { log('Deleted'); load(); })
         .catch(function (e) { log(e.message, true); });
