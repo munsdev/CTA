@@ -38,11 +38,13 @@ bucket_name = "abuela-terminal-assets"
 # Rate-limit counters and the global LLM kill-switch. KV rather than D1 because
 # these are hot-path writes on every generated response and none of it is
 # content worth keeping.
-# [[kv_namespaces]]
-# binding = "LIMITS"
-# id = "<run: wrangler kv namespace create LIMITS>"
+[[kv_namespaces]]
+binding = "LIMITS"
+id = "b96b181785ec483a8abb3828df5f211d"
 
-# Secrets (set with `wrangler secret put <NAME>`):
+# Secrets — set in the Cloudflare dashboard (Workers & Pages > abuela-terminal
+# > Settings > Variables and Secrets > Add), or via `wrangler secret put <NAME>`
+# if you have wrangler authenticated locally:
 #   ADMIN_TOKEN      bearer token for /api/admin/* and admin.html
 #   ANTHROPIC_API_KEY  long-tail response generation (optional; the console
 #                      runs without it — unmatched input just gets the flat
