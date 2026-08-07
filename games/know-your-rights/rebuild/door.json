@@ -4,153 +4,224 @@
   "meta": {
     "name": "At the door",
     "art": "door",
-    "teaches": "Consent is the whole game.",
+    "teaches": "The door is the line. Everything you win, you win by not opening it.",
     "floor": 0,
     "exitAt": null,
-    "exitDeny": null,
-    "open": "Someone is knocking. You are on the inside of your own front door.",
-    "law": "A warrant signed by an immigration officer does not let anyone in. Only a judge can sign one that does — and they almost never do.",
+    "exitDeny": "You are not being stopped. You are inside your own home. There is nothing to walk away from — there is only a door to keep closed.",
+    "open": "You're home. It's early. Something is happening on the other side of your front door.",
+    "law": "Verified 2026-08-08. Judicial vs administrative warrant distinction; right to remain silent regardless of status; no obligation to open the door absent a judicial warrant.",
     "active": true,
-    "sortOrder": 0,
+    "sortOrder": 1,
     "forcedEntry": {
-      "chance": 0.20,
-      "backdrop": "open-two-agents",
-      "text": "They came through the door. You never opened it, you never consented, and the paper they carried was signed by an immigration officer, not a judge. Write down the time. Write down what it said. A lawyer starts there."
+      "chance": 0.2,
+      "backdrop": "door-open",
+      "text": "You did everything right. At 6:31 they forced the lock and came in anyway. You are in the back of a van by 7:00. Nothing you said is in their file, because you said nothing. That is not a small thing — it is the only thing you controlled, and you controlled it."
     }
   },
   "backdrops": [
-    { "id": "closed-window", "title": "Door shut, agent at window", "file": "backdrops/closed-window.png" },
-    { "id": "closed-warrant", "title": "Door shut, agent holding papers", "file": "backdrops/closed-warrant.png" },
-    { "id": "cracked-two-agents", "title": "Door cracked, two agents", "file": "backdrops/cracked-two-agents.png" },
-    { "id": "open-two-agents", "title": "Door open, two agents", "file": "backdrops/open-two-agents.png" }
+    { "id": "door-closed-inside", "title": "Closed door, from inside", "file": "backdrops/door-closed-inside.png" },
+    { "id": "peephole-two-agents", "title": "Peephole view", "file": "backdrops/peephole-two-agents.png" },
+    { "id": "paper-on-glass", "title": "Paper against the glass", "file": "backdrops/paper-on-glass.png" },
+    { "id": "door-cracked", "title": "Door open on the chain", "file": "backdrops/door-cracked.png" },
+    { "id": "door-open", "title": "Doorway open", "file": "backdrops/door-open.png" }
   ],
   "npcs": [
-    { "id": "agent", "label": "Agent" }
+    { "id": "lead", "label": "The one doing the talking" },
+    { "id": "second", "label": "The one standing back" }
   ],
   "meters": [
-    { "key": "detain", "label": "Detainment risk", "max": 100, "fatalAt": 100, "primary": true }
+    { "key": "detain", "label": "Will they take you", "max": 100, "fatalAt": 100, "primary": true }
   ],
   "credits": [
-    { "key": "record", "label": "Started recording" },
-    { "key": "closed", "label": "Kept the door closed" },
-    { "key": "judge", "label": "Asked if a judge signed it" },
-    { "key": "slide", "label": "Asked them to slide it under the door" },
-    { "key": "read", "label": "Read the paper before deciding" },
-    { "key": "refused", "label": "Said “I do not consent”" },
-    { "key": "silent", "label": "Stayed silent" },
-    { "key": "lawyer", "label": "Asked for a lawyer" }
+    { "key": "no-open", "label": "You never opened the door." },
+    { "key": "silence", "label": "You said out loud that you were staying silent." },
+    { "key": "warrant", "label": "You made them show the paper, and you read it." },
+    { "key": "no-consent", "label": "You said out loud that you do not consent." },
+    { "key": "lawyer", "label": "You asked for a lawyer." },
+    { "key": "record", "label": "You wrote down what you saw." }
   ],
-  "start": "door-r1",
+  "start": "knock",
   "cards": {
-    "door-r1": {
-      "backdrop": "closed-window",
+    "knock": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["Federal agents. Open the door.", "We know you are in there. Open up."] }
+        { "speaker": null, "texts": ["6:04 a.m. Three hard knocks. Flat of the hand, not knuckles."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["A voice, close to the door: \"Police. Open up.\""] }
       ],
       "answers": [
-        { "text": "Stay where you are. Talk through the door.", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"] },
-        { "text": "Open it a crack, just to see who it is.", "goto": "door-ruse1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
-        { "text": "Open the door. Refusing looks guilty.", "goto": "end-fatal", "grade": "fatal", "why": "You let them in. Nothing after that was a search. It was a visit you agreed to." }
+        { "text": "Open the door. They said police.", "grade": "severe", "goto": "opened-early", "meters": { "detain": 45 }, "why": "“Police” at your door is not a command you have to obey. Nothing about the word obligates you to open. Once the door is open, everything after it is harder." },
+        { "text": "Look through the peephole. Say nothing yet.", "grade": "shield", "goto": "peephole", "meters": { "detain": 0 }, "why": "Looking costs you nothing and tells you who is actually out there. You have not spoken, opened, or agreed to anything." },
+        { "text": "Call through the door: \"Who is it?\"", "grade": "shield", "goto": "who", "meters": { "detain": 0 }, "why": "Talking through a closed door is not opening it. You can ask questions all day from this side." },
+        { "text": "Stay completely still and quiet.", "grade": "steady", "goto": "wait", "meters": { "detain": -8 }, "why": "Silence is a real option and it is safe. It is not the strongest play only because you learn nothing about who is there." }
       ]
     },
-    "door-ruse1": {
-      "backdrop": "cracked-two-agents",
+    "peephole": {
+      "backdrop": "peephole-two-agents",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["He puts a boot in the gap. “Since it is already open—”", "A hand is on the door now. “Just step back, we will come to you.”"] }
+        { "speaker": null, "texts": ["Two of them on the landing. Vests. One has a white patch on the chest — you cannot read it from here."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["Neither is in a police uniform."] }
       ],
       "answers": [
-        { "text": "Push it shut. “I did not consent to that.”", "goto": "door-r2", "grade": "shield", "meters": { "detain": 0 }, "credits": ["closed"] },
-        { "text": "Step back and let him follow you in.", "goto": "end-fatal", "grade": "fatal", "why": "A boot in a doorway is not a search warrant. But you treated it like an invitation, and that is all it takes." }
+        { "text": "\"Are you immigration? Are you ICE?\"", "grade": "shield", "goto": "who", "meters": { "detain": 0 }, "why": "A fair question, asked from behind a closed door. Vests reading POLICE or FEDERAL AGENT are routinely worn by immigration officers. Asking directly is how you find out." },
+        { "text": "Open the door to get a better look.", "grade": "severe", "goto": "opened-early", "meters": { "detain": 45 }, "why": "You never need a better look. The peephole told you what mattered: they are not in uniform and they came to your door at 6 a.m." },
+        { "text": "Say nothing. Keep watching.", "grade": "steady", "goto": "wait", "meters": { "detain": -8 }, "why": "Fine. Costs you nothing." }
       ]
     },
-    "door-r2": {
-      "backdrop": "closed-window",
+    "who": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["We have a warrant.", "There is a warrant. Open up."] }
+        { "speaker": "lead", "texts": ["We're with the Department of Homeland Security. We're looking for someone. Open the door and we'll clear this up in two minutes."] }
       ],
       "answers": [
-        { "text": "“Is it signed by a judge?”", "goto": "door-r3", "grade": "shield", "meters": { "detain": 0 }, "credits": ["judge"] },
-        { "text": "Ask who they are looking for.", "goto": "door-r3", "grade": "soft", "meters": { "detain": 12 } },
-        { "text": "“Then come in.”", "goto": "end-fatal", "grade": "fatal", "why": "You said yes. Consent is the only key they needed." }
+        { "text": "\"Do you have a warrant signed by a judge?\"", "grade": "shield", "goto": "warrant-claim", "meters": { "detain": 0 }, "why": "This is the whole scene in one sentence. A judge's warrant is the only paper that lets them in without your permission. Ask for it every time." },
+        { "text": "Open it. Two minutes and they're gone.", "grade": "fatal", "goto": "opened-invited", "meters": { "detain": 100 }, "why": "This is the most reasonable-sounding sentence they will say to you, and it is the one that ends the game. There is no two-minute version. Once you open, the encounter is on their terms." },
+        { "text": "\"I'm not opening the door. Who are you looking for?\"", "grade": "shield", "goto": "ruse", "meters": { "detain": 0 }, "why": "You can hold the line and still ask questions. Refusing to open is not refusing to speak." },
+        { "text": "\"Nobody by that name lives here.\"", "grade": "soft", "goto": "ruse", "meters": { "detain": 12 }, "damaged": true, "why": "You have not been told a name yet. Answering a question you have not been asked tells them someone is home, awake, and willing to talk." }
       ]
     },
-    "door-r3": {
-      "backdrop": "closed-window",
+    "wait": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["I told you. It has your name on it.", "It is a federal warrant. That is all you need to know."] }
+        { "speaker": null, "texts": ["Nothing for eleven seconds. Then the knocking starts again, harder."] },
+        { "speaker": "lead", "mode": "narration-on-shield", "texts": ["We know you're in there. We can hear you."] }
       ],
       "answers": [
-        { "text": "“Slide it under the door, or show me in the window.”", "goto": "door-r4", "grade": "shield", "meters": { "detain": 0 }, "credits": ["slide"] },
-        { "text": "Tell them your name so they can check.", "goto": "door-name1", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
-        { "text": "Open the door far enough to look at it.", "goto": "end-fatal", "grade": "fatal", "why": "The door came open. From there it was never going to close." }
+        { "text": "Keep silent. They are guessing.", "grade": "shield", "goto": "pressure", "meters": { "detain": 0 }, "why": "They say this whether they know or not. It is a line, not information. Silence is still working." },
+        { "text": "\"I'm here. What do you want?\"", "grade": "soft", "goto": "who", "meters": { "detain": 12 }, "why": "Not fatal, and not a disaster. But you just confirmed the one thing they were fishing for." },
+        { "text": "Open the door so they stop pounding.", "grade": "severe", "goto": "opened-early", "meters": { "detain": 45 }, "why": "The noise is the point. It is designed to make opening feel like the way to make it stop. It is not — the pounding stops when they leave, and they leave faster against a closed door." }
       ]
     },
-    "door-name1": {
-      "backdrop": "closed-window",
+    "ruse": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["“Thank you. Now open the door, this is easier for you.”", "“Good. Confirmed. Open up.”"] }
+        { "speaker": null, "texts": ["He holds a phone up toward the peephole. \"This guy. He gave this address. You know him?\""] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["The other one, quieter: \"We're not here for you.\""] }
       ],
       "answers": [
-        { "text": "“Confirming a name is not consent. I still do not consent.”", "goto": "door-r4", "grade": "shield", "meters": { "detain": 0 }, "credits": ["refused"] },
-        { "text": "“Fine. You have my name, open up.”", "goto": "end-fatal", "grade": "fatal", "why": "You gave them a fact and then gave them the door. The name was never the leverage — your next word was." }
+        { "text": "\"I'm going to remain silent.\"", "grade": "shield", "goto": "warrant-claim", "meters": { "detain": 0 }, "credits": ["silence"], "why": "The right to remain silent belongs to everyone in the United States, whatever their status. Saying it out loud is stronger than just going quiet — it puts your choice on the record." },
+        { "text": "Look at the photo and tell them you don't know him.", "grade": "harmful", "goto": "questions", "meters": { "detain": 30 }, "damaged": true, "why": "Officers are permitted to use a false story to get you talking or get the door open. A photo of a stranger is a common one. Every answer, even a denial, is you talking." },
+        { "text": "Crack the door to see the phone.", "grade": "severe", "goto": "cracked", "meters": { "detain": 45 }, "why": "The photo is bait for exactly this. A chain does not hold a door that is already open." },
+        { "text": "\"I'm not opening the door and I'm not answering questions.\"", "grade": "shield", "goto": "warrant-claim", "meters": { "detain": 0 }, "credits": ["silence"], "why": "Clean. Both halves stated. Nothing given." }
       ]
     },
-    "door-r4": {
-      "backdrop": "closed-warrant",
+    "warrant-claim": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["Last chance. Open it or we open it for you. Do not make this hard.", "Every minute you stall goes in the report. Open the door."] },
-        { "speaker": null, "mode": "narration-on-shield", "texts": ["He holds the paper up to the window. The header reads DEPARTMENT OF HOMELAND SECURITY. At the bottom: Field Office Director. No judge ever saw it."] }
+        { "speaker": "lead", "texts": ["We have a warrant."] }
       ],
       "answers": [
-        { "text": "“I do not consent to entry.”", "goto": "door-r5", "grade": "shield", "meters": { "detain": 0 }, "credits": ["refused"] },
-        { "text": "Tell them nobody is home.", "goto": "door-bluff1", "grade": "severe", "meters": { "detain": 45 }, "damaged": true },
-        { "text": "Unlock it. They said they would break it.", "goto": "end-fatal", "grade": "fatal", "why": "They did not break it. You opened it." }
+        { "text": "\"Slide it under the door or hold it to the window.\"", "grade": "shield", "goto": "warrant-read", "meters": { "detain": 0 }, "credits": ["warrant"], "why": "Saying they have one is not showing you one. You are entitled to look before you decide anything, and you can look without opening." },
+        { "text": "Open the door. They have a warrant.", "grade": "fatal", "goto": "opened-invited", "meters": { "detain": 100 }, "why": "Reasonable, and wrong. Most paper ICE carries is an administrative warrant signed by an ICE officer, not a judge. It does not let them in. You cannot know which one it is until you read it, and you cannot read it after you have opened the door." },
+        { "text": "\"I don't need to see it. I'm not opening.\"", "grade": "steady", "goto": "pressure", "meters": { "detain": -8 }, "credits": ["no-open"], "why": "The door stays shut, which is what matters most. But you gave up the one piece of information that tells you whether they can lawfully come in anyway." }
       ]
     },
-    "door-bluff1": {
-      "backdrop": "closed-warrant",
+    "warrant-read": {
+      "backdrop": "paper-on-glass",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["“We can hear the TV. Open the door.”", "“Someone is in there. Open it now.”"] }
+        { "speaker": null, "texts": ["A sheet goes flat against the window glass. You can read it if you get close."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["There is a name field, an address field, and one signature line at the bottom."] }
       ],
       "answers": [
-        { "text": "Say nothing further.", "goto": "door-r5", "grade": "shield", "meters": { "detain": 0 }, "credits": ["silent"] },
-        { "text": "“Okay, fine, I am home.” Open the door.", "goto": "end-fatal", "grade": "fatal", "why": "The lie bought you nothing and cost you credibility. Silence would have cost you nothing either — and given them nothing to catch." }
+        { "text": "Check the signature line for a judge's name.", "grade": "shield", "goto": "warrant-admin", "meters": { "detain": 0 }, "credits": ["warrant"], "why": "This is the single detail that decides everything. A judge's signature means a judicial warrant. An officer's signature means an administrative warrant — Form I-200 or I-205 — which does not authorise entry into your home." },
+        { "text": "Check that the name and address are yours.", "grade": "shield", "goto": "warrant-admin", "meters": { "detain": 0 }, "credits": ["warrant"], "why": "Also correct. A warrant with the wrong name or the wrong address is not a warrant for your home." },
+        { "text": "It's a warrant. Open the door.", "grade": "fatal", "goto": "opened-invited", "meters": { "detain": 100 }, "why": "You looked at it and did not read it. That is the same as not looking." },
+        { "text": "Slide your own papers back under so they can see you're not him.", "grade": "harmful", "goto": "questions", "meters": { "detain": 30 }, "damaged": true, "why": "Documents that go under the door do not come back. If the name on them is a name they are interested in, you have just confirmed it yourself. You can say out loud who you are; you do not have to hand anything over." }
       ]
     },
-    "door-r5": {
-      "backdrop": "closed-warrant",
+    "warrant-admin": {
+      "backdrop": "paper-on-glass",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["There. Warrant. Now open the door.", "You have seen it. Open the door."] }
+        { "speaker": null, "texts": ["The signature at the bottom is a Deportation Officer's. There is no judge's name anywhere on the page."] },
+        { "speaker": "lead", "mode": "narration-on-shield", "texts": ["That's a federal warrant. Open the door."] }
       ],
       "answers": [
-        { "text": "“That is not signed by a judge. I do not consent.”", "goto": "door-r6", "grade": "shield", "meters": { "detain": 0 }, "credits": ["read", "refused"] },
-        { "text": "“That is my name. I am the one you want.”", "goto": "door-r6", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true },
-        { "text": "It looks official. Unlock the door.", "goto": "end-fatal", "grade": "fatal", "why": "It said Department of Homeland Security at the top. A judge never saw it." }
+        { "text": "\"That's signed by an officer, not a judge. I do not consent to your entry.\"", "grade": "shield", "goto": "pressure", "meters": { "detain": 0 }, "credits": ["no-consent", "warrant"], "why": "Exactly right, and say it loudly enough to be heard. Saying it out loud matters later: it is the difference between agents entering with your permission and agents entering without it." },
+        { "text": "\"It says federal warrant. I have to open.\"", "grade": "fatal", "goto": "opened-invited", "meters": { "detain": 100 }, "why": "It says warrant, and it is a warrant — for arresting a person, not for entering a home. The word on the page is doing work the law does not." },
+        { "text": "Say nothing and stay where you are.", "grade": "steady", "goto": "pressure", "meters": { "detain": -8 }, "credits": ["no-open"], "why": "Safe. Silence still holds the door. But an unspoken refusal is not on any record." }
       ]
     },
-    "door-r6": {
-      "backdrop": "closed-warrant",
+    "pressure": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["Where were you born?", "You got papers in there? Just tell me where you were born."] }
+        { "speaker": "lead", "texts": ["This can be easy or it can be hard. Step outside for one minute, we sort it out, we're gone. Or we come back with more people, and we come back when your kids are home."] }
       ],
       "answers": [
-        { "text": "Say nothing.", "goto": "door-r7", "grade": "shield", "meters": { "detain": 0 }, "credits": ["silent"] },
-        { "text": "“I have lived here twelve years.”", "goto": "door-r7", "grade": "soft", "meters": { "detain": 12 } },
-        { "text": "Answer the question.", "goto": "door-r7", "grade": "harmful", "meters": { "detain": 30 }, "damaged": true }
+        { "text": "Step outside. One minute, and it protects everyone else.", "grade": "fatal", "goto": "stepped-out", "meters": { "detain": 100 }, "why": "The hardest one to refuse, because it is framed as protecting your family. But the doorway is the line. Outside it, an administrative warrant is enough to arrest you. Inside it, it is not. One minute outside is the whole difference." },
+        { "text": "\"I'm not coming out. I do not consent to you coming in.\"", "grade": "shield", "goto": "questions", "meters": { "detain": 0 }, "credits": ["no-consent"], "why": "Both halves, again. Not coming out, not letting in. The threat about coming back is a threat about the future; nothing about it makes opening now safer." },
+        { "text": "\"Give me your names and badge numbers.\"", "grade": "shield", "goto": "record", "meters": { "detain": 0 }, "why": "You are allowed to ask, and asking changes the temperature. Whether they answer or not, you have started documenting." },
+        { "text": "Crack the door to talk face to face.", "grade": "severe", "goto": "cracked", "meters": { "detain": 45 }, "why": "A cracked door reads like a compromise. It is not one. A boot in the gap ends the conversation about whether you consented." }
       ]
     },
-    "door-r7": {
-      "backdrop": "closed-warrant",
+    "questions": {
+      "backdrop": "door-closed-inside",
       "responses": [
-        { "speaker": "agent", "mode": "random", "texts": ["Come out here and we will clear this up in five minutes.", "Step outside. It is easier for everyone."] }
+        { "speaker": null, "texts": ["Easier now: \"Alright. Just tell me — where were you born, and how long have you been in the country? Say the right thing and we're out of your hair.\""] }
       ],
       "answers": [
-        { "text": "“I want a lawyer. I am not opening the door.”", "goto": "end", "grade": "shield", "meters": { "detain": 0 }, "credits": ["lawyer"] },
-        { "text": "“Come back with a warrant a judge signed.”", "goto": "end", "grade": "steady", "meters": { "detain": -8 } },
-        { "text": "Step outside.", "goto": "end-fatal", "grade": "fatal", "why": "On the porch you are not in your home. The porch was the whole plan." }
+        { "text": "Tell them the truth. You've been here twenty years.", "grade": "severe", "goto": "record", "meters": { "detain": 45 }, "damaged": true, "why": "This feels like the answer that helps you, and there is a real reason it might — but not here and not now. How long you have been in the country decides whether you can be deported without ever seeing a judge. That is a fact you give to a lawyer or a judge, not to an officer through your door, and never before you know what they already have." },
+        { "text": "\"I'm going to remain silent. I want to speak to a lawyer.\"", "grade": "shield", "goto": "record", "meters": { "detain": 0 }, "credits": ["silence", "lawyer"], "why": "The strongest sentence in the game. Where you were born, when you entered, and how you entered are the three questions that build a deportation case, and you never have to answer any of them." },
+        { "text": "Make something up to end it faster.", "grade": "severe", "goto": "record", "meters": { "detain": 45 }, "damaged": true, "why": "Lying to a federal officer is its own crime, and it hands them a reason to hold you that has nothing to do with immigration. Silence is always available and never illegal." },
+        { "text": "\"I'm not answering that.\"", "grade": "shield", "goto": "record", "meters": { "detain": 0 }, "credits": ["silence"], "why": "Fine. Slightly less protective than naming the right to a lawyer, but it gives nothing away." }
       ]
     },
-    "end": { "type": "end" },
-    "end-fatal": { "type": "end", "fatal": true, "backdrop": "open-two-agents" }
+    "record": {
+      "backdrop": "door-closed-inside",
+      "responses": [
+        { "speaker": null, "texts": ["They are still out there. One is on a phone."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["You have a pen somewhere, and a phone of your own."] }
+      ],
+      "answers": [
+        { "text": "Write down the time, how many, what they said, what they wore.", "grade": "shield", "goto": "leave", "meters": { "detain": 0 }, "credits": ["record"], "why": "Nobody else is keeping this record. If anything is ever challenged, your notes made in the moment are worth more than your memory a month later." },
+        { "text": "Record video through the peephole or window.", "grade": "shield", "goto": "leave", "meters": { "detain": 0 }, "credits": ["record"], "why": "Recording from inside your own home is yours to do. Keep the door shut while you do it." },
+        { "text": "Do nothing. Wait it out.", "grade": "steady", "goto": "leave", "meters": { "detain": -8 }, "why": "No harm. But you end up with nothing to show anyone afterwards." },
+        { "text": "Open the door to film them properly.", "grade": "fatal", "goto": "opened-invited", "meters": { "detain": 100 }, "why": "A better shot is not worth the door. The footage does not help you from inside a van." }
+      ]
+    },
+    "cracked": {
+      "backdrop": "door-cracked",
+      "responses": [
+        { "speaker": null, "texts": ["The chain snaps tight. A boot is across the threshold before you can shift your weight."] },
+        { "speaker": "lead", "mode": "narration-on-shield", "texts": ["Now that we're talking — just step out here."] }
+      ],
+      "answers": [
+        { "text": "Push it shut.", "grade": "soft", "goto": "pressure", "meters": { "detain": 12 }, "why": "You can still recover from here, and closing it is right. But the boot has already made the question of consent much harder to argue later." },
+        { "text": "Step out. It's already open.", "grade": "fatal", "goto": "stepped-out", "meters": { "detain": 100 }, "why": "A door that is 10 cm open is not the same as a door that is all the way open. It is still worth closing." },
+        { "text": "\"I do not consent. Take your foot out of my door.\"", "grade": "soft", "goto": "pressure", "meters": { "detain": 12 }, "credits": ["no-consent"], "why": "Say it, and keep saying it. It does not undo the crack, but it puts your refusal on the record from the moment it happened." }
+      ]
+    },
+    "leave": {
+      "type": "end",
+      "backdrop": "door-closed-inside",
+      "responses": [
+        { "speaker": null, "texts": ["6:22. Footsteps on the stairs. A car door. Then nothing."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["The door never opened."] }
+      ]
+    },
+    "opened-early": {
+      "type": "end",
+      "backdrop": "door-open",
+      "responses": [
+        { "speaker": null, "texts": ["The door swings in. Both of them are inside the frame before you have finished pulling it."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["Whatever happens now happens on their side of the line."] }
+      ]
+    },
+    "opened-invited": {
+      "type": "end",
+      "fatal": true,
+      "backdrop": "door-open",
+      "responses": [
+        { "speaker": null, "texts": ["You opened it yourself."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["Later, on paper, this will be written down as consent. Not as pressure, not as a warrant, not as a threat about your kids. Consent."] }
+      ]
+    },
+    "stepped-out": {
+      "type": "end",
+      "fatal": true,
+      "backdrop": "door-open",
+      "responses": [
+        { "speaker": null, "texts": ["Your own door clicks shut behind you."] },
+        { "speaker": null, "mode": "narration-on-shield", "texts": ["One step. Inside it, the paper they were holding was not enough. Outside it, it is."] }
+      ]
+    }
   }
 }

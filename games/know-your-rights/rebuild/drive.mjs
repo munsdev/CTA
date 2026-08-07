@@ -50,8 +50,8 @@ async function pickAnswer(prefix) {
 }
 
 async function readEnd() {
-  // a fatal `why` line waits for a box tap before finish() — drain it
-  for (let i = 0; i < 10; i++) {
+  // fatal `why` lines and end-card flavor lines wait for a box tap before finish() — drain them
+  for (let i = 0; i < 12; i++) {
     if (await page.locator('[data-el="result"]:not([hidden])').count()) break;
     await page.locator('[data-el="box"]').click();
     await page.waitForTimeout(120);
@@ -69,70 +69,83 @@ async function readEnd() {
 }
 async function backToTitle() { await page.click('[data-el="btnTitle"]'); await page.waitForTimeout(100); }
 
-// ---- CLEAN: the full shield line, refuse everything, ask for a lawyer ----
+// ---- CLEAN-ish: full shield line, never speaks a fact, records at the end ----
+// knock -> peephole -> who -> warrant-claim -> warrant-read -> warrant-admin -> pressure -> record -> leave
+// risk stays 0 the whole way, so the only way this isn't WALKED AWAY / clean truth
+// is the scene's own ~20% forced-entry roll (floor 0, undamaged, risk 0) — accept both.
 await boot();
 await startDoor();
-await pickAnswer('Stay where you are');          // r1 shield -> r2
-await pickAnswer('“Is it signed by a judge?”');  // r2 shield -> r3
-await pickAnswer('“Slide it under');             // r3 shield (warrantShown) -> r4
-await pickAnswer('“I do not consent to entry.”');// r4 shield -> narration -> r5
-await pickAnswer('“That is not signed');         // r5 shield -> r6
-await pickAnswer('Say nothing.');                // r6 shield -> r7
-await pickAnswer('“I want a lawyer.');           // r7 shield -> end
+await pickAnswer('Look through the peephole');       // knock shield -> peephole
+await pickAnswer('"Are you immigration? Are you ICE?"'); // peephole shield -> who
+await pickAnswer('"Do you have a warrant');          // who shield -> warrant-claim
+await pickAnswer('"Slide it under the door');        // warrant-claim shield -> warrant-read
+await pickAnswer("Check the signature line");        // warrant-read shield -> warrant-admin
+await pickAnswer('"That\'s signed by an officer');   // warrant-admin shield -> pressure
+await pickAnswer('"Give me your names');             // pressure shield -> record
+await pickAnswer('Write down the time');             // record shield -> leave (end)
 {
   const e = await readEnd();
-  ok('CLEAN stamp = WALKED AWAY', e.stamp === 'WALKED AWAY', e.stamp);
-  ok('CLEAN checklist ticks (closed,judge,slide,refused,read,silent,lawyer = 7/8)', e.ticked === 7, `${e.ticked}/${e.total}`);
-  ok('CLEAN truth is clean line', e.truth.startsWith('You gave them nothing, and they had nothing'), e.truth.slice(0,40));
+  const forced = e.truth.startsWith('You did everything right');
+  ok('CLEAN-ish stamp is a valid ending', e.stamp === 'WALKED AWAY' || (forced && e.stamp === 'DETAINED'), e.stamp);
+  ok('CLEAN-ish checklist ticks (warrant, no-consent, record = 3/6)', e.ticked === 3, `${e.ticked}/${e.total}`);
+  ok('CLEAN-ish truth is clean or forced-entry line', e.truth.startsWith('You gave them nothing, and they had nothing') || forced, e.truth.slice(0, 40));
+  ok('CLEAN-ish shows the door-closed-inside backdrop unless forced', forced || (e.layers.length === 1 && e.layers[0] === 'door-closed-inside.png'), e.layers.join(','));
 }
 await backToTitle();
 
-// ---- DAMAGED path via recovery loop, then a fatal to force DETAINED ----
-// r1 harmful (crack) -> ruse1 ; ruse1 shield push shut -> r2 ; then fatal
+// ---- DAMAGED path via the cracked-door recovery loop, then a true fatal ----
+// knock -> who (nobody by that name, damaged) -> ruse -> crack (severe, continues) -> cracked
+// -> push it shut (soft) -> pressure -> step outside (fatal) -> stepped-out
 await startDoor();
-await pickAnswer('Open it a crack');             // r1 harmful (damaged, door cracked) -> ruse1
+await pickAnswer('Call through the door');       // knock shield -> who
+await pickAnswer('"Nobody by that name lives here."'); // who soft, damaged -> ruse
+await pickAnswer('Crack the door to see the phone.'); // ruse severe -> cracked (NOT an instant end — stays playable)
 {
-  // after the crack, exactly one backdrop shows: the cracked-two-agents look
   const mid = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-el="layers"] img'))
       .filter(im => !im.classList.contains('hide')).map(im => im.getAttribute('src').split('/').pop()));
-  ok('CRACK shows the cracked-two-agents backdrop', mid.length === 1 && mid[0] === 'cracked-two-agents.png', mid.join(','));
+  ok('CRACK shows the door-cracked backdrop and offers choices (scene did not end)', mid.length === 1 && mid[0] === 'door-cracked.png', mid.join(','));
+  const state = await drainToChoice(); // cracked has two dialogue lines before its choices appear
+  const optsVisible = await page.locator('[data-el="opts"]:not([hidden]) .pr-opt').count();
+  ok('CRACK is not a forced end — options are shown', state === 'opts' && optsVisible > 0, `${state}/${optsVisible}`);
 }
-await pickAnswer('Push it shut');                // ruse1 shield -> r2 (door closed again)
-await pickAnswer('“Then come in.”');             // r2 fatal -> end-fatal
+await pickAnswer('Push it shut.');               // cracked soft -> pressure
+await pickAnswer('Step outside.');               // pressure fatal -> stepped-out
 {
   const e = await readEnd();
   ok('DAMAGED+FATAL stamp = DETAINED', e.stamp === 'DETAINED', e.stamp);
-  ok('DAMAGED truth is damaged line', e.truth.startsWith('They took you, and they took what you gave'), e.truth.slice(0,40));
-  ok('FATAL shows the open-two-agents backdrop', e.layers.length === 1 && e.layers[0] === 'open-two-agents.png', e.layers.join(','));
+  ok('DAMAGED truth is damaged line', e.truth.startsWith('They took you, and they took what you gave'), e.truth.slice(0, 40));
+  ok('FATAL shows the door-open backdrop', e.layers.length === 1 && e.layers[0] === 'door-open.png', e.layers.join(','));
 }
 await backToTitle();
 
-// ---- RECORD note appears on the end screen when REC pushed ----
+// ---- RECORD note appears on the end screen when REC is pushed, on a fast fatal ----
+// knock -> who -> "Open it. Two minutes and they're gone." (fatal) -> opened-invited
 await startDoor();
 await page.click('[data-el="btnRec"]');
 ok('REC toggles on', (await page.locator('[data-el="btnRec"].on').count()) === 1);
-await pickAnswer('Open the door. Refusing');     // r1 fatal -> end-fatal
+await pickAnswer('Call through the door');
+await pickAnswer("Open it. Two minutes and they're gone."); // who fatal -> opened-invited
 {
   const e = await readEnd();
   ok('REC note appended to truth', e.truth.includes('You have it on video'), e.truth.slice(-60));
+  ok('opened-invited also shows door-open backdrop', e.layers.length === 1 && e.layers[0] === 'door-open.png', e.layers.join(','));
 }
 await backToTitle();
 
-// ---- name1 recovery loop reaches r4 and can still finish clean-ish ----
+// ---- INTACT-flavored path: silence + lawyer, still ends up detained by a later fatal ----
+// covers the questions -> record loop and confirms the `intact`-style shield line
+// (silence, lawyer credited, damaged never set) survives a forced fatal later on.
 await startDoor();
-await pickAnswer('Stay where you are');
-await pickAnswer('“Is it signed by a judge?”');
-await pickAnswer('Tell them your name');         // r3 harmful (damaged) -> name1
-await pickAnswer('“Confirming a name is not');   // name1 shield -> r4
-await pickAnswer('“I do not consent to entry.”');// r4 shield -> r5
-await pickAnswer('“That is not signed');         // r5 shield -> r6
-await pickAnswer('Say nothing.');                // r6 -> r7
-await pickAnswer('“Come back with a warrant');   // r7 steady -> end
+await pickAnswer('Look through the peephole');
+await pickAnswer('"Are you immigration? Are you ICE?"');
+await pickAnswer('"I\'m not opening the door. Who are you looking for?"'); // who shield -> ruse
+await pickAnswer('"I\'m going to remain silent."'); // ruse shield -> warrant-claim, credits: silence
+await pickAnswer('Open the door. They have a warrant.'); // warrant-claim fatal -> opened-invited
 {
   const e = await readEnd();
-  ok('NAME-LOOP reaches an end', e.stamp === 'WALKED AWAY' || e.stamp === 'DETAINED', e.stamp);
-  ok('NAME-LOOP damaged => lucky/damaged truth', /luck|took what you gave/.test(e.truth), e.truth.slice(0,40));
+  ok('SILENT+FATAL stamp = DETAINED', e.stamp === 'DETAINED', e.stamp);
+  ok('SILENT+FATAL is intact truth (no damaged flag was ever set)', e.truth.startsWith('They took you anyway. You gave them nothing'), e.truth.slice(0, 40));
 }
 
 await browser.close();
