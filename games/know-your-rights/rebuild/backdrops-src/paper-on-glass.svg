@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900">
+  <rect width="1000" height="900" fill="#aebfc9"/>
+  <polygon points="0,0 1000,0 1000,220 0,340" fill="#e8eef1" opacity="0.55"/>
+  <rect x="260" y="140" width="480" height="600" rx="8" fill="#cfcfc6" stroke="#9a9a90" stroke-width="3"/>
+  <rect x="300" y="180" width="400" height="46" fill="#5b5b52"/>
+  <text x="500" y="210" font-family="monospace" font-size="22" fill="#f2f2ec" text-anchor="middle">DEPARTMENT OF HOMELAND SECURITY</text>
+  <text x="300" y="270" font-family="monospace" font-size="20" fill="#3c3c34">NAME:  ____________________</text>
+  <text x="300" y="310" font-family="monospace" font-size="20" fill="#3c3c34">ADDRESS: _________________</text>
+  <g stroke="#8c8c80" stroke-width="4">
+    <line x1="300" y1="360" x2="660" y2="360"/>
+    <line x1="300" y1="384" x2="660" y2="384"/>
+    <line x1="300" y1="408" x2="660" y2="408"/>
+    <line x1="300" y1="432" x2="620" y2="432"/>
+    <line x1="300" y1="456" x2="660" y2="456"/>
+    <line x1="300" y1="480" x2="580" y2="480"/>
+    <line x1="300" y1="504" x2="660" y2="504"/>
+    <line x1="300" y1="528" x2="640" y2="528"/>
+  </g>
+  <line x1="470" y1="660" x2="660" y2="660" stroke="#3c3c34" stroke-width="3"/>
+  <text x="470" y="686" font-family="monospace" font-size="18" fill="#3c3c34">SIGNATURE</text>
+  <path d="M230 640 q-30 20 -20 60 q10 30 50 30 l20 -70 z" fill="#7d8a91"/>
+</svg>

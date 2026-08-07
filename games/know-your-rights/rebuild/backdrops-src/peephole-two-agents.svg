@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900">
+  <rect width="1000" height="900" fill="#050607"/>
+  <defs>
+    <clipPath id="lens"><circle cx="500" cy="450" r="420"/></clipPath>
+  </defs>
+  <g clip-path="url(#lens)">
+    <rect x="80" y="30" width="840" height="840" fill="#1c232c"/>
+    <rect x="80" y="640" width="840" height="230" fill="#12161c"/>
+    <g transform="translate(390,470)">
+      <circle cx="0" cy="-70" r="30" fill="#2c333d"/>
+      <rect x="-34" y="-42" width="68" height="130" rx="10" fill="#232a33"/>
+      <rect x="-14" y="-30" width="28" height="24" rx="3" fill="#eee" opacity="0.9"/>
+      <rect x="-40" y="88" width="30" height="120" fill="#1c222a"/>
+      <rect x="10" y="88" width="30" height="120" fill="#1c222a"/>
+    </g>
+    <g transform="translate(600,470)">
+      <circle cx="0" cy="-70" r="30" fill="#2c333d"/>
+      <rect x="-34" y="-42" width="68" height="130" rx="10" fill="#232a33"/>
+      <rect x="-40" y="88" width="30" height="120" fill="#1c222a"/>
+      <rect x="10" y="88" width="30" height="120" fill="#1c222a"/>
+    </g>
+  </g>
+  <circle cx="500" cy="450" r="420" fill="none" stroke="#000" stroke-width="60"/>
+</svg>

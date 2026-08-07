@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900">
+  <rect width="1000" height="900" fill="#12161c"/>
+  <rect x="230" y="70" width="540" height="760" fill="#f0d189"/>
+  <rect x="230" y="740" width="540" height="90" fill="#d9b969"/>
+  <g fill="#12161c">
+    <g transform="translate(420,760)">
+      <circle cx="0" cy="-260" r="46" />
+      <path d="M-60 -210 Q0 -240 60 -210 L70 40 Q0 70 -70 40 Z"/>
+    </g>
+    <g transform="translate(590,770)">
+      <circle cx="0" cy="-250" r="44" />
+      <path d="M-56 -202 Q0 -230 56 -202 L64 30 Q0 58 -64 30 Z"/>
+    </g>
+  </g>
+  <polyline points="215,110 200,150 218,190 198,230" fill="none" stroke="#8a8f96" stroke-width="7" stroke-linecap="round"/>
+</svg>
