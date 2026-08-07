@@ -3,8 +3,20 @@
 Recovered/verified 2026-08-07. `CLAUDE.md` covers the dev/build workflow;
 this covers what's actually live on Cloudflare and what's still missing.
 
+## Play it
+
+- **https://stormwatch.birdrebels.art/** — live custom domain (confirmed by Casey)
+- https://storm-watch.casey-945.workers.dev/ — default `workers.dev` URL,
+  same worker (derived from the account's `casey-945` subdomain, seen on
+  `kyr-content.casey-945.workers.dev` elsewhere in this repo, and confirmed
+  live via DNS — not independently browsed due to this session's egress
+  restrictions)
+
 ## Live resources
 - **Worker**: `storm-watch` (id `a8018406f05a4b86b05ad9aa1ecead0e`)
+- **Custom domain**: `stormwatch.birdrebels.art` (zone/route config not
+  visible via the Workers-scoped Cloudflare tools used for this doc — only
+  confirmed the domain serves the app, not how the route is configured)
 - **D1 database**: `storm-watch` (uuid `e7204f5e-5a6e-4fa8-b5a8-4dcd00b568f2`),
   single `games` table (schema matches `schema.sql` in this dir)
 - **Assets binding**: `ASSETS` → `./public` (native Workers Assets, not

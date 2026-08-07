@@ -6,6 +6,7 @@ entry point for picking the project back up from nothing.
 
 ## TL;DR
 
+- **Play it**: https://stormwatch.birdrebels.art/
 - **Live at**: worker `storm-watch`, deployed to Cloudflare
 - **Source**: this directory (recovered from a local dev copy + verified
   against the live deployment — see [DEPLOYMENT.md](./DEPLOYMENT.md))
