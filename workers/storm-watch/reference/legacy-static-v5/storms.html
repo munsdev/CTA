@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bird Rebels: Storm Watch — Storm Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --nav:#09090f;
+  --black:#0a0606;--black-2:#110a0a;--black-3:#180e0e;--black-4:#221212;
+  --red:#e53e3e;--red-dim:#7f1d1d;--red-glow:rgba(229,62,62,.08);
+  --amber:#f59e0b;--amber-dim:#92400e;--amber-glow:rgba(245,158,11,.08);
+  --blue:#38bdf8;--blue-dim:#0c4a6e;--blue-glow:rgba(56,189,248,.08);
+  --green:#4ade80;--green-dim:#166534;--green-glow:rgba(74,222,128,.08);
+  --purple:#a78bfa;--purple-dim:#4c1d95;--purple-glow:rgba(167,139,250,.08);
+  --yellow:#f5c800;--white:#f0f0f0;
+  --grey:#a09090;--grey-light:#c8b8b8;--grey-dim:#7a6a6a;
+}
+body{background:var(--black);color:var(--white);font-family:'Barlow',sans-serif;min-height:100vh;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E")}
+
+nav{background:var(--nav);border-bottom:1px solid #141420;padding:.7rem 1.5rem;display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:200}
+.nav-brand{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:.08em;color:var(--white);text-decoration:none}
+.nav-brand .rebel{color:var(--yellow)}
+.nav-sub{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1.4rem;letter-spacing:.3em;text-transform:uppercase;color:#8a8aaa}
+.nav-divider{color:#5a5a7a}
+.nav-links{display:flex;gap:.15rem;margin-left:auto}
+.nav-link{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:.4rem .8rem;text-decoration:none;color:#555;border:1px solid transparent;transition:all .15s}
+.nav-link:hover,.nav-link.active{color:var(--red);border-color:#2a1010;background:#0e0808}
+
+.masthead{background:var(--black-2);border-bottom:3px solid var(--red);padding:1.25rem 1rem 1rem;position:sticky;top:48px;z-index:100;background-image:radial-gradient(ellipse at 50% 0%,rgba(229,62,62,.04) 0%,transparent 60%)}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(1.6rem,7vw,2.4rem);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+h1 span{color:var(--red)}
+.sub{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;letter-spacing:.3em;text-transform:uppercase;color:var(--grey-dim);margin-top:2px}
+.masthead-top{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.75rem}
+.count{margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;color:var(--grey-dim)}
+.count span{color:var(--red)}
+.controls input{width:100%;background:var(--black-3);border:1px solid var(--black-4);color:var(--white);font-family:inherit;font-size:1.35rem;padding:.5rem .75rem;outline:none;margin-bottom:.5rem}
+.controls input:focus{border-color:var(--red-dim)}
+.controls input::placeholder{color:var(--grey-dim)}
+.filters{display:flex;gap:.35rem;flex-wrap:wrap}
+.filters select{flex:1 1 auto;background:var(--black-3);border:1px solid var(--black-4);color:var(--grey);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .5rem;outline:none;cursor:pointer;appearance:none}
+.filters select.active{color:var(--red)}
+
+.card-list{padding:.6rem .75rem 1rem;max-width:860px;margin:0 auto}
+.storm-card{background:var(--black-2);border:1px solid var(--black-4);margin-bottom:5px;display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;cursor:pointer;transition:background .1s}
+.storm-card:hover{background:var(--black-3)}
+.storm-card.intensity-1{border-left:3px solid var(--blue-dim)}
+.storm-card.intensity-2{border-left:3px solid var(--amber-dim)}
+.storm-card.intensity-3{border-left:3px solid var(--red-dim)}
+.state-badge{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;letter-spacing:.05em;border:1px solid}
+.storm-info{flex:1;min-width:0}
+.storm-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;text-transform:uppercase;letter-spacing:.05em;color:var(--white);line-height:1.1}
+.storm-bird{font-size:1.1rem;color:var(--grey);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.storm-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.intensity-tag{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;white-space:nowrap;border:1px solid}
+.type-tag{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-dim)}
+.status-tag{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.empty{text-align:center;padding:3rem;color:var(--grey-dim);font-family:'Barlow Condensed',sans-serif;letter-spacing:.15em;text-transform:uppercase;font-size:1.25rem}
+
+/* MECHANICS POOL */
+.mechanics-section{max-width:860px;margin:0 auto;padding:.5rem .75rem 1rem}
+.mechanics-head{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.35em;text-transform:uppercase;color:var(--grey-dim);padding:.75rem 0 .5rem;border-top:1px solid var(--black-4)}
+.mechanics-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--black-4)}
+.mechanic-card{background:var(--black-2);padding:.85rem 1rem}
+.mechanic-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.25rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:.3rem}
+.mechanic-desc{font-size:1.2rem;line-height:1.6;color:var(--grey)}
+.mechanic-assigned{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-top:.4rem}
+
+.page-bottom{padding-bottom:5rem}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:300;align-items:center;justify-content:center;padding:1.25rem}
+.overlay.open{display:flex}
+.modal{width:100%;max-width:520px;background:var(--black-2);border-radius:12px;padding:1.5rem 1.25rem 2rem;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.7);animation:popIn .18s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--grey-dim);font-size:1.5rem;cursor:pointer;padding:.25rem}
+.modal-close:hover{color:var(--white)}
+.modal-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;padding-right:2rem}
+.modal-state-badge{width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:.05em;border:2px solid}
+.modal-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;text-transform:uppercase;letter-spacing:.05em;line-height:1;color:var(--white)}
+.modal-meta{font-size:1.2rem;color:var(--grey);margin-top:3px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--black-4);margin-bottom:1px}
+.stat-cell{background:var(--black-3);padding:.6rem .4rem;text-align:center}
+.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--grey-dim);margin-bottom:4px}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.1rem;text-transform:uppercase;letter-spacing:.04em}
+.notes-block{background:var(--black-3);padding:1rem 1.25rem;margin-bottom:1px}
+.notes-label{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--grey-dim);margin-bottom:.6rem}
+.notes-list{list-style:none;display:flex;flex-direction:column;gap:.35rem}
+.notes-list li{font-size:1.25rem;line-height:1.6;color:var(--grey-light);padding-left:1rem;position:relative}
+.notes-list li::before{content:'—';position:absolute;left:0;color:var(--grey-dim);font-weight:700}
+.res-block{background:var(--black-3);padding:.85rem 1.25rem;margin-bottom:1px;border-left:3px solid var(--black-4)}
+.res-block.solo-res{border-left-color:var(--yellow)}
+.res-block.flock-res{border-left-color:#2563eb}
+.res-block.mixed-res{border-left-color:var(--red-dim)}
+.res-block.special-res{border-left-color:var(--amber)}
+.res-block.opening-res{border-left-color:var(--green)}
+.res-label{font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--grey-dim);margin-bottom:.3rem}
+.res-value{font-size:1.3rem;line-height:1.6;color:var(--grey-light)}
+.res-value.tbd{color:var(--grey-dim);font-style:italic}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">BIRD <span class="rebel">REBELS</span></a>
+  <span class="nav-divider">·</span>
+  <span class="nav-sub">Storm Watch</span>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link" href="birds.html">Birds</a>
+    <a class="nav-link" href="rules.html">Rules</a>
+    <a class="nav-link active" href="storms.html">Storms</a>
+  </div>
+</nav>
+
+<header class="masthead">
+  <div class="masthead-top">
+    <div><h1>THE <span>STORMS</span></h1><div class="sub">Storm Watch · Threat Deck</div></div>
+    <div class="count"><span id="count">17</span> mapped</div>
+  </div>
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search state, name, region, or bird…" autocomplete="off">
+    <div class="filters">
+      <select id="statusFilter" onchange="applyFilters()">
+        <option value="">Status: All</option>
+        <option value="locked">Locked</option>
+        <option value="progress">In Progress</option>
+        <option value="research">Research</option>
+      </select>
+      <select id="typeFilter" onchange="applyFilters()">
+        <option value="">Type: All</option>
+        <option value="Immigration">Immigration</option>
+        <option value="Voting Rights">Voting Rights</option>
+        <option value="Press Freedom">Press Freedom</option>
+        <option value="Civil Liberties">Civil Liberties</option>
+      </select>
+      <select id="intensityFilter" onchange="applyFilters()">
+        <option value="">Intensity: All</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+      </select>
+      <select id="regionFilter" onchange="applyFilters()">
+        <option value="">Region: All</option>
+        <option>New England</option><option>Mid-Atlantic</option><option>Southeast</option>
+        <option>Appalachia</option><option>Midwest</option><option>Great Plains</option>
+        <option>South Central</option><option>Southwest</option><option>Rockies</option>
+        <option>Pacific</option><option>Caribbean</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main class="card-list" id="cardList"></main>
+
+<div class="mechanics-section">
+  <div class="mechanics-head">⚙ Mechanics Pool — Unassigned</div>
+  <div class="mechanics-grid">
+    <div class="mechanic-card">
+      <div class="mechanic-name">Wild Draw</div>
+      <div class="mechanic-desc">At Round 1 start, flip top bird from deck. If it solos the storm, storm wins automatically. If not, it joins the flock as a wild card.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">From The Ashes</div>
+      <div class="mechanic-desc">Same as Wild Draw but draws from the discard pile instead of the deck.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Hostage</div>
+      <div class="mechanic-desc">Before Round 1, each player places one card face down — frozen and out of play for the duration. Win: cards return to hand. Loss: cards discarded.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Scale</div>
+      <div class="mechanic-desc">Round 2 requires everyone to play 2 cards instead of 1.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Dual Hero</div>
+      <div class="mechanic-desc">Solo requires 2 birds instead of 1. Both must qualify for the solo condition.
+      <div class="mechanic-assigned">→ Used: The Firestorm (CA)</div></div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Blocked Hero</div>
+      <div class="mechanic-desc">A named bird is explicitly excluded from the solo condition. Forces the table to find another path.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Migration Targeting</div>
+      <div class="mechanic-desc">Storm conditions based on Migration stat — Resident, Migratory, Partial Migrant, or Irruptive birds only.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Power Neutralizer</div>
+      <div class="mechanic-desc">A specific bird power is disabled for the duration of this storm. Survivors don't stay. Mimics can't substitute. Etc.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Hand Reduction</div>
+      <div class="mechanic-desc">Players must discard down to 3 cards before Round 1 begins.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Chained Condition</div>
+      <div class="mechanic-desc">Mixed flock requires two stats simultaneously — e.g. Forest habitat AND Northeast region.</div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Opening Draw</div>
+      <div class="mechanic-desc">Everyone draws +1 card at storm start (hand = 6). Stakes scale up alongside demand.
+      <div class="mechanic-assigned">→ Used: The Ice Storm / The Surge (MN)</div></div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Fear Effect / Frozen</div>
+      <div class="mechanic-desc">Frozen birds placed face down before Round 1. Win: all return to hand. Loss: frozen birds discarded, next refill reduced by 1.
+      <div class="mechanic-assigned">→ Used: The Cold Front / Frozen (DC)</div></div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">Wildfire</div>
+      <div class="mechanic-desc">If not resolved in Round 1, each player draws +1 card. In Round 2, each player must play 2 cards instead of 1.
+      <div class="mechanic-assigned">→ Used: The Firestorm / Wildfire (CA)</div></div>
+    </div>
+    <div class="mechanic-card">
+      <div class="mechanic-name">The Surge</div>
+      <div class="mechanic-desc">Each player draws +1. Second storm flips immediately — both active simultaneously. No solo wins. No shared birds between storms.
+      <div class="mechanic-assigned">→ Used: The Ice Storm (MN)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="page-bottom"></div>
+
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-header">
+      <div class="modal-state-badge" id="mBadge"></div>
+      <div>
+        <div class="modal-name" id="mName"></div>
+        <div class="modal-meta" id="mMeta"></div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="stat-label">Intensity</div><div class="stat-value" id="mIntensity"></div></div>
+      <div class="stat-cell"><div class="stat-label">Region</div><div class="stat-value" id="mRegion"></div></div>
+      <div class="stat-cell"><div class="stat-label">Habitat</div><div class="stat-value" id="mHabitat"></div></div>
+    </div>
+    <div id="mOpeningWrap" class="res-block opening-res" style="display:none">
+      <div class="res-label">🃏 Opening</div>
+      <div class="res-value" id="mOpening"></div>
+    </div>
+    <div class="notes-block">
+      <div class="notes-label">📋 Operation Notes</div>
+      <ul class="notes-list" id="mNotes"></ul>
+    </div>
+    <div class="res-block solo-res">
+      <div class="res-label">⚡ Solo — Hero</div>
+      <div class="res-value" id="mSolo"></div>
+    </div>
+    <div class="res-block flock-res">
+      <div class="res-label">🐦 Same Flock</div>
+      <div class="res-value" id="mFlock"></div>
+    </div>
+    <div class="res-block mixed-res">
+      <div class="res-label">🗺 Mixed Flock</div>
+      <div class="res-value" id="mMixed"></div>
+    </div>
+    <div id="mSpecialWrap" class="res-block special-res" style="display:none">
+      <div class="res-label">⚠ Special Rule</div>
+      <div class="res-value" id="mSpecial"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const IC={
+  1:{color:'#38bdf8',dim:'#0c4a6e',glow:'rgba(56,189,248,.08)',label:'Level 1'},
+  2:{color:'#f59e0b',dim:'#92400e',glow:'rgba(245,158,11,.08)',label:'Level 2'},
+  3:{color:'#e53e3e',dim:'#7f1d1d',glow:'rgba(229,62,62,.08)',label:'Level 3'}
+};
+const ST={
+  locked:{label:'Locked',color:'#4ade80'},
+  progress:{label:'In Progress',color:'#f59e0b'},
+  research:{label:'Research',color:'#8a7a7a'}
+};
+const TC={
+  'Immigration':'#38bdf8',
+  'Voting Rights':'#a78bfa',
+  'Press Freedom':'#fb923c',
+  'Civil Liberties':'#f472b6'
+};
+
+const storms=[
+  {
+    id:1,state:"MN",name:"The Ice Storm",status:"locked",type:"Immigration",
+    bird:"Common Loon",habitat:"Wetland",region:"Midwest",power:"Revival",intensity:3,
+    notes:[],
+    solo:"1 × Common Loon ☑",
+    flock:"3 × Wetland birds — Mimics ok",
+    mixed:"4 birds NOT from Midwest region",
+    special:"The Surge: Each player draws 1 extra bird card. Flip the next storm — both are now active. Play Rounds 1 and 2 against both simultaneously. Cards may not be shared between storms. Neither storm can be claimed as a personal win."
+  },
+  {
+    id:2,state:"IL",name:"Operation Midway Blitz",status:"research",type:"Immigration",
+    bird:"Northern Cardinal",habitat:"Forest",region:"Midwest",power:"Cardinal Rule",intensity:2,
+    notes:[
+      "Sept 2025 — one of first large-scale interior campaigns",
+      "Hundreds of agents across Chicago and suburbs, documented use of force",
+      "3,300+ arrests statewide, 60% had no criminal record",
+      "Chicago sanctuary city — direct federal vs city confrontation",
+      "DEA also making immigration arrests in the region alongside ICE",
+      "Trump directed DOJ to investigate ActBlue (Democratic fundraising platform) same month — April 2025",
+      "IL/IN/OH are all Cardinals — a Midwest storm hits the Cardinal network hard"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:3,state:"CA",name:"The Firestorm",status:"locked",type:"Immigration",
+    bird:"California Quail",habitat:"Shrubland",region:"Pacific",power:"Rescue",intensity:2,
+    notes:[],
+    solo:"1 × California Quail",
+    flock:"4 × any species",
+    mixed:"4 birds each from a different region",
+    special:"Wildfire: If not resolved in Round 1, each player draws 1 extra bird card. In Round 2, each player must play 2 cards instead of 1."
+  },
+  {
+    id:4,state:"NY",name:"The Bronx & Albion",status:"research",type:"Immigration",
+    bird:"Eastern Bluebird",habitat:"Forest",region:"Mid-Atlantic",power:"Assist",intensity:1,
+    notes:[
+      "Kristi Noem personally oversaw Bronx op (Jan 29, 2025) — political theater",
+      "Albion (upstate): unmarked vehicles, pre-compiled name list, union farm workers",
+      "Albion widely viewed as union retaliation — agents had targeted list before arriving",
+      "Two very different flavors: urban spectacle vs quiet rural targeting",
+      "NY redistricting also under litigation — part of multi-state gerrymandering battle"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:5,state:"GA",name:"Hyundai Battery Plant",status:"research",type:"Immigration",
+    bird:"Brown Thrasher",habitat:"Forest",region:"Southeast",power:"Displace",intensity:2,
+    notes:[
+      "Ellabell plant, Sept 4 2025 — largest single-site worksite raid in US history",
+      "475 arrested — majority South Korean nationals, many with valid visas",
+      "At least one legally employed worker pressured into voluntary departure",
+      "US attorney fired for attempting to enforce court restrictions on the raids",
+      "Republican state — zero pushback from state government",
+      "Corporate supply chain disruption — Hyundai's US manufacturing halted",
+      "International angle: mostly Korean nationals, not the typical Latin American enforcement framing"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:6,state:"MA",name:"The Massachusetts Sweep",status:"research",type:"Immigration",
+    bird:"Black-capped Chickadee",habitat:"Forest",region:"New England",power:"Survivor",intensity:2,
+    notes:[
+      "~1,500 arrested in a single action, June 2025 — one of highest single-day totals nationally",
+      "Tom Homan directly blamed sanctuary policies by name",
+      "Sanctuary city deliberately targeted as Democratic stronghold — CU Boulder study confirmed pattern",
+      "Democratic strongholds saw disproportionate enforcement spikes in 2025"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:7,state:"LA",name:"Delta Downs & The Redraw",status:"research",type:"Voting Rights",
+    bird:"Brown Pelican",habitat:"Coastal",region:"South Central",power:"Rescue",intensity:2,
+    notes:[
+      "Delta Downs Racetrack, Vinton (June 2025) — 84 workers arrested, Louisiana State Police participated under 287(g)",
+      "Louisiana v. Callais decided April 29, 2026 — Supreme Court struck down Louisiana's second majority-Black congressional district",
+      "6-3 ruling along ideological lines gutted Section 2 of the Voting Rights Act",
+      "Justice Kagan dissent: 'Today's decision renders Section 2 all but a dead letter'",
+      "Louisiana is ~1/3 Black — only one of six congressional seats was majority-Black before 2024",
+      "Rep. Cleo Fields (D): 'If you tell me I have to be white to serve in Congress from Louisiana, I can't do nothing about that'",
+      "Ruling immediately triggered redistricting pushes in Tennessee, Alabama, South Carolina, Mississippi",
+      "State cooperates with federal enforcement — no sanctuary resistance"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:8,state:"NE",name:"Omaha Meatpacking",status:"research",type:"Immigration",
+    bird:"Western Meadowlark",habitat:"Grassland",region:"Great Plains",power:"False Feathers",intensity:1,
+    notes:[
+      "Omaha meatpacking plant — 76 workers arrested",
+      "ICE paused ag/meatpacking raids via internal email, then reversed under political pressure",
+      "Food supply chain target — part of broader pattern of food industry enforcement",
+      "The pause-and-reverse is a unique design moment: a storm that came back"
+    ],
+    solo:"1 × Western Meadowlark (NE)",
+    flock:"3 × Meadowlark (KS, MT, NE, ND, OR, WY — 6 available)",
+    mixed:"2 birds from Grassland habitat"
+  },
+  {
+    id:9,state:"FL",name:"Tallahassee Construction",status:"research",type:"Civil Liberties",
+    bird:"Northern Mockingbird",habitat:"Urban",region:"Southeast",power:"Mimic",intensity:1,
+    notes:[
+      "Tallahassee construction site — 100+ arrested, one of largest worksite raids pre-Metro Surge",
+      "Republican state — full federal cooperation, no legal resistance",
+      "Part of June 2025 national escalation across multiple states simultaneously",
+      "Florida leads the nation in book bans — 2,304 books banned across 33 school districts",
+      "HR1069 book ban law partially struck down as unconstitutional (Aug 2025) but enforcement continued",
+      "Florida cut off ~12,000 people from affordable HIV medication",
+      "Anti-trans legislation advanced aggressively throughout 2025-26"
+    ],
+    solo:"1 × Florida Mockingbird (FL)",
+    flock:"3 × Mockingbird (AR, FL, MS, TN, TX — 5 available)",
+    mixed:"2 birds from Urban habitat"
+  },
+  {
+    id:10,state:"DC",name:"The Cold Front",status:"locked",type:"Press Freedom",
+    bird:"Wood Thrush",habitat:"Forest",region:"Mid-Atlantic",power:"Veto",intensity:1,
+    notes:[],
+    solo:"1 × Wood Thrush",
+    flock:"2 × any same species from Northeast — Mimics ok",
+    mixed:"3 × Resident birds",
+    special:"Frozen: Before Round 1, each player places 1 frozen bird face down — out of play until the storm resolves. If won, all played and frozen birds return to hand. If lost, frozen birds are discarded alongside played birds, and each player's next refill is reduced by 1."
+  },
+  {
+    id:11,state:"PA",name:"Philadelphia Car Wash",status:"research",type:"Immigration",
+    bird:"Ruffed Grouse",habitat:"Forest",region:"Mid-Atlantic",power:"Double Down",intensity:1,
+    notes:[
+      "Philadelphia car wash — 7 arrested",
+      "Smallest operation in the set — framed as labor exploitation response",
+      "Double Down power (counts as 2 but costs you) suits a card where overreacting has consequences"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:12,state:"TX",name:"Texas Dragnet",status:"research",type:"Voting Rights",
+    bird:"Northern Mockingbird",habitat:"Urban",region:"South Central",power:"Mimic",intensity:2,
+    notes:[
+      "Ongoing immigration raids throughout 2025 — Houston, Austin, San Antonio protests, Los Fresnos bakery owners arrested",
+      "Trump directed Texas to redraw congressional map — 5 new Republican-leaning districts signed Aug 29, 2025",
+      "Federal court (El Paso) ruled new maps an illegal racial gerrymander Nov 18, 2025",
+      "Supreme Court blocked lower court ruling to let maps stand (Nov 21, 2025)",
+      "Texas Attorney General sought to compile a list of trans people requesting gender marker changes",
+      "1,781 books banned across 7 school districts",
+      "Same bird as FL (Mockingbird) — Southwest vs Southeast distinction matters for storm design",
+      "Massive protest response statewide — immigration + democracy dual front"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD"
+  },
+  {
+    id:13,state:"HI",name:"The Swell",status:"locked",type:"Immigration",
+    bird:"Nene (Hawaiian Goose)",habitat:"Grassland",region:"Pacific",power:"Mana",intensity:2,
+    notes:[
+      "Arrests quadrupled year over year (52 in 2024 → 194 in 2025)",
+      "Kauai 4am raids — explosions, workforce housing, Tren de Aragua framing used",
+      "Multi-island sweep across Oahu, Maui, and Hawaii island (May 2025)",
+      "Courthouse and check-in traps operated throughout year",
+      "Pacific Islander communities (Micronesian, Marshallese, Samoan) targeted — legally complex under COFA",
+      "Island geography: nowhere to run — unique to Hawaii in the entire deck"
+    ],
+    solo:"1 × Nene (HI) + 1 × Willow Ptarmigan (AK) ☑",
+    flock:"3 × Pacific birds — Mimics ok",
+    mixed:"4 × Resident birds",
+    special:"Blue Tsunami: High flock demand, broad mixed condition. If beaten, ALL played birds return to hand — the wave recedes and nothing is lost. Neither storm can be claimed as a personal win."
+  },
+  {
+    id:14,state:"AK",name:"The Squall",status:"locked",type:"Immigration",
+    bird:"Willow Ptarmigan",habitat:"Tundra",region:"Pacific",power:"Survivor",intensity:1,
+    notes:[
+      "13 arrests in all of 2024 → 99 in 2025 → 47+ in early 2026 — nearly 8× increase",
+      "No large raids — targeted individuals only: pregnant woman on city bus, father at school drop-off",
+      "Soldotna mother taken with her children",
+      "Detainees transferred to Tacoma, WA — no in-state facility",
+      "Split 287(g): Anchorage police refuse to cooperate, Alaska state corrections will",
+      "Remote geography makes enforcement more isolating — arrested in Alaska, wake up in Washington State"
+    ],
+    solo:"1 × Nene (HI) + 1 × Willow Ptarmigan (AK) ☑",
+    flock:"3 × Pacific birds — Mimics ok",
+    mixed:"4 × Resident birds",
+    special:"Isolation: Flip 1 card from the deck face up — its power is negated. This shared card is available to all players during Round 1. Round 1 only — no Round 2. If all players pass, only the shared card is discarded. Players keep their hands intact."
+  },
+  {
+    id:15,state:"CO",name:"Colorado Dragnet",status:"progress",type:"Immigration",
+    bird:"Lark Bunting",habitat:"Grassland",region:"Rockies",power:"Double Down",intensity:2,
+    notes:[
+      "4,160 arrests in 2025 — 281% increase, 12 people per day average",
+      "Aurora/Denver apartment raids (Feb 5, 2025) — ICE, ATF, DEA multi-agency, Tren de Aragua framing",
+      "Colorado Springs nightclub (April 27, 2025) — 300+ agents, tear gas, only 9 of 100+ had prior convictions",
+      "Vail (Jan 21, 2026) — warrantless arrests violating active federal court order",
+      "Durango (Oct 27, 2025) — father + children ages 12 and 15 arrested on way to school",
+      "88% of detainees arrested internally — at work, home, traffic stop — not at border",
+      "Federal judge ruled ICE violated court order (May 12, 2026) — still actively ongoing",
+      "DEA made 173 immigration arrests across CO/WY/UT/MT — drug agency doing immigration work",
+      "7-year-old detained in Alamosa; 19-year-old student arrested for her accent in Fruita"
+    ],
+    solo:"TBD",flock:"TBD",mixed:"TBD",
+    special:"Contempt: Win — discard the top card of the bird deck. Loss — discard the top 2 cards of the bird deck."
+  },
+  {
+    id:16,state:"TN",name:"The Remap",status:"research",type:"Voting Rights",
+    bird:"Northern Mockingbird",habitat:"Urban",region:"Appalachia",power:"Mimic",intensity:2,
+    notes:[
+      "Tennessee Three (2023): Two Black Democrats expelled from state house for gun control floor protest — unprecedented in modern US history. White counterpart survived by one vote",
+      "Jan 2025: New House rules passed to silence 'unruly' lawmakers, Rep. Justin Jones sued Speaker Sexton for constitutional violations",
+      "May 7, 2026: Within days of Louisiana v. Callais VRA ruling, Tennessee carved Memphis — one of the nation's largest majority-Black cities — into 3 separate districts",
+      "The explicit goal: flip the only Democratic (majority-Black) congressional seat in the state",
+      "Rep. Justin Pearson at rally: 'These maps look like some coloring book from the Republican Party'",
+      "1,622 books banned across 8 school districts — 3rd worst in the nation",
+      "Pattern of systematic silencing: legislators, voters, and library shelves all targeted"
+    ],
+    solo:"1 × Tennessee Mockingbird (TN)",
+    flock:"3 × Mockingbird (AR, FL, MS, TN, TX — 5 available)",
+    mixed:"3 birds from Urban habitat"
+  },
+  {
+    id:17,state:"VA",name:"The Override",status:"research",type:"Voting Rights",
+    bird:"Northern Cardinal",habitat:"Forest",region:"Southeast",power:"Cardinal Rule",intensity:1,
+    notes:[
+      "Virginia voters approved redistricting referendum 52-48 on April 21, 2026 — would have flipped 4 House seats to Democrats",
+      "Virginia Supreme Court struck it down May 8, 2026 — just 17 days after the vote",
+      "Procedural grounds: legislature first voted on the amendment after early voting had already begun",
+      "1.3 million early voters' choices legally nullified",
+      "Court (4-3): 'This violation irreparably undermines the integrity of the resulting referendum vote'",
+      "Trump on Truth Social: 'Huge win for the Republican Party, and America'",
+      "Combined with Louisiana v. Callais: VRA gutted federally the week before, Democratic counter-gerrymander blocked the week after",
+      "Democrats announced emergency appeal to US Supreme Court",
+      "First time in modern history a voter-approved referendum was nullified after the election"
+    ],
+    solo:"1 × Virginia Cardinal (VA)",
+    flock:"2 × Cardinal from Southeast region (KY, NC, VA, WV)",
+    mixed:"2 birds from Southeast region"
+  },
+];
+
+let filtered=[...storms];
+function isTBD(v){return!v||v==='TBD'}
+function intensityStars(n){return'★'.repeat(n)+'☆'.repeat(3-n)}
+
+function render(){
+  const list=document.getElementById('cardList');
+  document.getElementById('count').textContent=filtered.length;
+  if(!filtered.length){list.innerHTML='<div class="empty">No storms match</div>';return;}
+  list.innerHTML=filtered.map(s=>{
+    const ic=IC[s.intensity];
+    const st=ST[s.status];
+    const tc=TC[s.type]||'#8a8aaa';
+    return`<div class="storm-card intensity-${s.intensity}" onclick="openModal(${s.id})">
+      <div class="state-badge" style="background:${ic.glow};border-color:${ic.dim};color:${ic.color}">${s.state}</div>
+      <div class="storm-info">
+        <div class="storm-name">${s.name}</div>
+        <div class="storm-bird">${s.bird} · ${s.region} · ${s.power}</div>
+      </div>
+      <div class="storm-meta">
+        <div class="intensity-tag" style="background:${ic.glow};border-color:${ic.dim};color:${ic.color}">${ic.label}</div>
+        <div class="type-tag" style="color:${tc}">${s.type}</div>
+        <div class="status-tag" style="color:${st.color}">${st.label}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function applyFilters(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const status=document.getElementById('statusFilter').value;
+  const type=document.getElementById('typeFilter').value;
+  const intensity=document.getElementById('intensityFilter').value;
+  const region=document.getElementById('regionFilter').value;
+  document.querySelectorAll('.filters select').forEach(s=>s.classList.toggle('active',!!s.value));
+  filtered=storms.filter(s=>{
+    if(q&&!s.state.toLowerCase().includes(q)&&!s.name.toLowerCase().includes(q)&&!s.region.toLowerCase().includes(q)&&!s.bird.toLowerCase().includes(q)&&!s.type.toLowerCase().includes(q))return false;
+    if(status&&s.status!==status)return false;
+    if(type&&s.type!==type)return false;
+    if(intensity&&s.intensity!==parseInt(intensity))return false;
+    if(region&&s.region!==region)return false;
+    return true;
+  });
+  render();
+}
+
+function openModal(id){
+  const s=storms.find(x=>x.id===id);if(!s)return;
+  const ic=IC[s.intensity];
+  const tc=TC[s.type]||'#8a8aaa';
+  document.getElementById('modal').style.borderTop=`3px solid ${ic.color}`;
+  document.getElementById('modal').style.boxShadow=`0 24px 80px rgba(0,0,0,.7), 0 0 40px ${ic.glow}`;
+  const badge=document.getElementById('mBadge');
+  badge.textContent=s.state;
+  badge.style.cssText=`width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:.05em;border:2px solid ${ic.color};background:${ic.glow};color:${ic.color}`;
+  document.getElementById('mName').textContent=s.name.toUpperCase();
+  document.getElementById('mMeta').innerHTML=`${s.bird} · ${s.power} · <span style="color:${tc}">${s.type}</span> · <span style="color:${ST[s.status].color}">${ST[s.status].label}</span>`;
+  document.getElementById('mIntensity').textContent=intensityStars(s.intensity);
+  document.getElementById('mIntensity').style.color=ic.color;
+  document.getElementById('mRegion').textContent=s.region;
+  document.getElementById('mRegion').style.color=ic.color;
+  document.getElementById('mHabitat').textContent=s.habitat;
+  document.getElementById('mHabitat').style.color=ic.color;
+
+  const openWrap=document.getElementById('mOpeningWrap');
+  if(s.opening){openWrap.style.display='block';document.getElementById('mOpening').textContent=s.opening;}
+  else{openWrap.style.display='none';}
+
+  const notesBlock=document.querySelector('.notes-block');
+  if(s.notes&&s.notes.length>0){
+    notesBlock.style.display='block';
+    document.getElementById('mNotes').innerHTML=s.notes.map(n=>`<li>${n}</li>`).join('');
+  }else{
+    notesBlock.style.display='none';
+  }
+
+  const sv=document.getElementById('mSolo');
+  sv.textContent=isTBD(s.solo)?'In development':s.solo;
+  sv.className='res-value'+(isTBD(s.solo)?' tbd':'');
+  const fv=document.getElementById('mFlock');
+  fv.textContent=isTBD(s.flock)?'In development':s.flock;
+  fv.className='res-value'+(isTBD(s.flock)?' tbd':'');
+  const mv=document.getElementById('mMixed');
+  mv.textContent=isTBD(s.mixed)?'In development':s.mixed;
+  mv.className='res-value'+(isTBD(s.mixed)?' tbd':'');
+
+  const specWrap=document.getElementById('mSpecialWrap');
+  if(s.special){specWrap.style.display='block';document.getElementById('mSpecial').textContent=s.special;}
+  else{specWrap.style.display='none';}
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('overlay'))return;
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+document.getElementById('search').addEventListener('input',applyFilters);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal({target:document.getElementById('overlay')})});
+render();
+</script>
+</body>
+</html>

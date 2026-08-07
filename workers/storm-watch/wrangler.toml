@@ -1,0 +1,18 @@
+name = "storm-watch"
+main = "src/worker.js"
+compatibility_date = "2025-05-01"
+
+# Static client (public/index.html) is served via this binding.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# D1 database. Replace database_id with the id printed by `wrangler d1 create`.
+[[d1_databases]]
+binding = "DB"
+database_name = "storm-watch"
+database_id = "e7204f5e-5a6e-4fa8-b5a8-4dcd00b568f2"
+
+# Nightly cleanup of games untouched for 7+ days (04:00 UTC).
+[triggers]
+crons = ["0 4 * * *"]

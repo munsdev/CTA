@@ -1,0 +1,531 @@
+// ═══ HELPERS ═══
+const clone=o=>JSON.parse(JSON.stringify(o));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const API={
+  async create(playerCount,state){const r=await fetch('/api/games',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({playerCount,state})});return r.json();},
+  async get(id){const r=await fetch('/api/games/'+id);if(!r.ok)return null;return r.json();},
+  async put(id,state){const r=await fetch('/api/games/'+id,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({state})});if(!r.ok)return null;return r.json();},
+  async list(){const r=await fetch('/api/games');if(!r.ok)return{games:[]};return r.json();},
+  async del(id){const r=await fetch('/api/games/'+id,{method:'DELETE'});return r.ok;}
+};
+const base=()=>location.origin+location.pathname;
+const ROMAN=['','I','II','III'];
+function centered(theme,inner){return h('div',{className:'sw','data-theme':theme,style:{minHeight:'100vh',background:'var(--bg)',color:'var(--tx)',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',fontFamily:"'Barlow Condensed',Impact,sans-serif"}},inner);}
+
+// ═══ CARD (bird) — poker-portrait frame ═══
+function Card({card,onClick,W,H,fs,dim,pending,faceDown,tag,carried}){
+  const f=fs||1;
+  if(faceDown) return h('div',{onClick,style:{width:W,height:H,borderRadius:`${13*f}px`,background:(card&&card.color)||'#5a4a2a',padding:`${5*f}px`,flexShrink:0,cursor:onClick?'pointer':'default',position:'relative',boxSizing:'border-box'}},
+    h('div',{style:{width:'100%',height:'100%',borderRadius:`${9*f}px`,background:'#14140d',border:`${2*f}px solid ${Y}`,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}},
+      h('div',{style:{position:'absolute',inset:0,opacity:0.12,backgroundImage:`repeating-linear-gradient(45deg, ${Y} 0 ${2*f}px, transparent ${2*f}px ${9*f}px)`}}),
+      h('div',{style:{fontSize:`${30*f}px`}},'\u{1F985}'),
+      tag&&h('div',{style:{fontSize:`${13*f}px`,color:Y,fontWeight:800,marginTop:`${4*f}px`,letterSpacing:'1px'}},tag)));
+  const col=card.color||Y, body=carried?'#fef3dc':'var(--card)', txt=carried?'#221d10':'var(--ctx)',
+        dimtx=carried?'#6e6038':'var(--cdim)', lbl=carried?'#86763f':'var(--dim3)', cell=carried?'#fff':'var(--zone)';
+  return h('div',{className:'bcard'+(onClick?' sel':''),onClick,title:card.power,
+    style:{width:W,minWidth:W,height:H,background:col,borderRadius:`${13*f}px`,padding:`${5*f}px`,position:'relative',cursor:onClick?'pointer':'default',userSelect:'none',opacity:dim?0.5:1,flexShrink:0,boxSizing:'border-box',
+      boxShadow:pending?`0 0 0 ${3*f}px ${Y},0 8px 22px rgba(0,0,0,0.5)`:'0 4px 16px rgba(0,0,0,0.3)',transform:pending?'translateY(-6px)':'none'}},
+    tag&&h('div',{style:{position:'absolute',top:`${10*f}px`,right:`${10*f}px`,background:'rgba(0,0,0,0.7)',color:'#fff',fontSize:`${11*f}px`,fontWeight:800,padding:`${3*f}px ${6*f}px`,borderRadius:`${5*f}px`,zIndex:3,letterSpacing:'0.5px'}},tag),
+    h('div',{style:{width:'100%',height:'100%',background:body,borderRadius:`${9*f}px`,display:'flex',flexDirection:'column',padding:`${6*f}px ${9*f}px ${8*f}px`,boxSizing:'border-box',overflow:'hidden'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+        h('div',{style:{fontSize:`${26*f}px`,fontWeight:900,color:txt,lineHeight:1,letterSpacing:'1px'}},card.code),
+        h('div',{style:{fontSize:`${21*f}px`,fontWeight:900,color:txt,lineHeight:1}},('0'+card.rarity).slice(-2))),
+      h('div',{style:{alignSelf:'center',margin:`${1*f}px 0 ${2*f}px`,width:`${58*f}px`,height:`${58*f}px`,borderRadius:'50%',border:`${3*f}px solid ${col}`,background:cell,display:'flex',alignItems:'center',justifyContent:'center'}},
+        h('div',{style:{fontSize:`${20*f}px`,fontWeight:900,color:col,fontFamily:'monospace',letterSpacing:'1px'}},card.code)),
+      h('div',{style:{textAlign:'center',marginBottom:`${3*f}px`}},
+        h('div',{style:{fontSize:`${10*f}px`,color:dimtx}},card.name),
+        h('div',{style:{fontSize:`${17*f}px`,fontWeight:900,color:txt,letterSpacing:'0.5px',textTransform:'uppercase',lineHeight:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},card.species)),
+      h('div',{style:{display:'flex',gap:`${3*f}px`,marginBottom:`${2*f}px`}},
+        [['REGION',card.region],['ROLE',card.style],['MIGRATION',card.migration]].map((p,i)=>
+          h('div',{key:i,style:{flex:1,background:cell,borderRadius:`${5*f}px`,padding:`${3*f}px ${4*f}px`,minWidth:0}},
+            h('div',{style:{fontSize:`${7*f}px`,color:lbl,fontWeight:700,letterSpacing:'0.3px'}},p[0]),
+            h('div',{style:{fontSize:`${8.5*f}px`,color:txt,fontWeight:700,lineHeight:1.05}},p[1])))),
+      h('div',{style:{flex:1,background:cell,borderRadius:`${5*f}px`,padding:`${5*f}px ${6*f}px`,minHeight:0,overflow:'hidden'}},
+        h('div',{style:{fontSize:`${8*f}px`,color:lbl,fontWeight:800,letterSpacing:'1.5px',marginBottom:`${2*f}px`}},'POWER'),
+        h('div',{style:{fontSize:`${9*f}px`,color:txt,lineHeight:1.2}},card.power))));
+}
+
+// ═══ STORM CARD — same frame, condition cells ═══
+function condAxis(cond){const q=String(cond).replace(/^\d+\s+/,'').replace(/^NOT\s+/i,'').trim();const ax=(typeof qualAxis==='function')?qualAxis(q):'';return ({region:'REGION',style:'ROLE',migration:'MIGRATION',species:'SPECIES'}[ax]||'CONDITION');}
+const GLOW='#3bd16f';  // single 'satisfied' green
+function condCell(cond,f,col,info,glow){
+  const lit=info&&info.met;
+  return h('div',{style:{flex:1,background:lit?glow+'22':'var(--zone)',borderRadius:`${5*f}px`,padding:`${4*f}px ${5*f}px`,minWidth:0,border:`${1.5*f}px solid ${lit?glow:col+'55'}`,boxShadow:lit?`0 0 ${8*f}px ${glow}66`:'none',transition:'all .2s'}},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+      h('div',{style:{fontSize:`${7*f}px`,color:lit?glow:'var(--dim3)',fontWeight:700,letterSpacing:'0.3px'}},condAxis(cond)),
+      info&&h('div',{style:{fontSize:`${7.5*f}px`,fontWeight:900,color:lit?glow:'var(--dim2)'}},info.have+'/'+info.n)),
+    h('div',{style:{fontSize:`${9.5*f}px`,color:'var(--ctx)',fontWeight:800,lineHeight:1.05}},cond));
+}
+function StormCard({storm,W,H,fs,onClick,analysis}){
+  const f=fs||1;
+  if(!storm) return h('div',{style:{width:W,height:H,borderRadius:`${13*f}px`,border:`${2*f}px dashed var(--bd)`,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--dim)',fontSize:`${20*f}px`,flexShrink:0,boxSizing:'border-box'}},'\u2014');
+  const col=storm.color||Y; const a=analysis;
+  const beatable=a&&a.met; const birdLit=a&&a.bird;
+  return h('div',{onClick,style:{width:W,minWidth:W,height:H,background:beatable?GLOW:col,borderRadius:`${13*f}px`,padding:`${5*f}px`,position:'relative',flexShrink:0,boxSizing:'border-box',boxShadow:beatable?`0 0 ${20*f}px ${GLOW}99,0 4px 18px rgba(0,0,0,0.4)`:'0 4px 18px rgba(0,0,0,0.4)',cursor:onClick?'pointer':'default',transition:'all .25s'}},
+    h('div',{style:{width:'100%',height:'100%',background:'var(--card)',borderRadius:`${9*f}px`,display:'flex',flexDirection:'column',padding:`${6*f}px ${9*f}px ${8*f}px`,boxSizing:'border-box',overflow:'hidden'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+        h('div',{style:{fontSize:`${26*f}px`,fontWeight:900,color:birdLit?GLOW:'var(--ctx)',lineHeight:1,letterSpacing:'1px',textShadow:birdLit?`0 0 ${10*f}px ${GLOW}`:'none',transition:'all .2s'}},storm.code),
+        h('div',{style:{fontSize:`${21*f}px`,fontWeight:900,color:'var(--ctx)',lineHeight:1}},('0'+storm.intensity).slice(-2))),
+      h('div',{style:{alignSelf:'center',margin:`${1*f}px 0 ${2*f}px`,width:`${50*f}px`,height:`${50*f}px`,borderRadius:'50%',border:`${3*f}px solid ${birdLit?GLOW:col}`,background:'var(--zone)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:birdLit?`0 0 ${10*f}px ${GLOW}88`:'none'}},
+        h('div',{style:{fontSize:`${20*f}px`}},'\u26A1'.repeat(Math.min(storm.intensity,3)))),
+      h('div',{style:{textAlign:'center',marginBottom:`${3*f}px`}},
+        h('div',{style:{fontSize:`${10*f}px`,color:'var(--cdim)'}},storm.origin),
+        h('div',{style:{fontSize:`${17*f}px`,fontWeight:900,color:'var(--ctx)',textTransform:'uppercase',lineHeight:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},storm.name)),
+      h('div',{style:{display:'flex',gap:`${3*f}px`,alignItems:'center',marginBottom:`${2*f}px`}},
+        condCell(storm.c1,f,col,a&&a.c1,GLOW),
+        h('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',background:'#14140d',color:'#fff',borderRadius:'50%',width:`${24*f}px`,height:`${24*f}px`,fontSize:`${8.5*f}px`,fontWeight:900,flexShrink:0}},storm.op),
+        condCell(storm.c2,f,col,a&&a.c2,GLOW)),
+      h('div',{style:{flex:1,background:'var(--zone)',borderRadius:`${5*f}px`,padding:`${5*f}px ${6*f}px`,minHeight:0,overflow:'hidden'}},
+        h('div',{style:{fontSize:`${8*f}px`,color:'var(--dim3)',fontWeight:800,letterSpacing:'1.5px',marginBottom:`${2*f}px`}},'POWER'),
+        h('div',{style:{fontSize:`${8.5*f}px`,color:'var(--ctx)',lineHeight:1.2}},storm.effect||'No special action.'),
+        h('div',{style:{fontSize:`${8*f}px`,color:'var(--dim)',marginTop:`${4*f}px`,fontStyle:'italic'}},'Solo: the '+storm.code+' bird, or meet the conditions alone.'))));
+}
+
+// ═══ DECK PILE (draw / discard) ═══
+function DeckPile({label,count,top,faceDown,W,H,fs,color}){
+  const f=fs||1;
+  return h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:`${6*f}px`,flexShrink:0}},
+    h('div',{style:{position:'relative',width:W,height:H}},
+      count>1&&h('div',{style:{position:'absolute',top:`${4*f}px`,left:`${4*f}px`,width:'100%',height:'100%',borderRadius:`${13*f}px`,background:'var(--bd)',opacity:0.45}}),
+      top?h(Card,{card:top,W,H,fs:f,faceDown:faceDown}):
+        h('div',{style:{position:'relative',width:W,height:H,borderRadius:`${13*f}px`,border:`${2*f}px dashed var(--bd)`,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--dim2)',fontSize:`${13*f}px`,boxSizing:'border-box'}},'empty'),
+      h('div',{style:{position:'absolute',bottom:`${-7*f}px`,right:`${-7*f}px`,background:color||Y,color:'#000',fontWeight:900,fontSize:`${15*f}px`,minWidth:`${26*f}px`,textAlign:'center',padding:`${2*f}px ${6*f}px`,borderRadius:`${13*f}px`,boxShadow:'0 2px 8px rgba(0,0,0,0.45)'}},count)),
+    h('div',{style:{fontSize:`${12*f}px`,color:'var(--dim)',fontWeight:700,letterSpacing:'1px'}},label));
+}
+
+// ═══ SCOREBOARD ═══
+function Scoreboard({g}){
+  const beat=g.piles.birds.length,lost=g.piles.storms.length,total=g.storms.length;
+  const stat=(lbl,v,c)=>h('div',{style:{display:'flex',alignItems:'center',gap:'10px'}},h('span',{style:{fontSize:'24px',fontWeight:700,color:c,letterSpacing:'1px'}},lbl),h('span',{style:{fontSize:'44px',fontWeight:900,color:c,lineHeight:1}},v));
+  return h('div',{style:{display:'flex',alignItems:'center',gap:'14px',padding:'7px 20px',background:'var(--panel)',borderBottom:'1px solid var(--bd)',flexWrap:'wrap'}},
+    stat('\uD83D\uDC26 WINS',beat+'/'+total,GREEN),
+    h('span',{style:{fontSize:'22px',color:'var(--dim)'}},'(need '+(Math.floor(g.storms.length/2)+1)+')'),
+    stat('\u26A1 LOSSES',lost,RED),
+    h('div',{style:{width:'1px',height:'22px',background:'var(--bd)'}}),
+    h('span',{style:{fontSize:'22px',color:'var(--dim)',fontWeight:700,letterSpacing:'1px'}},'SOLO'),
+    [1,2,3,4].slice(0,g.playerCount).map(p=>h('div',{key:p,style:{display:'flex',alignItems:'center',gap:'3px'}},h('span',{style:{fontSize:'24px',color:'var(--dim)',fontWeight:700}},'P'+p),h('span',{style:{fontSize:'32px',fontWeight:900,color:'var(--tx)'}},g.piles.solo[p].length))),
+    h('div',{style:{marginLeft:'auto',fontSize:'24px',color:'var(--dim)'}},'deck '+g.deck.length));
+}
+
+// ═══ SETTINGS ═══
+function Settings({open,onClose,theme,setTheme,enabled,setEnabled,canEdit,stormCount,setStormCount}){
+  if(!open)return null;
+  const toggle=code=>{const s=new Set(enabled);s.has(code)?s.delete(code):s.add(code);setEnabled([...s]);};
+  const opt=(a,l,o)=>h('button',{onClick:o,style:{flex:1,background:a?Y:'transparent',color:a?'#000':'var(--tx)',border:`2px solid ${a?Y:'var(--bd2)'}`,padding:'11px',fontWeight:a?900:700,fontSize:'32px',borderRadius:'7px'}},l);
+  return h('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',backdropFilter:'blur(4px)'}},
+    h('div',{onClick:e=>e.stopPropagation(),style:{background:'var(--panel)',border:`3px solid ${Y}`,borderRadius:'14px',padding:'24px',width:'100%',maxWidth:'440px',maxHeight:'85vh',overflowY:'auto'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:'20px'}},h('div',{style:{fontSize:'44px',fontWeight:900,color:'var(--atx)',letterSpacing:'2px'}},'SETTINGS'),h('button',{onClick:onClose,style:{background:'transparent',border:'none',color:'var(--dim)',fontSize:'48px'}},'\u2715')),
+      h('div',{style:{fontSize:'24px',color:'var(--dim)',letterSpacing:'1.5px',fontWeight:700,marginBottom:'9px'}},'THEME'),
+      h('div',{style:{display:'flex',gap:'9px',marginBottom:'20px'}},opt(theme==='dark','\uD83C\uDF19 DARK',()=>setTheme('dark')),opt(theme==='light','\u2600 LIGHT',()=>setTheme('light'))),
+      (function(){var poolMax=(enabled&&enabled.length)?enabled.length:STORMS.length;var sc=Math.max(3,Math.min(stormCount||poolMax,poolMax));var sb=function(lbl,on,dis){return h('button',{disabled:dis,onClick:on,style:{width:'60px',height:'60px',background:dis?'transparent':'var(--zone)',border:'2px solid '+(dis?'var(--bd)':'var(--bd2)'),color:dis?'var(--dim2)':'var(--tx)',borderRadius:'9px',fontSize:'44px',fontWeight:900}},lbl);};return h('div',{style:{marginBottom:'20px'}},
+        h('div',{style:{fontSize:'24px',color:'var(--dim)',letterSpacing:'1.5px',fontWeight:700,marginBottom:'4px'}},'STORMS PER GAME'),
+        h('div',{style:{fontSize:'24px',color:'var(--dim2)',marginBottom:'10px'}},'Beat more than half to win \u2014 that\u2019s '+(Math.floor(sc/2)+1)+' of '+sc+' this game.'),
+        h('div',{style:{display:'flex',alignItems:'center',gap:'12px'}},
+          sb('\u2212',function(){canEdit&&setStormCount(Math.max(3,sc-1));},!canEdit||sc<=3),
+          h('div',{style:{fontSize:'60px',fontWeight:900,color:'var(--atx)',minWidth:'48px',textAlign:'center'}},sc),
+          sb('+',function(){canEdit&&setStormCount(Math.min(poolMax,sc+1));},!canEdit||sc>=poolMax),
+          h('div',{style:{fontSize:'26px',color:'var(--dim)'}},'max '+poolMax+(canEdit?'':' \u00B7 locked'))));})(),
+      h('div',{style:{fontSize:'24px',color:'var(--dim)',letterSpacing:'1.5px',fontWeight:700,marginBottom:'4px'}},'STORM DECK'),
+      h('div',{style:{fontSize:'24px',color:'var(--dim2)',marginBottom:'10px'}},canEdit?'The pool drawn from each game. Disable any to exclude them.':'Storm selection can only be changed before starting a new game.'),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:'5px'}},STORMS.map(s=>{const on=enabled.length===0||enabled.includes(s.code);return h('label',{key:s.code,style:{display:'flex',alignItems:'center',gap:'9px',padding:'7px 10px',background:'var(--zone)',borderRadius:'7px',cursor:canEdit?'pointer':'default',opacity:on?1:0.45}},
+        h('input',{type:'checkbox',checked:on,disabled:!canEdit,onChange:()=>canEdit&&toggle(s.code),style:{width:'17px',height:'17px',accentColor:Y}}),
+        h('span',{style:{width:'10px',height:'10px',borderRadius:'2px',background:s.color}}),
+        h('span',{style:{fontSize:'30px',fontWeight:700,color:'var(--tx)',flex:1}},s.name),
+        h('span',{style:{fontSize:'24px',color:'var(--dim)'}},s.c1+' '+s.op+' '+s.c2))}))));
+}
+
+// ═══ CONFIRM POPUP ═══
+function Confirm({open,title,body,onYes,onNo}){
+  if(!open)return null;
+  return h('div',{onClick:onNo,style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:600,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',backdropFilter:'blur(4px)'}},
+    h('div',{onClick:e=>e.stopPropagation(),style:{background:'var(--panel)',border:`3px solid ${RED}`,borderRadius:'14px',padding:'26px',width:'100%',maxWidth:'360px',textAlign:'center'}},
+      h('div',{style:{fontSize:'44px',fontWeight:900,color:'var(--tx)',marginBottom:'10px'}},title),
+      h('div',{style:{fontSize:'30px',color:'var(--dim)',marginBottom:'22px',lineHeight:1.4}},body),
+      h('div',{style:{display:'flex',gap:'10px'}},
+        h('button',{className:'ibtn',onClick:onNo,style:{flex:1,background:'transparent',border:'1px solid var(--bd2)',color:'var(--tx)',padding:'12px',fontWeight:700,fontSize:'30px',borderRadius:'8px'}},'Cancel'),
+        h('button',{className:'ibtn',onClick:onYes,style:{flex:1,background:RED,border:'none',color:'#fff',padding:'12px',fontWeight:900,fontSize:'30px',borderRadius:'8px'}},'Yes, reset'))));
+}
+
+// ═══ HELP / LOG MODALS ═══
+function HelpModal({open,onClose}){
+  const [full,setFull]=useState(false);
+  if(!open)return null;
+  const line=(n,t)=>h('div',{key:n,style:{display:'flex',gap:'12px',marginBottom:'13px'}},
+    h('div',{style:{fontSize:'22px',fontWeight:900,color:Y,lineHeight:1.1,minWidth:'18px'}},n),
+    h('div',{style:{fontSize:'17px',color:'var(--tx)',lineHeight:1.45}},t));
+  const hdr=t=>h('div',{key:t,style:{fontSize:'13px',fontWeight:900,color:'var(--atx)',letterSpacing:'1.5px',margin:'14px 0 4px'}},t);
+  const para=t=>h('div',{style:{fontSize:'15px',color:'var(--dim)',lineHeight:1.5,marginBottom:'9px'}},t);
+  return h('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:620,display:'flex',alignItems:'center',justifyContent:'center',padding:'18px',backdropFilter:'blur(4px)'}},
+    h('div',{onClick:e=>e.stopPropagation(),style:{background:'var(--panel)',border:`3px solid ${Y}`,borderRadius:'14px',padding:'24px',width:'100%',maxWidth:'520px',maxHeight:'86vh',overflowY:'auto'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}},h('div',{style:{fontSize:'24px',fontWeight:900,color:'var(--atx)',letterSpacing:'2px'}},'HOW TO PLAY'),h('button',{onClick:onClose,style:{background:'transparent',border:'none',color:'var(--dim)',fontSize:'28px'}},'\u2715')),
+      line('1','Work together to beat more than half the storms \u2014 do that and the birds win.'),
+      line('2','A card helps beat a storm when its traits \u2014 Region, Role, or Migration \u2014 match the storm\u2019s conditions.'),
+      line('3','Each storm: try it solo first (the storm\u2019s home-state bird can hero it). If everyone passes, play together into the flock \u2014 it resolves the moment the flock matches.'),
+      h('button',{onClick:()=>setFull(!full),style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--atx)',padding:'9px 14px',borderRadius:'8px',fontWeight:700,fontSize:'14px',marginTop:'4px'}},full?'Hide full rules':'Full rules \u2192'),
+      full&&h('div',{style:{marginTop:'14px',borderTop:'1px solid var(--bd)',paddingTop:'14px'}},
+        para('Storm season is here, and the Bird Rebels are ready to take flight and protect their flock. A 1\u20134 player game of strategy and teamwork: beat the storms together \u2014 or hero one solo if you\u2019ve got the cards.'),
+        para('Each bird card lists its home state, species, region, migration, role, and special ability. Each storm lists its epicenter, the Rebel who can beat it solo, and the flock conditions a team needs.'),
+        hdr('SETUP (2\u20134)'),para('Hand limit is 5; the lead player rotates each round. Deal 5 to each player and flip the top storm face-up. Carry out any action printed on it.'),
+        hdr('ROUND 1 \u2014 SOLO'),para('Each player may try to beat the storm alone, or pass. Continue until someone wins or everyone passes.'),
+        hdr('ROUND 2 \u2014 FLOCK'),para('Each player must add one card to the flock, until it\u2019s beaten or everyone has added one.'),
+        hdr('ROUND 3 \u2014 LAST PUSH'),para('Each player may add one more card, or pass.'),
+        hdr('RESOLUTION'),para('Solo win keeps the storm as a Solo point; a team win goes to the team pile; no win goes to the loss pile. After each storm the birds are discarded (unless a card says otherwise), the lead rotates, everyone draws back to 5, and the next storm flips.'),
+        hdr('WINNING'),para('When the storm deck runs out, if team + solo wins outnumber the losses, the birds win. Most Solo points is the Hero \u2014 but only if the birds win.'),
+        hdr('SOLO (1 PLAYER)'),para('Hand size 7, Round 1 only \u2014 every win is a Solo point.'),
+        h('div',{style:{fontSize:'12px',color:'var(--dim2)',marginTop:'6px',fontStyle:'italic'}},'Under active development \u2014 hand-drawn, zero AI art. Thanks for testing.'))));
+}
+
+function LogModal({open,onClose,log}){
+  if(!open)return null;
+  return h('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:620,display:'flex',alignItems:'center',justifyContent:'center',padding:'18px',backdropFilter:'blur(4px)'}},
+    h('div',{onClick:e=>e.stopPropagation(),style:{background:'var(--panel)',border:`3px solid ${Y}`,borderRadius:'14px',padding:'22px',width:'100%',maxWidth:'460px',maxHeight:'80vh',display:'flex',flexDirection:'column'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:'12px'}},h('div',{style:{fontSize:'40px',fontWeight:900,color:'var(--atx)',letterSpacing:'2px'}},'GAME LOG'),h('button',{onClick:onClose,style:{background:'transparent',border:'none',color:'var(--dim)',fontSize:'48px'}},'\u2715')),
+      h('div',{style:{overflowY:'auto',fontFamily:'monospace',fontSize:'26px',lineHeight:1.6,display:'flex',flexDirection:'column',gap:'2px'}},(log||[]).map((l,i)=>h('div',{key:i,style:{color:l[0]==='\u2705'?GREEN:(l[0]==='\u274C'?RED:(l[0]==='\u26A1'?Y:'var(--dim)'))}},l)))));
+}
+
+// ═══ BOARD ═══
+function Board({gameId,me,mode,theme,setTheme,enabled,setEnabled,stormCount,setStormCount}){
+  const isLocal=mode==='local', isTable=(me==='table'||me==='admin');
+  const [G,setG]=useState(isLocal?freshGame(1,enabled,undefined,stormCount):null);
+  const [err,setErr]=useState(null),[loading,setLoading]=useState(!isLocal);
+  const [settings,setSettings]=useState(false),[reset,setReset]=useState(false);
+  const [showLog,setShowLog]=useState(false),[showHelp,setShowHelp]=useState(false),[toast,setToast]=useState(null),[showTips,setShowTips]=useState(false);
+  const [nameModal,setNameModal]=useState(false),[nameInput,setNameInput]=useState('');
+  const [debrief,setDebrief]=useState(null);
+  const [mob,setMob]=useState(()=>window.innerWidth<=991);
+  const revRef=useRef(0),savingRef=useRef(false),lastSaveRef=useRef(0),prevAP=useRef(null),prevOut=useRef(null),prevDbid=useRef(null),askedName=useRef(false);
+  useEffect(()=>{const f=()=>setMob(window.innerWidth<=991);window.addEventListener('resize',f);return()=>window.removeEventListener('resize',f)},[]);
+  useEffect(()=>{document.documentElement.style.background=theme==='dark'?'#0c0c0c':'#e9e5db'},[theme]);
+
+  useEffect(()=>{if(isLocal)return;let alive=true;
+    (async()=>{const d=await API.get(gameId);if(!alive)return;
+      if(!d||d.error){setErr('Game '+gameId+' not found — it may have expired (games clear after 7 days).');setLoading(false);return;}
+      setG(d.state);revRef.current=d.rev;setLoading(false);})();
+    const t=setInterval(async()=>{if(savingRef.current||Date.now()-lastSaveRef.current<900)return;
+      const d=await API.get(gameId);if(!alive||!d||d.error)return;if(d.rev!==revRef.current){setG(d.state);revRef.current=d.rev;}},1800);
+    return()=>{alive=false;clearInterval(t);};},[gameId,isLocal]);
+  async function save(n){if(isLocal)return;savingRef.current=true;lastSaveRef.current=Date.now();
+    try{const r=await API.put(gameId,n);if(r&&r.rev)revRef.current=r.rev;}catch(e){}finally{savingRef.current=false;lastSaveRef.current=Date.now();}}
+  const act=fn=>setG(prev=>{if(!prev)return prev;const n=fn(clone(prev));save(n);return n;});
+  // per-game display names
+  useEffect(()=>{if(!G||isLocal||isTable||typeof me!=='number')return;if(G.names&&G.names[me])return;if(askedName.current)return;askedName.current=true;setNameModal(true);},[G&&G.names&&G.names[me]]);
+  // toasts: your-turn + storm result
+  useEffect(()=>{if(!G)return;if(prevAP.current!==null&&prevAP.current!==G.activePlayer&&typeof me==='number'&&G.activePlayer===me&&G.phase!=='game_over')setToast({m:'\u23F0 Your turn',c:Y});const db=G.lastDebrief;if(prevDbid.current===null){prevDbid.current=db?db.id:0;}else if(db&&db.id!==prevDbid.current){setDebrief(db);prevDbid.current=db.id;}prevAP.current=G.activePlayer;},[G&&G.activePlayer,G&&G.lastDebrief&&G.lastDebrief.id,G&&G.phase]);
+  useEffect(()=>{if(!debrief)return;const t=setTimeout(()=>setDebrief(null),7000);return()=>clearTimeout(t);},[debrief]);
+  useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(null),2600);return()=>clearTimeout(t);},[toast]);
+
+  if(loading)return centered(theme,h('div',{style:{color:'var(--dim)',fontSize:'36px'}},'Loading game '+gameId+'\u2026'));
+  if(err)return centered(theme,h('div',{style:{textAlign:'center',maxWidth:'420px'}},h('div',{style:{fontSize:'80px',marginBottom:'10px'}},'\uD83C\uDF2A'),h('div',{style:{color:'var(--tx)',fontSize:'36px',marginBottom:'16px',lineHeight:1.4}},err),h('a',{href:base(),style:{color:'var(--atx)',fontWeight:700,textDecoration:'none'}},'\u2190 Lobby')));
+  if(!G)return null;
+
+  const players=[1,2,3,4].slice(0,G.playerCount);
+  const myTurn=isTable||(typeof me==='number'&&me===G.activePlayer);
+  const ap=G.activePlayer, storm=G.storms[G.stormIdx], over=G.phase==='game_over';
+  // whose hand do I see/act on
+  const handOwner=isTable?ap:me;
+  const projFlock=G.flock.concat(myTurn?G.staged:[]);
+  const analysis=(!over&&storm)?stormAnalysis(projFlock,storm):null;
+  const winNow=!!analysis&&analysis.met;
+  const canBeatSolo=!!analysis&&(analysis.met||analysis.bird);
+  const nm=pid=>(G.names&&G.names[pid])||('Player '+pid);
+  const phaseLabel={freeze:'FREEZE',pass:'PASS',r1:'ROUND 1',r2:'ROUND 2',r3:'ROUND 3'}[G.phase]||'';
+  const instr={freeze:'tap a card to freeze it face-down',pass:'tap a card to pass to the next player',r1:'tap cards to stage, then BEAT THE STORM \u2014 or PASS',r2:'play exactly '+G.r2count+' card'+(G.r2count>1?'s':''),r3:'play 1 more or PASS'}[G.phase]||'';
+
+  // card sizes (poker 5:7)
+  const FW=mob?'140px':'196px',FH=mob?'218px':'306px',FF=mob?0.95:1.3;    // flock
+  const HW=mob?'162px':'224px',HH=mob?'253px':'350px',HF=mob?1.08:1.45;   // hand
+  const SW=mob?'150px':'232px',SH=mob?'234px':'362px',SF=mob?1.0:1.45;    // storm card
+  const DW=mob?'104px':'150px',DH=mob?'162px':'234px',DF=mob?0.7:1.0;     // draw / discard
+
+  // hand card click → phase action (only when my turn)
+  const handClick=card=>{
+    if(!myTurn||G.pendingRetrieval>0)return;
+    if(G.phase==='freeze')act(g=>freezeSelect(g,card.uid));
+    else if(G.phase==='pass')act(g=>passSelect(g,card.uid));
+    else if(G.phase==='r1'||G.phase==='r2'||G.phase==='r3')act(g=>stageCard(g,card.uid));
+  };
+  const stagedClick=card=>{if(myTurn)act(g=>unstageCard(g,card.uid));};
+
+  // ── action bar ──
+  const btn=(label,onClick,color,dis)=>h('button',{className:'ibtn',onClick,disabled:dis,style:{background:dis?'transparent':(color||Y),color:dis?'var(--dim2)':(color===Y||!color?'#000':'#fff'),border:dis?'1px solid var(--bd)':'none',padding:'16px 28px',fontWeight:900,fontSize:'30px',letterSpacing:'1px',borderRadius:'8px'}},label);
+  let actions=null;
+  if(over) actions=null;
+  else if(!myTurn) actions=null;
+  else if(G.pendingRetrieval>0){
+    actions=h('div',{style:{display:'flex',gap:'10px',alignItems:'center',flexWrap:'wrap'}},
+      h('div',{style:{fontSize:'28px',color:'var(--atx)',fontWeight:700}},'\u21A9 Tap a glowing flock card to take it back \u2014 '+G.pendingRetrieval+' left'),
+      btn('DONE / SKIP',()=>act(skipRetrieval),'#555'));
+  } else {
+    const beat=(label,fn)=>h('button',{className:'ibtn'+(winNow?' pulse':''),onClick:()=>act(fn),style:{width:'100%',background:winNow?GREEN:'var(--zone)',color:winNow?'#fff':'var(--dim2)',border:winNow?'none':'2px solid var(--bd2)',padding:'15px 18px',fontWeight:900,fontSize:'26px',letterSpacing:'1px',borderRadius:'9px',boxShadow:winNow?`0 0 18px ${GREEN}88`:'none',transition:'all .2s'}},winNow?'\u2713 '+label:label);
+    const pass=(label,fn,dis)=>h('button',{className:'ibtn',onClick:()=>act(fn),disabled:dis,style:{width:'100%',background:'transparent',color:dis?'var(--dim2)':'var(--dim)',border:'2px solid var(--bd2)',padding:'13px 18px',fontWeight:800,fontSize:'22px',letterSpacing:'1px',borderRadius:'9px'}},label);
+    if(G.phase==='r1'){
+      actions=h('div',{style:{display:'flex',flexDirection:'column',gap:'8px',width:'100%'}},
+        h('button',{className:'ibtn'+(canBeatSolo?' pulse':''),onClick:()=>act(r1Resolve),disabled:!canBeatSolo,style:{width:'100%',background:canBeatSolo?GREEN:'var(--zone)',color:canBeatSolo?'#fff':'var(--dim2)',border:canBeatSolo?'none':'2px solid var(--bd2)',padding:'15px 18px',fontWeight:900,fontSize:'26px',letterSpacing:'1px',borderRadius:'9px',boxShadow:canBeatSolo?`0 0 18px ${GREEN}88`:'none',transition:'all .2s'}},(canBeatSolo?'\u2713 ':'')+'BEAT THE STORM'),
+        pass(G.staged.length?'\u21A9 TAKE BACK & PASS':'PASS',r1Pass));
+    } else if(G.phase==='r2'){
+      const req=r2req(G);
+      actions=beat('BEAT THE STORM',r2Play);
+      if(!winNow) actions=h('button',{className:'ibtn',onClick:()=>act(r2Play),disabled:G.staged.length!==req,style:{width:'100%',background:G.staged.length===req?Y:'var(--zone)',color:G.staged.length===req?'#000':'var(--dim2)',border:G.staged.length===req?'none':'2px solid var(--bd2)',padding:'15px 18px',fontWeight:900,fontSize:'26px',letterSpacing:'1px',borderRadius:'9px'}},'\u25B6 PLAY '+req+' CARD'+(req>1?'S':''));
+    } else if(G.phase==='r3'){
+      actions=h('div',{style:{display:'flex',flexDirection:'column',gap:'8px',width:'100%'}},
+        winNow?beat('BEAT THE STORM',r3Play):h('button',{className:'ibtn',onClick:()=>act(r3Play),disabled:G.staged.length!==1,style:{width:'100%',background:G.staged.length===1?Y:'var(--zone)',color:G.staged.length===1?'#000':'var(--dim2)',border:G.staged.length===1?'none':'2px solid var(--bd2)',padding:'15px 18px',fontWeight:900,fontSize:'26px',letterSpacing:'1px',borderRadius:'9px'}},'\u25B6 PLAY 1'),
+        pass('PASS',r3Pass,G.staged.length!==0));
+    } else if(G.phase==='freeze'||G.phase==='pass'){
+      actions=h('div',{style:{fontSize:'24px',color:'var(--atx)',fontWeight:700,textAlign:'center',lineHeight:1.3}},instr);
+    }
+  }
+
+  // ── flock zone ──
+  const flockCards=G.flock.map(c=>{const canGrab=myTurn&&G.pendingRetrieval>0&&(G.retrievable||[]).includes(c.uid);return h(Card,{key:c.uid,card:c,W:FW,H:FH,fs:FF,carried:c.carried,pending:canGrab,tag:canGrab?'\u21A9 TAKE':(c.source==='STUD'?'STUD':(c.source||null)),onClick:canGrab?()=>act(g=>retrieveCard(g,c.uid)):null});});
+  const stagedCards=(myTurn?G.staged:[]).map(c=>h(Card,{key:c.uid,card:c,W:FW,H:FH,fs:FF,pending:true,onClick:()=>stagedClick(c)}));
+  const flockEmpty=G.flock.length===0&&(!myTurn||G.staged.length===0);
+  const flock=h('div',{style:{display:'flex',gap:mob?'8px':'14px',alignItems:'flex-start',margin:mob?'10px 8px':'14px 20px'}},
+    h('div',{style:{flexShrink:0,width:SW,display:'flex',flexDirection:'column',alignItems:'stretch',gap:'8px'}},
+      h(StormCard,{storm,W:SW,H:SH,fs:SF,analysis}),
+      h('div',{style:{fontSize:mob?'11px':'13px',color:'var(--dim)',fontWeight:700,letterSpacing:'1px',textAlign:'center',marginBottom:'2px'}},'STORM '+(G.stormIdx+1)+' / '+G.storms.length),
+      actions),
+    h('div',{style:{flex:1,background:TBL.surf,borderRadius:'14px',border:`1px solid ${TBL.line}`,boxShadow:'0 8px 28px rgba(0,0,0,0.35)',overflow:'hidden',minWidth:0}},
+    h('div',{style:{display:'flex',alignItems:'center',gap:'10px',padding:mob?'7px 12px':'9px 18px',background:TBL.mat,borderBottom:`1px solid ${TBL.line}`,flexWrap:'wrap'}},
+      h('div',{style:{fontSize:mob?'15px':'18px',color:TBL.dim,fontWeight:700,letterSpacing:'2px'}},'THE FLOCK'),
+      Object.keys(G.frozen).length>0&&h('div',{style:{display:'flex',gap:'6px'}},players.map(p=>G.frozen[p]?h('span',{key:p,style:{fontSize:mob?'14px':'16px',color:'#6cf',fontWeight:700}},'\u2744P'+p):null)),
+      G.staged.length>0&&myTurn&&h('div',{style:{marginLeft:'auto',fontSize:mob?'13px':'16px',color:Y,fontWeight:700}},'tap a staged card to take it back')),
+    h('div',{style:{position:'relative',minHeight:mob?'200px':'290px',background:TBL.felt,backgroundImage:`radial-gradient(ellipse at 50% 40%, ${TBL.surf} 0%, ${TBL.felt} 75%)`,display:'flex',gap:'10px',flexWrap:'wrap',padding:'14px',alignContent:'flex-start'}},
+      flockCards, stagedCards,
+      flockEmpty&&h('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:TBL.dim,fontSize:mob?'18px':'24px',opacity:0.6,pointerEvents:'none'}},'cards played here'))));
+
+  // ── hand(s) ──
+  function handZone(pid,owner){
+    const hd=G.hands[pid]||[];const mine=pid===handOwner;
+    const clickable=mine&&myTurn&&!G.pendingRetrieval&&['freeze','pass','r1','r2','r3'].includes(G.phase);
+    const showCards=isTable||pid===me||isLocal;
+    return h('div',{key:pid,style:{padding:mob?'10px':'12px 20px',borderTop:'1px solid var(--bd)'}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px'}},
+        h('div',{style:{fontSize:'34px',fontWeight:900,color:pid===ap?'var(--atx)':'var(--dim)',letterSpacing:'1px'}},nm(pid).toUpperCase()+(pid===me?' (you)':'')+(pid===ap?' \u2190 turn':'')),
+        h('div',{style:{fontSize:'24px',color:'var(--dim)'}},hd.length+' cards'),
+        G.frozen[pid]&&h('div',{style:{fontSize:'24px',color:'#6cf',fontWeight:700}},'\u2744 frozen')),
+      h('div',{style:{display:'flex',gap:'9px',overflowX:'auto',minHeight:mob?'150px':'120px',padding:'4px 2px 10px',alignItems:'flex-start'}},
+        showCards?(hd.length?hd.map(c=>h(Card,{key:c.uid,card:c,W:HW,H:HH,fs:HF,onClick:clickable?()=>handClick(c):null,dim:clickable?false:(mine?false:false)})):h('div',{style:{color:'var(--dim2)',alignSelf:'center',fontSize:'28px',padding:'10px'}},'empty')) 
+          :h('div',{style:{display:'flex',gap:'8px'}},hd.map((c,i)=>h(Card,{key:i,card:c,W:HW,H:HH,fs:HF,faceDown:true}))),
+        G.frozen[pid]&&h('div',{style:{marginLeft:'6px'}},h(Card,{card:G.frozen[pid],W:HW,H:HH,fs:HF,faceDown:!(isTable||pid===me||isLocal),tag:'FROZEN'}))));
+  }
+  const hands=isTable?players.map(p=>handZone(p)):(typeof me==='number'?handZone(me):null);
+
+
+
+  // ── header ──
+  const ctrl=(label,onClick,dis)=>h('button',{className:'ibtn',onClick,disabled:dis,style:{background:'transparent',color:dis?'var(--dim2)':'var(--tx)',border:`1px solid ${dis?'var(--bd)':'var(--bd2)'}`,padding:'13px 18px',fontWeight:700,fontSize:'26px',borderRadius:'7px',whiteSpace:'nowrap'}},label);
+  const wins=G.piles.birds.length, losses=G.piles.storms.length, need=Math.floor(G.storms.length/2)+1;
+  const pill=(lbl,val,c)=>h('div',{style:{display:'flex',alignItems:'center',gap:'6px'}},h('span',{style:{fontSize:mob?'12px':'14px',fontWeight:700,letterSpacing:'1px',color:'var(--dim)'}},lbl),h('span',{style:{fontSize:mob?'20px':'24px',fontWeight:900,lineHeight:1,color:c}},val));
+  const header=h('div',{style:{position:'sticky',top:0,zIndex:50,background:'var(--head)',borderBottom:`4px solid ${Y}`,boxShadow:'0 4px 14px rgba(0,0,0,0.3)'}},
+    h('div',{style:{display:'flex',alignItems:'center',gap:'14px',padding:mob?'8px 12px':'10px 20px',flexWrap:'wrap'}},
+      h('div',null,h('div',{style:{fontSize:mob?'17px':'20px',fontWeight:900,color:'var(--atx)',letterSpacing:'2px',lineHeight:1}},'BIRD REBELS'),h('div',{style:{fontSize:mob?'10px':'12px',color:'var(--dim)',letterSpacing:'4px'}},'STORM WATCH')),
+      h('div',{style:{display:'flex',gap:'7px',marginLeft:'auto',flexWrap:'wrap',alignItems:'center'}},
+        !isLocal&&h('div',{style:{fontSize:mob?'13px':'15px',fontWeight:700,color:'var(--dim)',background:'var(--zone)',border:'1px solid var(--bd2)',borderRadius:'7px',padding:'6px 10px'}},'#'+gameId),
+        ctrl('\uD83D\uDCDC',()=>setShowLog(true)),
+        ctrl('?',()=>setShowHelp(true)),
+        ctrl('\u2699',()=>setSettings(true)),
+        isLocal&&ctrl('\u2190 LOBBY',()=>{location.href=base();}),
+        (isLocal||isTable)&&ctrl('\u21BA',()=>setReset(true)),
+        !isLocal&&ctrl('\u2906',()=>{location.href=base();}))),
+    h('div',{style:{display:'flex',alignItems:'center',gap:mob?'12px':'20px',padding:mob?'6px 12px':'7px 20px',background:'var(--zone)',borderTop:'1px solid var(--bd)',flexWrap:'wrap'}},
+      pill('WINS',wins+'/'+need,GREEN), pill('LOSSES',losses,RED), pill('DECK',G.deck.length,'var(--dim)'), pill('DISCARD',(G.fallen||[]).length,'var(--dim)'),
+      !over&&h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},
+        h('div',{style:{background:Y,color:'#000',fontWeight:900,fontSize:mob?'12px':'14px',padding:'3px 9px',borderRadius:'5px',letterSpacing:'0.5px'}},phaseLabel),
+        h('div',{className:myTurn?'':'pulse',style:{fontSize:mob?'14px':'16px',fontWeight:700,color:myTurn?GREEN:'var(--dim)'}},myTurn?'Your turn':('\u23F3 Waiting for '+nm(ap)+'\u2026'))),
+      h('div',{style:{marginLeft:'auto',display:'flex',gap:mob?'6px':'10px',alignItems:'center',flexWrap:'wrap'}},
+        players.map(p=>h('div',{key:p,style:{display:'flex',alignItems:'center',gap:'5px',background:p===ap?'var(--zone)':'transparent',border:'1px solid '+(p===ap?Y:'transparent'),borderRadius:'7px',padding:'3px 8px'}},
+          p===ap&&h('span',{className:'pulse',style:{color:Y,fontSize:mob?'13px':'15px',lineHeight:1}},'\u25B6'),
+          h('span',{style:{fontSize:mob?'14px':'16px',fontWeight:p===ap?900:700,color:p===me?'var(--atx)':(p===ap?'var(--tx)':'var(--dim)')}},nm(p)+(p===me?' (you)':'')),
+          h('span',{title:'solo points',style:{fontSize:mob?'13px':'15px',fontWeight:900,color:'var(--dim)'}},'\u2605'+G.piles.solo[p].length),
+          p===me&&typeof me==='number'&&!isLocal&&h('button',{onClick:()=>{const cur=nm(me);setNameInput(cur===('Player '+me)?'':cur);setNameModal(true);},title:'Edit your name',style:{background:'transparent',border:'none',color:'var(--dim)',cursor:'pointer',fontSize:mob?'13px':'15px',padding:'0 2px',lineHeight:1}},'\u270E'))))));
+
+  // ── game over ──
+  let overlay=null;
+  if(over){const r=gameResult(G);
+    overlay=h('div',{style:{padding:'40px 20px',textAlign:'center'}},
+      h('div',{style:{fontSize:'104px',marginBottom:'8px'}},r.won?'\uD83D\uDD4A\uFE0F':r.tie?'\u2696\uFE0F':'\u26A1'),
+      h('div',{style:{fontSize:'68px',fontWeight:900,letterSpacing:'2px',color:r.won?GREEN:r.tie?Y:RED,marginBottom:'6px'}},r.won?'THE BIRDS WIN':r.tie?'A TIE':'THE STORMS WIN'),
+      h('div',{style:{fontSize:'36px',color:'var(--tx)',marginBottom:'4px'}},r.beat+' of '+r.total+' storms beaten \u00B7 needed '+r.need),
+      r.won&&r.hero&&h('div',{style:{fontSize:'40px',color:'var(--atx)',fontWeight:900,marginTop:'10px'}},'\uD83C\uDFC6 HERO: '+nm(r.hero)+' ('+r.solo[r.hero]+' solo points)'),
+      r.won&&!r.hero&&h('div',{style:{fontSize:'30px',color:'var(--dim)',marginTop:'10px'}},'no solo hero this game \u2014 a true team effort'),
+      r.won&&G.playerCount>1&&h('div',{style:{fontSize:'26px',color:'var(--dim)',marginTop:'8px'}},[1,2,3,4].slice(0,G.playerCount).map(p=>nm(p)+': '+r.solo[p]).join('   \u00B7   ')+'  (solo points, incl. bonus cards)'),
+      h('button',{className:'ibtn',onClick:()=>setReset(true),style:{marginTop:'24px',background:Y,color:'#000',border:'none',padding:'14px 28px',fontWeight:900,fontSize:'32px',letterSpacing:'1px',borderRadius:'9px'}},'\u21BA NEW GAME'));
+  }
+
+  // ── contextual tips ──
+  function getTip(){
+    if(over) return null;
+    const sn=storm?storm.name:'the storm', sc=storm?storm.code:'??';
+    if(G.pendingRetrieval>0&&myTurn) return '\u21A9 You played a retrieval card \u2014 tap a glowing card in the flock to take it back into your hand. Or skip.';
+    if(G.phase==='freeze'){
+      if(myTurn) return '\u2744\uFE0F Cold Front: choose one card from your hand to freeze. It\u2019s locked until the storm ends \u2014 pick the one you can least afford to lose.';
+      return '\u2744\uFE0F Cold Front: '+nm(ap)+' is choosing a card to freeze. Hang tight.';
+    }
+    if(G.phase==='pass'){
+      if(myTurn) return '\uD83D\uDCA8 Wind Shear: choose one card from your hand to pass to the next player. Think about what they might need.';
+      return '\uD83D\uDCA8 Wind Shear: '+nm(ap)+' is choosing a card to pass around. Your card is coming.';
+    }
+    if(G.phase==='r1'){
+      const cond=storm?'\u201C'+storm.c1+' '+storm.op+' '+storm.c2+'\u201D':'the conditions';
+      if(isLocal&&G.playerCount===1) return '\uD83C\uDFAF Solo \u2014 Round 1 only. Check if you hold the '+sc+' bird (instant win!), or if your hand alone meets '+cond+'. Stage the cards \u2014 when the storm card glows green, hit BEAT THE STORM. No match? Pass.';
+      if(myTurn&&winNow) return '\u2705 Your staged cards already meet the conditions! The storm card is green \u2014 hit BEAT THE STORM!';
+      if(myTurn) return '\uD83D\uDC40 Round 1 \u2014 Solo. Do you hold the '+sc+' state bird? That\u2019s an instant solo win. Otherwise check if your cards alone meet '+cond+'. Stage them \u2014 the storm card glows green when you can win. Can\u2019t do it? Pass \u2014 you\u2019ll play together in Round 2.';
+      return '\uD83D\uDC40 Round 1 \u2014 Solo. '+nm(ap)+' is checking if they can beat '+sn+' alone. If they pass, the next player gets a chance.';
+    }
+    if(G.phase==='r2'){
+      const req=G.r2count>1?G.r2count+' cards':'1 card';
+      if(myTurn&&winNow) return '\u2705 The storm card is green \u2014 the flock meets the conditions. Play your '+req+' to seal it.';
+      if(myTurn) return '\uD83D\uDC26 Round 2 \u2014 Flock. Everyone must play '+req+'. Choose wisely \u2014 the storm resolves the moment the flock meets its conditions.';
+      return '\uD83D\uDC26 Round 2 \u2014 Flock. '+nm(ap)+' is playing into the flock. The storm resolves automatically once the conditions are met.';
+    }
+    if(G.phase==='r3'){
+      if(myTurn&&winNow) return '\u2705 The storm card is green \u2014 play your card to lock in the win.';
+      if(myTurn) return '\uD83C\uDF0A Round 3 \u2014 Last push. You can play 1 more card or pass. This is the last chance before the storm wins.';
+      return '\uD83C\uDF0A Round 3 \u2014 Last push. '+nm(ap)+' may play one more card. After everyone acts or passes, the storm resolves.';
+    }
+    return null;
+  }
+  const tip=getTip();
+  const tipsBar=h('div',{style:{position:'fixed',bottom:0,left:0,right:0,zIndex:490,pointerEvents:'none'}},
+    showTips&&tip&&h('div',{style:{pointerEvents:'auto',background:'var(--panel)',borderTop:`3px solid ${Y}`,padding:mob?'12px 14px':'13px 22px',display:'flex',alignItems:'flex-start',gap:'14px',boxShadow:'0 -4px 18px rgba(0,0,0,0.4)'}},
+      h('div',{style:{flex:1,fontSize:mob?'17px':'19px',color:'var(--tx)',lineHeight:1.5}},tip),
+      h('button',{onClick:()=>setShowTips(false),style:{background:'transparent',border:'none',color:'var(--dim)',fontSize:'28px',lineHeight:1,flexShrink:0,cursor:'pointer',padding:'0 4px'}},'\u25BC')),
+    (!showTips||!tip)&&h('button',{onClick:()=>setShowTips(v=>!v),title:'Tips',style:{pointerEvents:'auto',position:'absolute',bottom:'14px',right:'14px',width:'50px',height:'50px',borderRadius:'50%',background:tip?Y:'var(--panel)',border:`2px solid ${tip?'transparent':Y}`,color:tip?'#000':'var(--atx)',fontSize:'24px',cursor:'pointer',boxShadow:'0 4px 14px rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center'}},'\uD83D\uDCA1'));
+
+  return h('div',{className:'sw','data-theme':theme,style:{minHeight:'100vh',background:'var(--bg)',color:'var(--tx)',fontFamily:"'Barlow Condensed',Impact,sans-serif"}},
+    h(Settings,{open:settings,onClose:()=>setSettings(false),theme,setTheme,enabled,setEnabled,canEdit:isLocal||isTable,stormCount,setStormCount}),
+    h(Confirm,{open:reset,title:'Reset game?',body:'This abandons the current game and deals a fresh one. Cannot be undone.',onYes:()=>{setReset(false);act(g=>freshGame(g.playerCount,enabled,g.names,stormCount));},onNo:()=>setReset(false)}),
+    header,
+    over?overlay:[h('div',{key:'f'},flock),h('div',{key:'h'},hands)],
+    // latest log line (tap for full popup)
+    tipsBar,
+    h('div',{onClick:()=>setShowLog(true),style:{padding:'10px 20px 30px',cursor:'pointer',maxWidth:'720px'}},
+      h('div',{style:{fontSize:'22px',color:'var(--dim2)',letterSpacing:'1px',marginBottom:'4px'}},'LATEST \u00B7 tap for full log'),
+      h('div',{style:{fontSize:'26px',color:'var(--dim)',lineHeight:1.5,fontFamily:'monospace'}},(G.log||[])[0]||'\u2014')),
+    // overlays
+    h(HelpModal,{open:showHelp,onClose:()=>setShowHelp(false)}),
+    h(LogModal,{open:showLog,onClose:()=>setShowLog(false),log:G.log}),
+    debrief&&(function(){var d=debrief,need=Math.floor(d.total/2)+1;
+      var head=d.outcome==='solo'?{t:'\uD83C\uDFC6 SOLO WIN',c:Y}:(d.outcome==='birds'?{t:'\u2705 STORM BEATEN',c:GREEN}:{t:'\u26A1 THE STORM HELD',c:RED});
+      var how=d.outcome==='solo'?(nm(d.soloPid)+' beat it alone'):(d.outcome==='birds'?'The flock beat it together':'The flock couldn\u2019t meet the conditions');
+      return h('div',{key:'debrief',onClick:()=>setDebrief(null),style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.72)',zIndex:680,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',backdropFilter:'blur(4px)'}},
+        h('div',{onClick:e=>e.stopPropagation(),style:{background:'var(--panel)',border:'3px solid '+head.c,borderRadius:'16px',padding:'28px',width:'100%',maxWidth:'420px',textAlign:'center',boxShadow:'0 12px 40px rgba(0,0,0,0.5)'}},
+          h('div',{style:{fontSize:'34px',fontWeight:900,color:head.c,letterSpacing:'1px',marginBottom:'4px'}},head.t),
+          h('div',{style:{fontSize:'22px',fontWeight:700,color:'var(--atx)',marginBottom:'2px'}},d.name),
+          h('div',{style:{fontSize:'15px',color:'var(--dim)',marginBottom:'14px'}},d.origin),
+          h('div',{style:{fontSize:'18px',color:'var(--tx)',marginBottom:d.contributors&&d.contributors.length?'6px':'14px'}},how),
+          d.contributors&&d.contributors.length>0&&h('div',{style:{fontSize:'14px',color:'var(--dim)',marginBottom:'14px'}},'Flock: '+d.contributors.join(' \u00B7 ')),
+          h('div',{style:{display:'flex',justifyContent:'center',gap:'18px',padding:'12px 0',borderTop:'1px solid var(--bd)',borderBottom:'1px solid var(--bd)',marginBottom:'14px'}},
+            h('div',null,h('div',{style:{fontSize:'13px',color:'var(--dim)',letterSpacing:'1px'}},'WINS'),h('div',{style:{fontSize:'26px',fontWeight:900,color:GREEN}},d.wins+' / '+need)),
+            h('div',null,h('div',{style:{fontSize:'13px',color:'var(--dim)',letterSpacing:'1px'}},'LOSSES'),h('div',{style:{fontSize:'26px',fontWeight:900,color:RED}},d.losses))),
+          !over&&h('div',{style:{fontSize:'15px',color:'var(--dim)',marginBottom:'16px'}},nm(G.firstPlayer)+' leads the next storm'),
+          h('button',{className:'ibtn',onClick:()=>setDebrief(null),style:{background:head.c,color:head.c===Y?'#000':'#fff',border:'none',borderRadius:'10px',padding:'13px 30px',fontSize:'19px',fontWeight:900,letterSpacing:'1px',width:'100%'}},over?'SEE RESULTS':'CONTINUE')));})(),
+    toast&&h('div',{key:'toast',className:'pulse',style:{position:'fixed',top:'14px',left:'50%',transform:'translateX(-50%)',zIndex:700,background:'var(--panel)',border:`2px solid ${toast.c}`,color:toast.c,fontWeight:900,fontSize:'30px',letterSpacing:'1px',padding:'10px 20px',borderRadius:'10px',boxShadow:'0 8px 24px rgba(0,0,0,0.4)'}},toast.m),
+    nameModal&&h('div',{key:'nm',style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:650,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',backdropFilter:'blur(4px)'}},
+      h('div',{style:{background:'var(--panel)',border:`3px solid ${Y}`,borderRadius:'14px',padding:'24px',width:'100%',maxWidth:'360px'}},
+        h('div',{style:{fontSize:'40px',fontWeight:900,color:'var(--atx)',marginBottom:'6px',letterSpacing:'1px'}},'WHAT\u2019S YOUR NAME?'),
+        h('div',{style:{fontSize:'26px',color:'var(--dim)',marginBottom:'14px'}},'Shown to others at the table. Optional \u2014 you can skip.'),
+        h('input',{autoFocus:true,value:nameInput,onChange:e=>setNameInput(e.target.value.slice(0,18)),placeholder:'Player '+me,style:{width:'100%',background:'var(--zone)',border:'1px solid var(--bd2)',borderRadius:'8px',padding:'12px',color:'var(--tx)',fontSize:'32px',fontWeight:700,marginBottom:'14px',boxSizing:'border-box'}}),
+        h('div',{style:{display:'flex',gap:'10px'}},
+          h('button',{className:'ibtn',onClick:()=>setNameModal(false),style:{flex:1,background:'transparent',border:'1px solid var(--bd2)',color:'var(--dim)',padding:'12px',fontWeight:700,borderRadius:'8px'}},'Skip'),
+          h('button',{className:'ibtn',onClick:()=>{const v=(nameInput||'').trim();if(v){act(g=>{g.names=g.names||{};g.names[me]=v;return g;});}setNameModal(false);},style:{flex:1,background:Y,border:'none',color:'#000',padding:'12px',fontWeight:900,borderRadius:'8px'}},'Save')))));
+}
+
+// ═══ PLAYER SELECT (game code, no player) ═══
+function PlayerSelect({gameId,theme}){
+  const [pc,setPc]=useState(null);
+  useEffect(()=>{(async()=>{const d=await API.get(gameId);if(d&&!d.error)setPc(d.playerCount);else setPc(0);})();},[gameId]);
+  const go=p=>{location.href=base()+'?game='+gameId+'&player='+p;};
+  const bigBtn=(label,p,color)=>h('button',{className:'ibtn',onClick:()=>go(p),style:{background:color||Y,color:color===PURPLE?'#fff':'#000',border:'none',padding:'16px',fontWeight:900,fontSize:'36px',letterSpacing:'1px',borderRadius:'10px'}},label);
+  return centered(theme,h('div',{style:{width:'100%',maxWidth:'380px',textAlign:'center'}},
+    h('div',{style:{fontSize:'52px',fontWeight:900,color:'var(--atx)',letterSpacing:'2px',marginBottom:'4px'}},'GAME #'+gameId),
+    h('div',{style:{fontSize:'30px',color:'var(--dim)',marginBottom:'22px'}},'Who are you signing in as?'),
+    pc===null?h('div',{style:{color:'var(--dim)'}},'Loading\u2026'):
+    pc===0?h('div',null,h('div',{style:{color:RED,marginBottom:'16px'}},'Game not found or expired.'),h('a',{href:base(),style:{color:'var(--atx)',fontWeight:700,textDecoration:'none'}},'\u2190 Lobby')):
+    h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}},
+      [1,2,3,4].slice(0,pc).map(p=>h('div',{key:p},bigBtn('Player '+p,p))),
+      bigBtn('\uD83D\uDC41 Table / Overview','table',PURPLE),
+      h('a',{href:base(),style:{color:'var(--dim)',fontSize:'26px',marginTop:'8px',textDecoration:'none'}},'\u2190 back to lobby'))));
+}
+
+// ═══ LOBBY ═══
+function Lobby({theme,setTheme,enabled,setEnabled,stormCount,setStormCount}){
+  const [count,setCount]=useState(2),[created,setCreated]=useState(null),[busy,setBusy]=useState(false);
+  const [joinId,setJoinId]=useState(''),[games,setGames]=useState(null),[showG,setShowG]=useState(false),[settings,setSettings]=useState(false),[showHelp,setShowHelp]=useState(false);
+  const siteAdmin=new URLSearchParams(location.search).get('admin')==='true';
+  const mob=window.innerWidth<=991;
+  useEffect(()=>{document.documentElement.style.background=theme==='dark'?'#0c0c0c':'#e9e5db'},[theme]);
+  async function start(){setBusy(true);const res=await API.create(count,freshGame(count,enabled,undefined,stormCount));setBusy(false);if(res&&res.id)setCreated({id:res.id,playerCount:count});else alert('Could not reach the server. Is the worker + D1 deployed? You can still use "Play on this device".');}
+  const go=(id,p)=>{location.href=base()+'?game='+id+'&player='+p;};
+  const link=(id,p)=>base()+'?game='+id+'&player='+p;
+  async function loadGames(){const d=await API.list();setGames(d.games||[]);setShowG(true);}
+  const cardBox=(ch,ex)=>h('div',{style:{background:'var(--panel)',border:'1px solid var(--bd)',borderRadius:'14px',padding:'22px',...(ex||{})}},ch);
+  const lab=t=>h('div',{style:{fontSize:'24px',color:'var(--dim)',letterSpacing:'2px',fontWeight:700,marginBottom:'10px'}},t);
+  const copyRow=(text,l)=>h('div',{style:{display:'flex',gap:'8px',alignItems:'center',marginBottom:'8px'}},
+    h('div',{style:{fontSize:'26px',fontWeight:700,color:'var(--atx)',minWidth:'66px'}},l),
+    h('input',{readOnly:true,value:text,onClick:e=>e.target.select(),style:{flex:1,background:'var(--zone)',border:'1px solid var(--bd2)',borderRadius:'7px',padding:'8px',color:'var(--tx)',fontSize:'24px',minWidth:0}}),
+    h('button',{className:'ibtn',onClick:()=>{navigator.clipboard&&navigator.clipboard.writeText(text);},style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--tx)',borderRadius:'7px',padding:'8px 11px',fontWeight:700,fontSize:'24px'}},'copy'));
+
+  return h('div',{className:'sw','data-theme':theme,style:{minHeight:'100vh',background:'var(--bg)',color:'var(--tx)',fontFamily:"'Barlow Condensed',Impact,sans-serif"}},
+    h(Settings,{open:settings,onClose:()=>setSettings(false),theme,setTheme,enabled,setEnabled,canEdit:true,stormCount,setStormCount}),
+    h(HelpModal,{open:showHelp,onClose:()=>setShowHelp(false)}),
+    h('div',{style:{borderBottom:`4px solid ${Y}`,background:'var(--head)',padding:mob?'14px 16px':'18px 28px',display:'flex',alignItems:'center',gap:'14px'}},
+      h('div',{style:{flex:1}},h('div',{style:{fontSize:mob?'24px':'30px',fontWeight:900,color:'var(--atx)',letterSpacing:'3px',lineHeight:1}},'BIRD REBELS'),h('div',{style:{fontSize:mob?'12px':'14px',color:'var(--dim)',letterSpacing:mob?'6px':'9px'}},'STORM WATCH')),
+      h('button',{className:'ibtn',onClick:()=>setShowHelp(true),style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--tx)',borderRadius:'8px',padding:'9px 13px',fontWeight:700}},'?'),
+      h('button',{className:'ibtn',onClick:()=>setSettings(true),style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--tx)',borderRadius:'8px',padding:'9px 13px',fontWeight:700}},'\u2699'),
+      h('button',{className:'ibtn',onClick:()=>setTheme(theme==='dark'?'light':'dark'),style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--tx)',borderRadius:'8px',padding:'9px 13px',fontWeight:700}},theme==='dark'?'\u2600':'\uD83C\uDF19')),
+    h('div',{style:{maxWidth:mob?'620px':'1040px',margin:'0 auto',padding:mob?'18px 14px':'32px 20px',display:mob?'flex':'grid',gridTemplateColumns:mob?undefined:'1fr 1fr',flexDirection:mob?'column':undefined,gap:mob?'16px':'22px',alignItems:'start'}},
+      h('div',{key:'info',style:{display:'flex',flexDirection:'column',gap:'14px'}},
+        h('div',{style:{fontSize:mob?'26px':'30px',color:'var(--dim)',lineHeight:1.5}},'A 1\u20134 player cooperative card game. State birds band together against a season of storms \u2014 pass-and-play on one device, or share a link per player. Beat more than half the storms and the birds win.'),
+        h('button',{className:'ibtn',onClick:()=>setShowHelp(true),style:{alignSelf:'flex-start',background:'transparent',border:'1px solid var(--bd2)',color:'var(--atx)',padding:'10px 18px',fontWeight:700,fontSize:'22px',borderRadius:'9px'}},'\u2753 How to play'),
+        h('div',{style:{fontSize:mob?'19px':'21px',color:'var(--dim2)',lineHeight:1.5}},'Every bird is a real state bird, hand-drawn. Every storm is a real test for the flock.')),
+      h('div',{key:'tools',style:{display:'flex',flexDirection:'column',gap:'16px'}},
+      created?cardBox([
+        h('div',{key:1,style:{fontSize:'44px',fontWeight:900,color:GREEN,marginBottom:'4px'}},'\u2713 GAME CREATED'),
+        h('div',{key:2,style:{fontSize:'30px',color:'var(--dim)',marginBottom:'16px'}},'Game ',h('span',{style:{color:'var(--tx)',fontWeight:900,fontSize:'40px',letterSpacing:'2px'}},created.id),' \u2014 share a link with each player.'),
+        lab('PLAYER LINKS'),
+        [1,2,3,4].slice(0,created.playerCount).map(p=>h('div',{key:p},copyRow(link(created.id,p),'Player '+p))),
+        h('div',{key:'a',style:{height:'8px'}}),lab('TABLE VIEW'),copyRow(link(created.id,'table'),'Table'),
+        h('div',{key:'b',style:{display:'flex',gap:'10px',marginTop:'14px',flexWrap:'wrap'}},
+          h('button',{className:'ibtn',onClick:()=>go(created.id,'table'),style:{flex:1,background:PURPLE,color:'#fff',border:'none',padding:'12px',fontWeight:900,fontSize:'28px',borderRadius:'9px',minWidth:'130px'}},'\uD83D\uDC41 OPEN TABLE'),
+          h('button',{className:'ibtn',onClick:()=>go(created.id,1),style:{flex:1,background:Y,color:'#000',border:'none',padding:'12px',fontWeight:900,fontSize:'28px',borderRadius:'9px',minWidth:'130px'}},'OPEN AS P1'),
+          h('button',{className:'ibtn',onClick:()=>setCreated(null),style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--dim)',padding:'12px 14px',fontWeight:700,borderRadius:'9px'}},'\u2190'))
+      ]):cardBox([
+        lab('START A NEW GAME'),
+        h('div',{key:1,style:{fontSize:'26px',color:'var(--dim)',marginBottom:'10px'}},'How many players?'),
+        h('div',{key:2,style:{display:'flex',gap:'9px',marginBottom:'16px'}},[1,2,3,4].map(n=>h('button',{key:n,className:'ibtn',onClick:()=>setCount(n),style:{flex:1,background:count===n?Y:'transparent',color:count===n?'#000':'var(--tx)',border:`2px solid ${count===n?Y:'var(--bd2)'}`,padding:'13px',fontWeight:900,fontSize:'38px',borderRadius:'9px'}},n))),
+        h('div',{key:3,style:{fontSize:'24px',color:'var(--dim2)',marginBottom:'14px'}},count===1?'Solo: 7-card hand, beat storms alone (Round 1 only).':'Storms are drawn at random — beat more than half to win.'),
+        h('button',{key:4,className:'ibtn',onClick:start,disabled:busy,style:{background:Y,color:'#000',border:'none',padding:'14px',fontWeight:900,fontSize:'30px',letterSpacing:'1px',borderRadius:'9px',width:'100%'}},busy?'CREATING\u2026':'\u2726 START NEW GAME')
+      ]),
+      cardBox([lab('JOIN A GAME'),
+        h('div',{key:1,style:{display:'flex',gap:'10px',flexWrap:'wrap'}},
+          h('input',{value:joinId,onChange:e=>setJoinId(e.target.value.replace(/[^0-9]/g,'').slice(0,6)),placeholder:'game number',inputMode:'numeric',style:{flex:1,minWidth:'140px',background:'var(--zone)',border:'1px solid var(--bd2)',borderRadius:'8px',padding:'12px',color:'var(--tx)',fontSize:'36px',fontWeight:700,letterSpacing:'2px'}}),
+          h('button',{className:'ibtn',onClick:()=>joinId.length>=5&&(location.href=base()+'?game='+joinId),disabled:joinId.length<5,style:{background:joinId.length>=5?Y:'transparent',color:joinId.length>=5?'#000':'var(--dim2)',border:joinId.length>=5?'none':'1px solid var(--bd)',padding:'12px 22px',fontWeight:900,fontSize:'30px',borderRadius:'8px'}},'JOIN'))])),
+      h('div',{key:'wide',style:{gridColumn:mob?undefined:'1 / -1',display:'flex',flexDirection:'column',gap:'16px'}},
+      siteAdmin&&cardBox([h('div',{key:0,style:{display:'flex',alignItems:'center'}},h('div',{style:{flex:1}},lab('ADMIN \u00B7 ALL GAMES')),h('button',{className:'ibtn',onClick:loadGames,style:{background:'transparent',border:'1px solid var(--bd2)',color:'var(--tx)',borderRadius:'7px',padding:'8px 13px',fontWeight:700,fontSize:'26px'}},showG?'refresh':'show'),showG&&games&&games.length>0&&h('button',{className:'ibtn',onClick:async()=>{if(confirm('Delete ALL '+games.length+' games? This cannot be undone.')){for(const gm of games){await API.del(gm.id);}loadGames();}},style:{background:RED,color:'#fff',border:'none',borderRadius:'7px',padding:'8px 13px',fontWeight:800,fontSize:'26px',marginLeft:'8px'}},'delete all')),
+        showG&&(games&&games.length?h('div',{key:1,style:{marginTop:'12px',display:'flex',flexDirection:'column',gap:'7px'}},games.map(gm=>h('div',{key:gm.id,style:{display:'flex',alignItems:'center',gap:'9px',background:'var(--zone)',border:'1px solid var(--bd2)',borderRadius:'8px',padding:'9px 11px',flexWrap:'wrap'}},
+          h('div',{style:{fontSize:'34px',fontWeight:900,color:'var(--tx)',minWidth:'70px'}},'#'+gm.id),
+          h('div',{style:{fontSize:'24px',color:'var(--dim)',flex:1}},gm.playerCount+'p'),
+          h('button',{className:'ibtn',onClick:()=>go(gm.id,'table'),style:{background:PURPLE,color:'#fff',border:'none',borderRadius:'7px',padding:'7px 11px',fontWeight:800,fontSize:'24px'}},'open'),
+          h('button',{className:'ibtn',onClick:async()=>{if(confirm('Delete #'+gm.id+'?')){await API.del(gm.id);loadGames();}},style:{background:'transparent',color:'var(--dim)',border:'1px solid var(--bd2)',borderRadius:'7px',padding:'7px 9px',fontWeight:700,fontSize:'24px'}},'del')))):h('div',{key:2,style:{marginTop:'10px',color:'var(--dim2)',fontSize:'26px'}},games?'No active games.':''))]),
+      h('div',{style:{textAlign:'center'}},h('button',{className:'ibtn',onClick:()=>{window.__local&&window.__local();},style:{background:'transparent',border:'1px dashed var(--bd2)',color:'var(--dim)',padding:'11px 18px',fontWeight:700,fontSize:'26px',borderRadius:'9px'}},'\uD83C\uDFB2 Play solo on this device')),
+      h('div',{style:{textAlign:'center',fontSize:'24px',color:'var(--dim2)'}},'Games clear after 7 days without play.'))));
+}
+
+// ═══ APP ═══
+function App(){
+  const p=new URLSearchParams(location.search);
+  const gameId=p.get('game'),playerParam=p.get('player');
+  const [theme,setTheme]=useState(()=>LS.get('sw-theme','dark'));
+  const [enabled,setEnabledRaw]=useState(()=>{try{return JSON.parse(LS.get('sw-storms','[]'))}catch(e){return[]}});
+  const [stormCount,setStormCountRaw]=useState(()=>parseInt(LS.get('sw-stormcount','0'),10)||0);
+  const [local,setLocal]=useState(false);
+  const setEnabled=v=>{setEnabledRaw(v);LS.set('sw-storms',JSON.stringify(v));};
+  const setStormCount=v=>{setStormCountRaw(v);LS.set('sw-stormcount',String(v));};
+  useEffect(()=>{LS.set('sw-theme',theme)},[theme]);
+  useEffect(()=>{window.__local=()=>setLocal(true);return()=>{delete window.__local}},[]);
+  if(local)return h(Board,{mode:'local',me:1,theme,setTheme,enabled,setEnabled,stormCount,setStormCount});
+  if(gameId&&!playerParam)return h(PlayerSelect,{gameId,theme});
+  if(gameId){const me=(playerParam==='admin'||playerParam==='table')?'table':(parseInt(playerParam,10)||1);return h(Board,{mode:'server',gameId,me,theme,setTheme,enabled,setEnabled,stormCount,setStormCount});}
+  return h(Lobby,{theme,setTheme,enabled,setEnabled,stormCount,setStormCount});
+}

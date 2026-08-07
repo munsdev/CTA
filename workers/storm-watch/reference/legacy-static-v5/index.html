@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bird Rebels: Storm Watch</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --nav:#09090f;
+  --base:#18192b;--base-2:#1f2038;--base-3:#252647;--base-4:#2e3060;
+  --bird-bg:#f0ead8;--bird-bg-2:#e8e0cc;--bird-ink:#1a1706;--bird-border:#c9ba9a;
+  --storm-bg:#0a0606;--storm-2:#120a0a;
+  --yellow:#f5c800;--yellow-dim:#c9960a;--red:#e53e3e;
+  --white:#f0f0f0;--grey:#8a8a9a;--grey-light:#b8b8c8;
+}
+html,body{min-height:100%;display:flex;flex-direction:column}
+body{background:var(--base);color:var(--white);font-family:'Barlow',sans-serif}
+
+nav{background:var(--nav);border-bottom:1px solid #141420;padding:.7rem 1.5rem;display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:.08em;color:var(--white);text-decoration:none}
+.nav-brand .rebel{color:var(--yellow)}
+.nav-sub{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1.4rem;letter-spacing:.3em;text-transform:uppercase;color:#8a8aaa}
+.nav-divider{color:#5a5a7a;font-weight:300}
+.nav-links{display:flex;gap:.15rem;margin-left:auto}
+.nav-link{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:.4rem .8rem;text-decoration:none;color:#333;border:1px solid transparent;transition:all .15s}
+.nav-link:hover{color:var(--yellow);border-color:#1e1f35}
+.nav-link.active{color:var(--yellow);border-color:#1e1f35;background:#0d0d18}
+
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem 3rem;position:relative;background:radial-gradient(ellipse at 50% 20%,rgba(245,200,0,.06) 0%,transparent 60%)}
+.hero-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(700px,95vw);height:min(700px,95vw);border:1px solid rgba(245,200,0,.03);border-radius:50%;pointer-events:none}
+.hero-ring::before{content:'';position:absolute;inset:15%;border:1px solid rgba(245,200,0,.02);border-radius:50%}
+.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.5em;text-transform:uppercase;color:#6868a0;margin-bottom:1.5rem;position:relative}
+.hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(5rem,22vw,15rem);text-transform:uppercase;letter-spacing:.02em;line-height:.85;position:relative}
+.hero h1 .rebels{color:var(--yellow);display:block}
+.storm-watch{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(.9rem,2.5vw,1.4rem);letter-spacing:.6em;text-transform:uppercase;color:#7070a8;margin-top:.75rem;padding:.5rem 0;border-top:1px solid #1e1f35;border-bottom:1px solid #1e1f35;display:inline-block;position:relative}
+.hero-desc{max-width:460px;margin:2rem auto 0;font-size:1.4rem;line-height:1.85;color:var(--grey);position:relative}
+.hero-desc strong{color:var(--grey-light)}
+.badge-row{display:flex;justify-content:center;gap:.35rem;margin-top:1.5rem;flex-wrap:wrap;position:relative}
+.badge{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:1px solid #1e1f35;background:var(--nav);padding:.3rem .7rem;color:#5a5a7a}
+.badge.hl{background:var(--yellow);color:var(--nav);border-color:var(--yellow)}
+
+.sections{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#0d0d18;border-top:1px solid #0d0d18}
+
+.sc{text-decoration:none;display:block;position:relative;overflow:hidden;padding:2.5rem 2rem;transition:filter .2s}
+.sc:hover{filter:brightness(1.07)}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+
+/* BIRDS — light */
+.sc-birds{background:var(--bird-bg)}
+.sc-birds::after{background:var(--yellow-dim)}
+.sc-birds .sc-eyebrow{color:#9a8e78}
+.sc-birds .sc-title{color:var(--yellow-dim);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.04em;line-height:1;margin-bottom:.6rem}
+.sc-birds .sc-body{color:#5a5040;font-size:1.25rem;line-height:1.7}
+.sc-birds .sc-cta{color:var(--yellow-dim)}
+
+/* RULES — mid */
+.sc-rules{background:var(--base-2)}
+.sc-rules::after{background:#38bdf8}
+.sc-rules .sc-eyebrow{color:#6a72a8}
+.sc-rules .sc-title{color:#38bdf8;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.04em;line-height:1;margin-bottom:.6rem}
+.sc-rules .sc-body{color:var(--grey);font-size:1.25rem;line-height:1.7}
+.sc-rules .sc-cta{color:#38bdf8}
+
+/* STORMS — dark */
+.sc-storms{background:var(--storm-bg)}
+.sc-storms::after{background:var(--red)}
+.sc-storms .sc-eyebrow{color:#906060}
+.sc-storms .sc-title{color:var(--red);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.04em;line-height:1;margin-bottom:.6rem}
+.sc-storms .sc-body{color:#a07878;font-size:1.25rem;line-height:1.7}
+.sc-storms .sc-cta{color:var(--red)}
+
+.sc-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;margin-bottom:.4rem}
+.sc-cta{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-top:1.25rem;display:block;opacity:.5;transition:opacity .2s}
+.sc:hover .sc-cta{opacity:1}
+
+footer{background:var(--nav);border-top:1px solid #141420;color:#7070a0;text-align:center;padding:1.25rem;font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase}
+footer a{color:#8888b0;text-decoration:none}
+footer a:hover{color:var(--yellow)}
+
+@media(max-width:600px){.sections{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">BIRD <span class="rebel">REBELS</span></a>
+  <span class="nav-divider">·</span>
+  <span class="nav-sub">Storm Watch</span>
+  <div class="nav-links">
+    <a class="nav-link active" href="index.html">Home</a>
+    <a class="nav-link" href="birds.html">Birds</a>
+    <a class="nav-link" href="rules.html">Rules</a>
+    <a class="nav-link" href="storms.html">Storms</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-ring"></div>
+  <div class="hero-eyebrow">★ A Cooperative Card Game of Resistance ★</div>
+  <h1>Bird<span class="rebels">Rebels</span></h1>
+  <div class="storm-watch">Storm&nbsp;&nbsp;&nbsp;Watch</div>
+  <p class="hero-desc">
+    The storms are coming. <strong>52 state and territory birds</strong> of America stand in their path.
+    Work together. Read the cards. Outthink the system.<br>
+    <em>A child plays a bird game. Everyone else reads something else entirely.</em>
+  </p>
+  <div class="badge-row">
+    <div class="badge hl">1–4 Players</div>
+    <div class="badge">Ages 10+</div>
+    <div class="badge">30–45 Min</div>
+    <div class="badge">52 Bird Cards</div>
+    <div class="badge">12 Storms Per Game</div>
+    <div class="badge">birdrebels.art</div>
+  </div>
+</div>
+
+<div class="sections">
+  <a class="sc sc-birds" href="birds.html">
+    <div class="sc-eyebrow">Card Reference</div>
+    <div class="sc-title">The Birds</div>
+    <div class="sc-body">52 state and territory bird emblems. Filter by region, habitat, migration, and power. Your flock. Your resistance.</div>
+    <span class="sc-cta">View Bird Cards →</span>
+  </a>
+  <a class="sc sc-rules" href="rules.html">
+    <div class="sc-eyebrow">How To Play</div>
+    <div class="sc-title">The Rules</div>
+    <div class="sc-body">Three ways to beat every storm. Two rounds. One shrinking deck. Learn the loop, master the flock.</div>
+    <span class="sc-cta">Read The Rules →</span>
+  </a>
+  <a class="sc sc-storms" href="storms.html">
+    <div class="sc-eyebrow">Threat Deck</div>
+    <div class="sc-title">The Storms</div>
+    <div class="sc-body">20+ storm cards, 12 drawn each game. Enforcement raids. Policy sweeps. Three resolution paths. None of them free.</div>
+    <span class="sc-cta">View Storm Cards →</span>
+  </a>
+</div>
+
+<footer>
+  Bird Rebels: Storm Watch &nbsp;·&nbsp; <a href="https://birdrebels.art">birdrebels.art</a> &nbsp;·&nbsp; Art & Design by Casey The American &nbsp;·&nbsp; CC BY-NC 4.0
+</footer>
+
+</body>
+</html>

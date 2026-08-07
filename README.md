@@ -21,3 +21,13 @@ https://cdn.jsdelivr.net/gh/{user}/CTA@main/games/{slug}/engine.js
 - `know-your-rights` — (planned)
 
 See `casey-minigame-contract-v1.md` for the shared shell/token architecture.
+
+## Workers
+
+Standalone Cloudflare Workers (own deploy, own `wrangler.toml`, not loaded
+via the Webflow jsDelivr pattern above) live in `workers/{name}/`:
+
+- `bird-rebels-ice-blaster` — deployed as `rebel-loon-ice-blast`
+- `kyr-content`
+- `storm-watch` — Bird Rebels: Storm Watch, a D1-backed card game
+  (`workers/storm-watch/CLAUDE.md` has the dev/build workflow)

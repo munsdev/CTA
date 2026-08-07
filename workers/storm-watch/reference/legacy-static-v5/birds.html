@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bird Rebels: Storm Watch — Bird Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f2ede4;--bg-2:#ede7dc;--bg-3:#e4ddd0;--bg-4:#cec6b5;
+  --yellow:#c9960a;--yellow-tag:#f5c800;--ink:#1a1708;--grey:#6b6455;--grey-light:#3d3729;
+}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;min-height:100vh;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")}
+nav{background:#09090f;border-bottom:1px solid #141420;padding:.7rem 1.5rem;display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:200}
+.nav-brand{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:.08em;color:#f0f0f0;text-decoration:none}
+.nav-brand span{color:#f5c800}
+.nav-sub{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1.4rem;letter-spacing:.3em;text-transform:uppercase;color:#8a8aaa}
+.nav-divider{color:#5a5a7a;font-weight:300}
+.nav-links{display:flex;gap:.15rem;margin-left:auto}
+.nav-link{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:.4rem .8rem;text-decoration:none;color:#333;border:1px solid transparent;transition:all .15s}
+.nav-link:hover,.nav-link.active{color:#f5c800;border-color:#1e1f35;background:#0d0d18}
+.masthead{background:var(--bg-2);border-bottom:3px solid var(--yellow);padding:1.25rem 1rem 1rem;position:sticky;top:48px;z-index:100}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(1.6rem,7vw,2.4rem);text-transform:uppercase;letter-spacing:.04em;line-height:1;color:var(--ink)}
+h1 span{color:var(--yellow)}
+.sub{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;letter-spacing:.3em;text-transform:uppercase;color:var(--grey);margin-top:2px}
+.masthead-top{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.75rem}
+.count{margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;color:var(--grey)}
+.count span{color:var(--yellow)}
+.controls input{width:100%;background:var(--bg);border:1px solid var(--bg-4);color:var(--ink);font-family:inherit;font-size:1.35rem;padding:.5rem .75rem;outline:none;margin-bottom:.5rem}
+.controls input:focus{border-color:var(--yellow)}
+.controls input::placeholder{color:var(--grey)}
+.filters{display:flex;gap:.35rem;flex-wrap:wrap}
+.filters select{flex:1 1 auto;background:var(--bg);border:1px solid var(--bg-4);color:var(--grey);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .5rem;outline:none;cursor:pointer;appearance:none}
+.filters select.active{color:var(--yellow)}
+.card-list{padding:.6rem .75rem 5rem;max-width:860px;margin:0 auto}
+.bird-card{background:var(--bg-2);border:1px solid var(--bg-4);border-left:3px solid var(--bg-3);margin-bottom:5px;display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;cursor:pointer;transition:background .1s}
+.bird-card:hover{background:var(--bg-3)}
+.abbr-box{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;letter-spacing:.05em}
+.bird-info{flex:1;min-width:0}
+.bird-state{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);line-height:1.1}
+.bird-species{font-size:1.1rem;color:var(--grey);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.bird-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.power-tag{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;white-space:nowrap}
+.mig-tag{font-size:1.4rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--grey);font-family:monospace}
+.empty{text-align:center;padding:3rem;color:var(--bg-4);font-family:'Barlow Condensed',sans-serif;letter-spacing:.15em;text-transform:uppercase;font-size:1.25rem}
+.overlay{display:none;position:fixed;inset:0;background:rgba(10,8,2,.88);z-index:300;align-items:center;justify-content:center;padding:1.25rem}
+.overlay.open{display:flex}
+.modal{width:100%;max-width:520px;background:var(--bg-2);border-radius:12px;padding:1.5rem 1.25rem 2rem;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);animation:popIn .18s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--grey);font-size:1.5rem;cursor:pointer;padding:.25rem}
+.modal-close:hover{color:var(--ink)}
+.modal-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;padding-right:2rem}
+.modal-abbr{width:50px;height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;letter-spacing:.05em}
+.modal-state{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;text-transform:uppercase;letter-spacing:.05em;line-height:1;color:var(--ink)}
+.modal-species{font-size:1.25rem;color:var(--grey);font-style:italic;margin-top:3px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--bg-4);margin-bottom:1.25rem}
+.stat-cell{background:var(--bg-3);padding:.6rem .5rem;text-align:center}
+.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.2rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
+.power-block{background:var(--bg-3);padding:1rem 1.25rem}
+.power-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.power-desc{font-size:1.35rem;line-height:1.7;color:var(--grey-light)}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="index.html">BIRD <span>REBELS</span></a>
+  <span class="nav-divider">·</span>
+  <span class="nav-sub">Storm Watch</span>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link active" href="birds.html">Birds</a>
+    <a class="nav-link" href="rules.html">Rules</a>
+    <a class="nav-link" href="storms.html">Storms</a>
+  </div>
+</nav>
+<header class="masthead">
+  <div class="masthead-top">
+    <div><h1>THE <span>BIRDS</span></h1><div class="sub">Storm Watch · Card Reference</div></div>
+    <div class="count"><span id="count">52</span> / 52</div>
+  </div>
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search state, bird, or power…" autocomplete="off">
+    <div class="filters">
+      <select id="regionFilter" onchange="applyFilters()">
+        <option value="">Region: All</option>
+        <option>New England</option><option>Mid-Atlantic</option><option>Southeast</option>
+        <option>Appalachia</option><option>Midwest</option><option>Great Plains</option>
+        <option>South Central</option><option>Southwest</option><option>Rockies</option>
+        <option>Pacific</option><option>Caribbean</option>
+      </select>
+      <select id="habitatFilter" onchange="applyFilters()">
+        <option value="">Habitat: All</option>
+        <option>Coastal</option><option>Desert</option><option>Farmland</option><option>Forest</option>
+        <option>Grassland</option><option>Mountain</option><option>Shrubland</option><option>Tundra</option>
+        <option>Urban</option><option>Wetland</option>
+      </select>
+      <select id="migFilter" onchange="applyFilters()">
+        <option value="">Migration: All</option>
+        <option>Resident</option><option>Migratory</option><option>Partial Migrant</option><option>Irruptive</option>
+      </select>
+      <select id="powerFilter" onchange="applyFilters()">
+        <option value="">Power: All</option>
+        <option>Assist</option><option>Cardinal Rule</option><option>Displace</option>
+        <option>Double Down</option><option>Drifter</option><option>Extra Feathers</option>
+        <option>False Feathers</option><option>Forecast</option><option>Head Start</option>
+        <option>Last Bird Standing</option><option>Mana</option><option>Mimic</option>
+        <option>Nest Egg</option><option>No Borders</option><option>Rescue</option>
+        <option>Revival</option><option>Rooster</option><option>Second Call</option>
+        <option>Survivor</option><option>Veto</option>
+      </select>
+    </div>
+  </div>
+</header>
+<main class="card-list" id="cardList"></main>
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-header">
+      <div class="modal-abbr" id="mAbbr"></div>
+      <div><div class="modal-state" id="mState"></div><div class="modal-species" id="mSpecies"></div></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="stat-label">Region</div><div class="stat-value" id="mRegion"></div></div>
+      <div class="stat-cell"><div class="stat-label">Habitat</div><div class="stat-value" id="mHabitat"></div></div>
+      <div class="stat-cell"><div class="stat-label">Migration</div><div class="stat-value" id="mMig"></div></div>
+    </div>
+    <div class="power-block" id="mPowerBlock">
+      <div class="power-name" id="mPowerName"></div>
+      <div class="power-desc" id="mPowerDesc"></div>
+    </div>
+  </div>
+</div>
+<script>
+const PC={"Mimic":"#7c3aed","False Feathers":"#c2410c","Cardinal Rule":"#dc2626","Survivor":"#15803d","Forecast":"#0369a1","Rooster":"#a16207","Revival":"#4338ca","Rescue":"#16a34a","Second Call":"#0e7490","Displace":"#be185d","Assist":"#4d7c0f","Extra Feathers":"#b45309","Double Down":"#be123c","Last Bird Standing":"#374151","Head Start":"#c2410c","Mana":"#6d28d9","Nest Egg":"#92400e","No Borders":"#166534","Drifter":"#075985","Veto":"#be123c"};
+const MS={"Resident":"Resident","Migratory":"Migratory","Partial Migrant":"Partial","Irruptive":"Irruptive"};
+const birds=[
+  {state:"Alabama",abbr:"AL",bird:"Northern Flicker (Yellowhammer)",year:1927,superName:"No Borders",superDesc:"Counts for any region or habitat condition on a storm card.",habitat:"Forest",migration:"Partial Migrant",region:"Southeast"},
+  {state:"Alaska",abbr:"AK",bird:"Willow Ptarmigan",year:1955,superName:"Survivor",superDesc:"After the storm resolves, this bird stays in play for one round instead of going to discard.",habitat:"Tundra",migration:"Resident",region:"Pacific"},
+  {state:"Arizona",abbr:"AZ",bird:"Cactus Wren",year:1931,superName:"Last Bird Standing",superDesc:"Score 1 extra victory point if this is the only card in your hand at end of game.",habitat:"Desert",migration:"Resident",region:"Southwest"},
+  {state:"Arkansas",abbr:"AR",bird:"Northern Mockingbird",year:1929,superName:"Mimic",superDesc:"A mockingbird can take the place of any other species in a flock of 2+.",habitat:"Urban",migration:"Resident",region:"South Central"},
+  {state:"California",abbr:"CA",bird:"California Quail",year:1931,superName:"Rescue",superDesc:"Play next to any card on the table. That card returns to its owner instead of being discarded — owner skips their replacement draw. If played first, any other player may attach their card to be saved.",habitat:"Shrubland",migration:"Resident",region:"Pacific"},
+  {state:"Colorado",abbr:"CO",bird:"Lark Bunting",year:1931,superName:"Double Down",superDesc:"Counts as 2 birds when played, but reduces your hand limit to 4 while held.",habitat:"Grassland",migration:"Migratory",region:"Rockies"},
+  {state:"Connecticut",abbr:"CT",bird:"American Robin",year:1943,superName:"Forecast",superDesc:"Flip the top storm card, revealing it early without putting it into play.",habitat:"Forest",migration:"Partial Migrant",region:"New England"},
+  {state:"Delaware",abbr:"DE",bird:"Delaware Blue Hen",year:1939,superName:"Rooster",superDesc:"If played first, draw the top card of the draw pile into your hand.",habitat:"Farmland",migration:"Resident",region:"Mid-Atlantic"},
+  {state:"Florida",abbr:"FL",bird:"Northern Mockingbird",year:1927,superName:"Mimic",superDesc:"A mockingbird can take the place of any other species in a flock of 2+.",habitat:"Urban",migration:"Resident",region:"Southeast"},
+  {state:"Georgia",abbr:"GA",bird:"Brown Thrasher",year:1935,superName:"Displace",superDesc:"Play your card and take a previously played card from another player's contribution on the table.",habitat:"Forest",migration:"Partial Migrant",region:"Southeast"},
+  {state:"Hawaii",abbr:"HI",bird:"Nene (Hawaiian Goose)",year:1957,superName:"Mana",superDesc:"When played as the last card in your hand, counts as 3 birds.",habitat:"Grassland",migration:"Resident",region:"Pacific"},
+  {state:"Idaho",abbr:"ID",bird:"Mountain Bluebird",year:1931,superName:"Drifter",superDesc:"Counts for any migration type condition on a storm card.",habitat:"Mountain",migration:"Partial Migrant",region:"Rockies"},
+  {state:"Illinois",abbr:"IL",bird:"Northern Cardinal",year:1929,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Midwest"},
+  {state:"Indiana",abbr:"IN",bird:"Northern Cardinal",year:1933,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Midwest"},
+  {state:"Iowa",abbr:"IA",bird:"American Goldfinch",year:1933,superName:"Extra Feathers",superDesc:"Hold 6 cards instead of 5 while this is in your hand. Does not stack with additional Goldfinches.",habitat:"Grassland",migration:"Partial Migrant",region:"Midwest"},
+  {state:"Kansas",abbr:"KS",bird:"Western Meadowlark",year:1937,superName:"False Feathers",superDesc:"2 Meadowlarks in a flock count as 1 of any other species.",habitat:"Grassland",migration:"Partial Migrant",region:"Great Plains"},
+  {state:"Kentucky",abbr:"KY",bird:"Northern Cardinal",year:1926,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Appalachia"},
+  {state:"Louisiana",abbr:"LA",bird:"Brown Pelican",year:1966,superName:"Rescue",superDesc:"Play next to any card on the table. That card returns to its owner instead of being discarded — owner skips their replacement draw. If played first, any other player may attach their card to the Pelican to save it.",habitat:"Coastal",migration:"Resident",region:"South Central"},
+  {state:"Maine",abbr:"ME",bird:"Black-capped Chickadee",year:1927,superName:"Survivor",superDesc:"After the storm resolves, this bird stays in play for one round instead of going to discard.",habitat:"Forest",migration:"Resident",region:"New England"},
+  {state:"Maryland",abbr:"MD",bird:"Baltimore Oriole",year:1947,superName:"Nest Egg",superDesc:"Play face-down. Taken as your first draw card next round instead of drawing from the pile.",habitat:"Forest",migration:"Migratory",region:"Mid-Atlantic"},
+  {state:"Massachusetts",abbr:"MA",bird:"Black-capped Chickadee",year:1941,superName:"Survivor",superDesc:"After the storm resolves, this bird stays in play for one round instead of going to discard.",habitat:"Forest",migration:"Resident",region:"New England"},
+  {state:"Michigan",abbr:"MI",bird:"American Robin",year:1931,superName:"Forecast",superDesc:"Flip the top storm card, revealing it early without putting it into play.",habitat:"Forest",migration:"Partial Migrant",region:"Midwest"},
+  {state:"Minnesota",abbr:"MN",bird:"Common Loon",year:1961,superName:"Revival",superDesc:"Draw up to 2 cards from the discard pile into your hand. Hand size rules apply — you may only receive as many as bring you to 5.",habitat:"Wetland",migration:"Migratory",region:"Midwest"},
+  {state:"Mississippi",abbr:"MS",bird:"Northern Mockingbird",year:1944,superName:"Mimic",superDesc:"A mockingbird can take the place of any other species in a flock of 2+.",habitat:"Urban",migration:"Resident",region:"Southeast"},
+  {state:"Missouri",abbr:"MO",bird:"Eastern Bluebird",year:1927,superName:"Assist",superDesc:"May be given to any player with fewer than 5 cards when the draw pile is empty.",habitat:"Forest",migration:"Partial Migrant",region:"Midwest"},
+  {state:"Montana",abbr:"MT",bird:"Western Meadowlark",year:1931,superName:"False Feathers",superDesc:"2 Meadowlarks in a flock count as 1 of any other species.",habitat:"Grassland",migration:"Partial Migrant",region:"Rockies"},
+  {state:"Nebraska",abbr:"NE",bird:"Western Meadowlark",year:1929,superName:"False Feathers",superDesc:"2 Meadowlarks in a flock count as 1 of any other species.",habitat:"Grassland",migration:"Partial Migrant",region:"Great Plains"},
+  {state:"Nevada",abbr:"NV",bird:"Mountain Bluebird",year:1967,superName:"Drifter",superDesc:"Counts for any migration type condition on a storm card.",habitat:"Mountain",migration:"Partial Migrant",region:"Southwest"},
+  {state:"New Hampshire",abbr:"NH",bird:"Purple Finch",year:1957,superName:"Assist",superDesc:"May be given to any player with fewer than 5 cards when the draw pile is empty.",habitat:"Forest",migration:"Irruptive",region:"New England"},
+  {state:"New Jersey",abbr:"NJ",bird:"American Goldfinch",year:1935,superName:"Extra Feathers",superDesc:"Hold 6 cards instead of 5 while this is in your hand. Does not stack with additional Goldfinches.",habitat:"Grassland",migration:"Partial Migrant",region:"Mid-Atlantic"},
+  {state:"New Mexico",abbr:"NM",bird:"Greater Roadrunner",year:1949,superName:"Head Start",superDesc:"Play face-down during any normal play. Auto-flips when the next storm card drops and is immediately in play as an extra bird. Draw 1 extra card.",habitat:"Desert",migration:"Resident",region:"Southwest"},
+  {state:"New York",abbr:"NY",bird:"Eastern Bluebird",year:1970,superName:"Assist",superDesc:"May be given to any player with fewer than 5 cards when the draw pile is empty.",habitat:"Forest",migration:"Partial Migrant",region:"Mid-Atlantic"},
+  {state:"North Carolina",abbr:"NC",bird:"Northern Cardinal",year:1943,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Southeast"},
+  {state:"North Dakota",abbr:"ND",bird:"Western Meadowlark",year:1947,superName:"False Feathers",superDesc:"2 Meadowlarks in a flock count as 1 of any other species.",habitat:"Grassland",migration:"Partial Migrant",region:"Great Plains"},
+  {state:"Ohio",abbr:"OH",bird:"Northern Cardinal",year:1933,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Midwest"},
+  {state:"Oklahoma",abbr:"OK",bird:"Scissor-tailed Flycatcher",year:1951,superName:"Displace",superDesc:"Play your card and take a previously played card from another player's contribution on the table.",habitat:"Grassland",migration:"Migratory",region:"South Central"},
+  {state:"Oregon",abbr:"OR",bird:"Western Meadowlark",year:1927,superName:"False Feathers",superDesc:"2 Meadowlarks in a flock count as 1 of any other species.",habitat:"Grassland",migration:"Partial Migrant",region:"Pacific"},
+  {state:"Pennsylvania",abbr:"PA",bird:"Ruffed Grouse",year:1931,superName:"Double Down",superDesc:"Counts as 2 birds when played, but reduces your hand limit to 4 while held.",habitat:"Forest",migration:"Resident",region:"Mid-Atlantic"},
+  {state:"Rhode Island",abbr:"RI",bird:"Rhode Island Red",year:1954,superName:"Rooster",superDesc:"If played first, draw the top card of the draw pile into your hand.",habitat:"Farmland",migration:"Resident",region:"New England"},
+  {state:"South Carolina",abbr:"SC",bird:"Carolina Wren",year:1948,superName:"Survivor",superDesc:"After the storm resolves, this bird stays in play for one round instead of going to discard.",habitat:"Forest",migration:"Resident",region:"Southeast"},
+  {state:"South Dakota",abbr:"SD",bird:"Ring-necked Pheasant",year:1943,superName:"Drifter",superDesc:"Counts for any migration type condition on a storm card.",habitat:"Farmland",migration:"Resident",region:"Great Plains"},
+  {state:"Tennessee",abbr:"TN",bird:"Northern Mockingbird",year:1933,superName:"Mimic",superDesc:"A mockingbird can take the place of any other species in a flock of 2+.",habitat:"Urban",migration:"Resident",region:"Appalachia"},
+  {state:"Texas",abbr:"TX",bird:"Northern Mockingbird",year:1927,superName:"Mimic",superDesc:"A mockingbird can take the place of any other species in a flock of 2+.",habitat:"Urban",migration:"Resident",region:"South Central"},
+  {state:"Utah",abbr:"UT",bird:"California Gull",year:1955,superName:"Second Call",superDesc:"When your flock is down to 1 bird, call any bird back from the discard pile.",habitat:"Wetland",migration:"Migratory",region:"Rockies"},
+  {state:"Vermont",abbr:"VT",bird:"Hermit Thrush",year:1941,superName:"Last Bird Standing",superDesc:"Score 1 extra victory point if this is the only card in your hand at end of game.",habitat:"Forest",migration:"Migratory",region:"New England"},
+  {state:"Virginia",abbr:"VA",bird:"Northern Cardinal",year:1950,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Southeast"},
+  {state:"Washington",abbr:"WA",bird:"Willow Goldfinch",year:1951,superName:"Extra Feathers",superDesc:"Hold 6 cards instead of 5 while this is in your hand. Does not stack with additional Goldfinches.",habitat:"Forest",migration:"Partial Migrant",region:"Pacific"},
+  {state:"West Virginia",abbr:"WV",bird:"Northern Cardinal",year:1949,superName:"Cardinal Rule",superDesc:"2 Cardinals of any state fulfill any single Cardinal state requirement.",habitat:"Forest",migration:"Resident",region:"Appalachia"},
+  {state:"Wisconsin",abbr:"WI",bird:"American Robin",year:1949,superName:"Forecast",superDesc:"Flip the top storm card, revealing it early without putting it into play.",habitat:"Forest",migration:"Partial Migrant",region:"Midwest"},
+  {state:"Wyoming",abbr:"WY",bird:"Western Meadowlark",year:1927,superName:"False Feathers",superDesc:"2 Meadowlarks in a flock count as 1 of any other species.",habitat:"Grassland",migration:"Partial Migrant",region:"Rockies"},
+  {state:"Washington DC",abbr:"DC",bird:"Wood Thrush",year:1967,superName:"Veto",superDesc:"Counts for any region or habitat condition on a storm card. If not played first, must also displace one other card on the table directly to discard.",habitat:"Forest",migration:"Migratory",region:"Mid-Atlantic"},
+  {state:"Puerto Rico",abbr:"PR",bird:"Puerto Rican Spindalis",year:1915,superName:"Survivor",superDesc:"After the storm resolves, this bird stays in play for one round instead of going to discard.",habitat:"Forest",migration:"Resident",region:"Caribbean"},
+];
+let filtered=[...birds];
+function render(){
+  const list=document.getElementById('cardList');
+  document.getElementById('count').textContent=filtered.length;
+  if(!filtered.length){list.innerHTML='<div class="empty">No birds match</div>';return;}
+  list.innerHTML=filtered.map(b=>{
+    const c=PC[b.superName]||'#c9960a';
+    return`<div class="bird-card" style="border-left-color:${c}" onclick="openModal('${b.abbr}')">
+      <div class="abbr-box" style="background:${c}18;border:1px solid ${c}44;color:${c}">${b.abbr}</div>
+      <div class="bird-info"><div class="bird-state">${b.state}</div><div class="bird-species">${b.bird}</div></div>
+      <div class="bird-meta">
+        <div class="power-tag" style="background:${c}18;border:1px solid ${c}55;color:${c}">${b.superName}</div>
+        <div class="mig-tag">${MS[b.migration]||b.migration}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function applyFilters(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const r=document.getElementById('regionFilter').value;
+  const h=document.getElementById('habitatFilter').value;
+  const m=document.getElementById('migFilter').value;
+  const p=document.getElementById('powerFilter').value;
+  document.querySelectorAll('.filters select').forEach(s=>s.classList.toggle('active',!!s.value));
+  filtered=birds.filter(b=>{
+    if(q&&!b.state.toLowerCase().includes(q)&&!b.abbr.toLowerCase().includes(q)&&!b.bird.toLowerCase().includes(q)&&!b.superName.toLowerCase().includes(q))return false;
+    if(r&&b.region!==r)return false;
+    if(h&&b.habitat!==h)return false;
+    if(m&&b.migration!==m)return false;
+    if(p&&b.superName!==p)return false;
+    return true;
+  });
+  render();
+}
+function openModal(abbr){
+  const b=birds.find(x=>x.abbr===abbr);if(!b)return;
+  const c=PC[b.superName]||'#c9960a';
+  document.getElementById('modal').style.borderTop=`3px solid ${c}`;
+  document.getElementById('mAbbr').style.cssText=`width:50px;height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;letter-spacing:.05em;background:${c}18;border:2px solid ${c};color:${c}`;
+  document.getElementById('mAbbr').textContent=b.abbr;
+  document.getElementById('mState').textContent=b.state.toUpperCase();
+  document.getElementById('mSpecies').textContent=b.bird;
+  document.getElementById('mRegion').textContent=b.region;document.getElementById('mRegion').style.color=c;
+  document.getElementById('mHabitat').textContent=b.habitat;document.getElementById('mHabitat').style.color=c;
+  document.getElementById('mMig').textContent=MS[b.migration]||b.migration;document.getElementById('mMig').style.color=c;
+  document.getElementById('mPowerBlock').style.borderLeft=`4px solid ${c}`;
+  document.getElementById('mPowerName').textContent='⚡ '+b.superName;document.getElementById('mPowerName').style.color=c;
+  document.getElementById('mPowerDesc').textContent=b.superDesc;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('overlay'))return;
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('search').addEventListener('input',applyFilters);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal({target:document.getElementById('overlay')})});
+render();
+</script>
+</body>
+</html>

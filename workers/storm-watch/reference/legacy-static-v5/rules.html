@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bird Rebels: Storm Watch — Rules</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --nav:#09090f;
+  --base:#18192b;--base-2:#1f2038;--base-3:#252647;--base-4:#2e3060;--base-5:#0d0e1c;
+  --yellow:#f5c800;--yellow-dim:#c9960a;--blue:#38bdf8;--blue-dim:#0369a1;
+  --red:#e53e3e;--green:#4ade80;--green-dim:#166534;
+  --white:#f0f0f0;--grey:#8a8a9a;--grey-light:#b8b8c8;
+}
+body{background:var(--base);color:var(--white);font-family:'Barlow',sans-serif;min-height:100vh}
+
+nav{background:var(--nav);border-bottom:1px solid #141420;padding:.7rem 1.5rem;display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:.08em;color:var(--white);text-decoration:none}
+.nav-brand .rebel{color:var(--yellow)}
+.nav-sub{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1.4rem;letter-spacing:.3em;text-transform:uppercase;color:#8a8aaa}
+.nav-divider{color:#5a5a7a}
+.nav-links{display:flex;gap:.15rem;margin-left:auto}
+.nav-link{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:.4rem .8rem;text-decoration:none;color:#333;border:1px solid transparent;transition:all .15s}
+.nav-link:hover,.nav-link.active{color:var(--yellow);border-color:#1e1f35;background:#0d0d18}
+
+.masthead{background:var(--base-5);border-bottom:3px solid var(--blue);padding:3rem 2rem 2.5rem;text-align:center;position:relative;overflow:hidden}
+.masthead::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,.05) 0%,transparent 70%);pointer-events:none}
+.masthead-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.4em;text-transform:uppercase;color:#5a68a8;margin-bottom:1rem}
+.masthead h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(3.5rem,12vw,8rem);letter-spacing:.04em;text-transform:uppercase;line-height:.88;color:var(--white)}
+.masthead h1 .rebels{color:var(--yellow);display:block}
+.storm-watch{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(1rem,3vw,1.6rem);letter-spacing:.45em;text-transform:uppercase;color:#5a68a8;margin-top:.6rem;border-top:1px solid #1e1f35;border-bottom:1px solid #1e1f35;padding:.4rem 0;display:inline-block}
+.masthead-tagline{font-size:1.35rem;color:var(--grey);margin-top:1.25rem;font-style:italic;max-width:420px;margin-left:auto;margin-right:auto}
+.badge-row{display:flex;justify-content:center;gap:.4rem;margin-top:1.5rem;flex-wrap:wrap}
+.badge{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:1px solid #1e1f35;background:var(--nav);padding:.3rem .75rem;color:#6a6a88}
+.badge.hl{background:var(--yellow);color:var(--nav);border-color:var(--yellow)}
+
+.page{max-width:860px;margin:0 auto;padding:0 1.5rem 5rem}
+.section-head{padding-top:2.5rem;margin-bottom:1.25rem;border-top:1px solid #1e1f35;margin-top:2.5rem}
+.section-head:first-child{border-top:none}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.35em;text-transform:uppercase;color:var(--blue);margin-bottom:.3rem}
+h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(1.8rem,5vw,2.8rem);text-transform:uppercase;letter-spacing:.05em;color:var(--white);line-height:1}
+h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.2rem;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:.5rem}
+p{font-size:1.4rem;line-height:1.8;color:var(--grey-light);margin-bottom:.75rem}
+p strong{color:var(--white);font-weight:600}
+p em{color:var(--grey)}
+
+.overview-block{background:var(--base-3);border-left:4px solid var(--yellow);padding:1.5rem 2rem;margin:1.25rem 0}
+.overview-block p{color:var(--grey-light);font-size:1.5rem;line-height:1.85;margin:0}
+
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--base-5);border:1px solid var(--base-5);margin:1.25rem 0}
+.card-face{background:var(--base-2);padding:1.5rem}
+.card-face.storm-face{background:var(--base-3)}
+.card-face h3{font-size:1.5rem;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #1e1f35}
+.stat-row{display:flex;gap:.75rem;align-items:baseline;margin-bottom:.45rem}
+.stat-lbl{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#6a6a88;min-width:5rem;flex-shrink:0}
+.stat-val{font-size:1.3rem;color:var(--grey-light)}
+.stat-val em{color:var(--grey);font-size:1.25rem;font-style:italic}
+
+.rounds{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--base-5);margin:1.25rem 0}
+.round-block{background:var(--base-2);padding:1.5rem;position:relative;padding-top:1.75rem}
+.round-block::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.round-r1::before{background:var(--yellow)}
+.round-r2::before{background:var(--blue)}
+.round-alt::before{background:#7a6a8a}
+.round-block .rnum{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:#5a68a8;margin-bottom:.25rem}
+.round-r1 h3{color:var(--yellow)}
+.round-r2 h3{color:var(--blue)}
+.round-alt h3{color:#9a8aaa}
+.round-block p{font-size:1.25rem;margin:0;line-height:1.65;color:var(--grey)}
+
+.cost-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--base-5);margin:1.25rem 0}
+.cost-block{background:var(--base-2);padding:1.25rem 1.5rem}
+.cost-block h3{font-size:1.35rem;margin-bottom:.5rem;letter-spacing:.1em}
+.cost-block p{font-size:1.25rem;margin:0;line-height:1.6;color:var(--grey)}
+.cost-best h3{color:var(--green)}
+.cost-team h3{color:var(--blue)}
+.cost-loss h3{color:var(--red)}
+.cost-solo h3{color:#9a8aaa}
+
+.res-table{margin:1.25rem 0;border:1px solid #1e1f35;overflow:hidden}
+.res-header{display:grid;grid-template-columns:130px 1fr 1fr;background:var(--base-5);padding:.6rem 1rem}
+.res-header span{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#5a68a8}
+.res-row{display:grid;grid-template-columns:130px 1fr 1fr;border-top:1px solid #1e1f35}
+.res-type{padding:1rem;border-right:1px solid #1e1f35;display:flex;flex-direction:column;gap:.35rem;justify-content:center}
+.res-tag{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:.2rem .5rem;width:fit-content}
+.tag-solo{background:var(--yellow);color:var(--nav)}
+.tag-team{background:var(--blue-dim);color:white}
+.tag-loss{background:#7f1d1d;color:white}
+.res-cell{padding:1rem;font-size:1.25rem;color:var(--grey);line-height:1.55;border-right:1px solid #1e1f35}
+.res-cell:last-child{border-right:none}
+.res-row:nth-child(odd){background:var(--base-2)}
+.res-row:nth-child(even){background:var(--base-3)}
+
+.outcome-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--base-5);margin:1.25rem 0}
+.outcome-block{background:var(--base-2);padding:1.5rem 1.25rem;text-align:center}
+.outcome-storms{border-top:3px solid var(--red)}
+.outcome-tie{border-top:3px solid #2e3060}
+.outcome-birds{border-top:3px solid var(--yellow)}
+.outcome-label{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:#5a68a8;margin-bottom:.5rem}
+.outcome-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.5rem;line-height:1;margin-bottom:.4rem}
+.outcome-storms .outcome-score{color:var(--red)}
+.outcome-tie .outcome-score{color:#6a6a88}
+.outcome-birds .outcome-score{color:var(--yellow)}
+.outcome-desc{font-size:1.15rem;color:#6a6a88;line-height:1.45}
+
+.callout{background:var(--base-3);border:1px solid #1e1f35;border-left:4px solid var(--yellow);padding:1.25rem 1.5rem;margin:1.25rem 0}
+.callout.info{border-left-color:var(--blue)}
+.callout.neutral{border-left-color:#5a68a8}
+.callout p{margin:0;font-size:1.35rem}
+
+.comms-block{background:var(--base-3);border:1px solid #1e1f35;padding:1.5rem 2rem;margin:1.25rem 0}
+.comms-block p{font-size:1.4rem;line-height:1.8}
+
+.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--base-5);margin:1.25rem 0}
+.qr-block{background:var(--base-2);padding:1.25rem}
+.qr-block h3{font-size:1.25rem;margin-bottom:.5rem;letter-spacing:.12em}
+.qr-block p{font-size:1.25rem;margin:0;line-height:1.6;color:var(--grey)}
+
+footer{background:var(--nav);border-top:1px solid #141420;color:#6a6a88;text-align:center;padding:2rem;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase}
+footer a{color:#8080a8;text-decoration:none}
+footer a:hover{color:var(--yellow)}
+.stars{color:var(--yellow);font-size:1.5rem;letter-spacing:.3em;display:block;margin-bottom:.5rem}
+
+@media(max-width:650px){
+  .card-grid,.rounds,.cost-grid,.outcome-grid,.qr-grid{grid-template-columns:1fr}
+  .res-header{display:none}
+  .res-row{grid-template-columns:1fr}
+  .res-type{border-right:none;border-bottom:1px solid #1e1f35}
+  .res-cell{border-right:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">BIRD <span class="rebel">REBELS</span></a>
+  <span class="nav-divider">·</span>
+  <span class="nav-sub">Storm Watch</span>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Home</a>
+    <a class="nav-link" href="birds.html">Birds</a>
+    <a class="nav-link active" href="rules.html">Rules</a>
+    <a class="nav-link" href="storms.html">Storms</a>
+  </div>
+</nav>
+
+<div class="masthead">
+  <div class="masthead-eyebrow">★ Official Rulebook · First Edition ★</div>
+  <h1>Bird<span class="rebels">Rebels</span></h1>
+  <div class="storm-watch">Storm&nbsp;&nbsp;&nbsp;Watch</div>
+  <p class="masthead-tagline">A cooperative card game of resistance, resilience, and really knowing your birds.</p>
+  <div class="badge-row">
+    <div class="badge hl">1–4 Players</div>
+    <div class="badge">Ages 10+</div>
+    <div class="badge">30–45 Min</div>
+    <div class="badge">52 Bird Cards</div>
+    <div class="badge">12 Storms Per Game</div>
+    <div class="badge">birdrebels.art</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="section-head" style="border-top:none;padding-top:2rem">
+    <div class="section-label">What is this game?</div>
+    <h2>Win Together. Lose Together.</h2>
+  </div>
+  <div class="overview-block">
+    <p>Storms are coming. The birds of America — 52 state and territory emblems — are the only defense. Every storm can be beaten three ways: by one bird acting alone, by a same-species flock, or by a mixed flock that qualifies on geographic or habitat grounds. That third option is where the game lives. Nobody memorizes the cards, but everyone reads them — and figures it out together. A child plays a bird game. Everyone else reads something else entirely.</p>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">Components</div>
+    <h2>Two Decks. One Fight.</h2>
+  </div>
+  <p>The game uses two separate decks. <strong>Bird cards</strong> are your weapons and your resources — once spent, they go to the shared discard pile and never return. <strong>Storm cards</strong> are drawn from a deck of 20+; shuffle and draw 12 at random at the start of each game. Set the rest aside. Every session is a different combination of threats.</p>
+
+  <div class="card-grid">
+    <div class="card-face">
+      <h3>🐦 Bird Card</h3>
+      <div class="stat-row"><span class="stat-lbl">Species</span><span class="stat-val">Common Loon</span></div>
+      <div class="stat-row"><span class="stat-lbl">State</span><span class="stat-val">Minnesota</span></div>
+      <div class="stat-row"><span class="stat-lbl">Region</span><span class="stat-val">Midwest</span></div>
+      <div class="stat-row"><span class="stat-lbl">Region</span><span class="stat-val">Midwest</span></div>
+      <div class="stat-row"><span class="stat-lbl">Habitat</span><span class="stat-val">Wetland</span></div>
+      <div class="stat-row"><span class="stat-lbl">Migration</span><span class="stat-val">Migratory</span></div>
+      <div class="stat-row"><span class="stat-lbl">Power</span><span class="stat-val">Revival — Draw up to 2 cards from discard.</span></div>
+    </div>
+    <div class="card-face storm-face">
+      <h3>⛈ Storm Card</h3>
+      <div class="stat-row"><span class="stat-lbl">Name</span><span class="stat-val">The Pre-Dawn Frost</span></div>
+      <div class="stat-row"><span class="stat-lbl">Flavor</span><span class="stat-val"><em>"Arrives 4–6am. No warning. Residential areas only."</em></span></div>
+      <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid #1e1f35">
+        <div class="stat-row"><span class="stat-lbl">Solo</span><span class="stat-val">1 × Common Loon</span></div>
+        <div class="stat-row"><span class="stat-lbl">Same Flock</span><span class="stat-val">3 × Cardinal</span></div>
+        <div class="stat-row"><span class="stat-lbl">Mixed Flock</span><span class="stat-val">2 birds from the Southeast region</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="callout">
+    <p><strong>The mixed flock condition uses only what's printed on each card</strong> — Region, Habitat, or Migration. Solo and same-species conditions are specific: either you have the card or you don't. The mixed flock is where the table talks it through, because the answers are right in front of everyone.</p>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">Before You Play</div>
+    <h2>Setup</h2>
+  </div>
+  <p>Shuffle both decks separately. Draw <strong>12 storm cards</strong> at random from the storm deck — set the rest aside. These are the only storms you'll face this game. Place both active decks face down. Each player draws <strong>5 bird cards</strong>. Assign the <strong>Lead Player token</strong> to a starting player — it passes clockwise after every storm, win or lose.</p>
+  <div class="callout info">
+    <p><strong>2-Player Rule:</strong> Any flock requirement of 3 birds is reduced to 2. This applies to both same-species and mixed flock conditions.</p>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">How Each Storm Plays Out</div>
+    <h2>Round Structure</h2>
+  </div>
+  <p>Flip the top storm card and read it aloud. Every storm has three possible resolutions. Play proceeds in up to two rounds — Round 2 only triggers if Round 1 fails to resolve the storm.</p>
+
+  <div class="rounds">
+    <div class="round-block round-r1">
+      <div class="rnum">Round 1 — Standard</div>
+      <h3>Solo Challenge</h3>
+      <p>Starting with the Lead Player and going clockwise, each player may play cards from their hand — but only if those cards alone constitute a <strong>complete win</strong>. No partial plays. Players may also pass. The first to beat the storm claims that storm card for their <strong>personal solo win pile</strong>. Round ends immediately. If all players pass, Round 2 is triggered.</p>
+    </div>
+    <div class="round-block round-r2">
+      <div class="rnum">Round 2 — If Round 1 Failed</div>
+      <h3>Flock Response</h3>
+      <p><strong>Everyone must contribute one card. No passing.</strong> Play order stays fixed. Before laying their card, any player may ask the table openly — <em>"Who has a Wetland bird?" "Anyone holding a Southeast card?"</em>. Players use what they learn to decide which card to commit. <strong>Played cards go to the shared discard pile</strong> regardless of outcome. If the combined flock meets the Mixed Flock condition, that storm card goes to the <strong>team win pile</strong>. If not, it goes to the <strong>storm loss pile</strong>.</p>
+    </div>
+    <div class="round-block round-alt">
+      <div class="rnum">Variant Mode</div>
+      <h3>Solo Last Stand</h3>
+      <p>One player takes on the storm alone. They may play a card, <strong>immediately draw back to 5</strong>, play another, draw again — repeating until the storm is beaten or they choose to stop. Powerful but costly: every card played pulls another from the shrinking deck.</p>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">Cards &amp; Discard</div>
+    <h2>The Cost of Every Storm</h2>
+  </div>
+  <p><strong>Bird cards spent in any round go to the shared discard pile and never return.</strong> Only storm cards go to win piles. After every storm resolves — win, lose, or draw — all players draw back up to 5 bird cards from the draw pile.</p>
+
+  <div class="cost-grid">
+    <div class="cost-block cost-best">
+      <h3>★ Best Case</h3>
+      <p>One player solos the storm with a single play. <strong>Only their played cards go to discard.</strong> That storm card goes to their personal solo win pile.</p>
+    </div>
+    <div class="cost-block cost-team">
+      <h3>Team Win</h3>
+      <p>Round 2 fires and the flock completes the condition. <strong>One card per player goes to discard.</strong> That storm card goes to the shared team win pile.</p>
+    </div>
+    <div class="cost-block cost-loss">
+      <h3>✗ Flock Loss</h3>
+      <p>Round 2 fires but the flock falls short. <strong>One card per player still goes to discard.</strong> That storm card goes to the storm loss pile.</p>
+    </div>
+    <div class="cost-block cost-solo">
+      <h3>Solo Last Stand</h3>
+      <p>One player grinds cards one at a time, drawing after each play. Cost scales with how many attempts it takes. High draw-pile risk.</p>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">Resolution Summary</div>
+    <h2>Where Cards Go</h2>
+  </div>
+  <div class="res-table">
+    <div class="res-header">
+      <span>Outcome</span><span>Storm Card Goes To…</span><span>Bird Cards Go To…</span>
+    </div>
+    <div class="res-row">
+      <div class="res-type"><span class="res-tag tag-solo">Solo Win</span></div>
+      <div class="res-cell">That player's <strong>personal solo win pile</strong></div>
+      <div class="res-cell">Shared discard pile. All players draw back to 5.</div>
+    </div>
+    <div class="res-row">
+      <div class="res-type"><span class="res-tag tag-team">Flock Win</span></div>
+      <div class="res-cell"><strong>Shared team win pile</strong></div>
+      <div class="res-cell">Shared discard pile. All players draw back to 5.</div>
+    </div>
+    <div class="res-row">
+      <div class="res-type"><span class="res-tag tag-loss">Flock Loss</span></div>
+      <div class="res-cell"><strong>Storm loss pile</strong></div>
+      <div class="res-cell">Shared discard pile. All players draw back to 5.</div>
+    </div>
+  </div>
+  <p>All 12 storms are played through regardless of outcome. Tally at the end.</p>
+
+  <div class="section-head">
+    <div class="section-label">After All 12 Storms</div>
+    <h2>End Game &amp; Scoring</h2>
+  </div>
+  <div class="outcome-grid">
+    <div class="outcome-block outcome-storms">
+      <div class="outcome-label">Storms Win</div>
+      <div class="outcome-score">0–5</div>
+      <div class="outcome-desc">Fewer than 6 storms beaten. The birds fall.</div>
+    </div>
+    <div class="outcome-block outcome-tie">
+      <div class="outcome-label">Draw</div>
+      <div class="outcome-score">6–6</div>
+      <div class="outcome-desc">Six storms each. The skies stay unsettled.</div>
+    </div>
+    <div class="outcome-block outcome-birds">
+      <div class="outcome-label">Birds Win</div>
+      <div class="outcome-score">7–12</div>
+      <div class="outcome-desc">Majority beaten. The flock holds.</div>
+    </div>
+  </div>
+  <div class="callout">
+    <p><strong>Individual Champion:</strong> Within a bird victory, the player with the most storm cards in their personal solo win pile wins the title. Ties broken by fewest bird cards remaining in hand.</p>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">Talking at the Table</div>
+    <h2>Open Comms</h2>
+  </div>
+  <div class="comms-block">
+    <p>Players may communicate openly at all times. Solo and same-species resolutions don't need discussion — you either have the card or you don't. Round 2 is where the table activates. Players ask questions about the stats visible on their cards: <em>"Anyone got a Migratory bird?"</em> <em>"Who's holding a Forest card?"</em> <em>"Do you have a West region state?"</em> The answers are right there on the card. The skill is in coordinating what you have — and deciding whether to reveal your hand — before it's your turn to play.</p>
+  </div>
+  <div class="callout neutral">
+    <p><strong>Silent Mode (Advanced):</strong> No talking or gesturing. All rules apply — but the flock operates on instinct alone.</p>
+  </div>
+
+  <div class="section-head">
+    <div class="section-label">One-Page Summary</div>
+    <h2>Quick Reference</h2>
+  </div>
+  <div class="qr-grid">
+    <div class="qr-block">
+      <h3>Setup</h3>
+      <p>Shuffle both decks. Draw 12 storms, set rest aside. Each player draws 5 bird cards. Assign Lead token.</p>
+    </div>
+    <div class="qr-block">
+      <h3>Each Storm</h3>
+      <p>Flip storm → Round 1: solo attempts in order, or pass → If unresolved: Round 2, ask questions, everyone plays one card → Lead token shifts clockwise.</p>
+    </div>
+    <div class="qr-block">
+      <h3>Cards &amp; Discard</h3>
+      <p>Spent bird cards → shared discard (never return). Storm cards only → win piles. All players draw back to 5 after every storm.</p>
+    </div>
+    <div class="qr-block">
+      <h3>End Tally</h3>
+      <p>7+ beaten = birds win. 6–6 = draw. 5 or fewer = storms win. Most solo storm cards = individual champion.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span class="stars">★ ★ ★ ★ ★</span>
+  Bird Rebels: Storm Watch &nbsp;·&nbsp; <a href="https://birdrebels.art">birdrebels.art</a> &nbsp;·&nbsp; Art & Design by Casey The American &nbsp;·&nbsp; CC BY-NC 4.0
+</footer>
+</body>
+</html>
