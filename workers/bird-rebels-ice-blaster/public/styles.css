@@ -273,10 +273,19 @@
   text-transform:uppercase; letter-spacing:.03em; margin:0 0 10px;
 }
 
-/* ---------- splash screen (native only) — logo only, no menus/buttons,
-   shown on top of everything while the app boots ---------- */
+/* ---------- title screen — logo, Play / How to Play,
+   covering the setup screen that stays rendered underneath ---------- */
+/* z-index has to clear the carousel cards, which engine.js pushes up to 100
+   so the centred card paints over its neighbours. Those cards are normally
+   sealed inside the carousel's own stacking context, but that context has
+   twice now been an accident of some other property (the breakout
+   translateX, later isolation:isolate) rather than a guarantee — and when
+   it lapsed, the enlarged card punched straight through this screen and
+   landed on top of the logo. Sitting above the cards' ceiling outright
+   means that can't happen again however the carousel is styled. The help
+   overlay sits above this in turn, since it opens from here. */
 .rl-splash{
-  display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center;
+  display:none; position:absolute; inset:0; z-index:200; align-items:center; justify-content:center;
   flex-direction:column; gap:28px;
   background-color:var(--rl-menu-bg);
   background-image:url('textures/diamonds-dark.png');
@@ -744,8 +753,8 @@
    render as a layer directly on top of it (see engine.js openHelp/closeHelp
    — no showScreen(), title stays untouched underneath) rather than behind
    it like every other overlay, which sits above the setup screen (z-index
-   5) but below the title screen's splash (z-index 50). */
-.rl-overlay[data-rl-screen="help"]{ z-index:55; }
+   5) but below the title screen (z-index 200). */
+.rl-overlay[data-rl-screen="help"]{ z-index:205; }
 /* The native topbar (see [data-rl-topbar] rules) belongs to the start
    screen, which stays rendered underneath every overlay (showScreen()
    doesn't hide it) — its higher z-index means it paints on top of
