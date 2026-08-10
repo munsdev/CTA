@@ -220,11 +220,11 @@
 .rl-picker-row .rl-scene-btn{ margin:0; flex:1 1 0; }
 
 /* ---------- native app simplified UI (data-rl-shop="1" only — never applies on web) ---------- */
-.rl-native{
+.rl-appui{
   --rl-font-display:'Black Elite', var(--_typography---font-styles--heading, 'Archivo Narrow', system-ui, sans-serif);
   --rl-font-body:'Genos', var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
 }
-.rl-native .rl-frame{
+.rl-appui .rl-frame{
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-bg-top),var(--rl-bg-bottom));
   background-size:220px 220px, cover;
   background-blend-mode:soft-light, normal;
@@ -248,7 +248,7 @@
    gradient untouched, since .rl-frame itself is shared across every screen
    and this only overrides it conditionally. The diamond texture overlay
    stays, just recolored onto black instead of navy. */
-.rl-native:has([data-rl-screen="start"]:not([hidden])) .rl-frame{
+.rl-appui:has([data-rl-screen="start"]:not([hidden])) .rl-frame{
   background-image:url('textures/diamonds-dark.png'), linear-gradient(180deg,var(--rl-menu-bg),var(--rl-menu-bg));
   background-size:220px 220px, cover;
   /* screen, not soft-light: soft-light barely lightens near-black
@@ -288,7 +288,7 @@
      already-rendered content rather than the game being built fresh after. */
   opacity:1; transition:opacity .5s ease;
 }
-.rl-native .rl-splash{ display:flex; }
+.rl-appui .rl-splash{ display:flex; }
 .rl-splash.rl-splash-hide{ opacity:0; pointer-events:none; }
 .rl-splash-logo{
   width:min(60vw, 300px); height:auto; filter:drop-shadow(0 8px 24px rgba(0,0,0,.6));
@@ -321,17 +321,49 @@
   font-family:var(--rl-font-display); font-weight:800; font-size:17px; cursor:pointer;
   z-index:15; box-shadow:0 4px 14px rgba(0,0,0,.35); padding:0;
 }
-.rl-native .rl-corner-btn{ display:flex; }
+.rl-appui .rl-corner-btn{ display:flex; }
 .rl-corner-btn:active{ transform:scale(.94); }
 .rl-corner-btn-left{ left:14px; }
 .rl-corner-btn-right{ right:14px; color:#ffd23d; }
+/* Desktop keeps the app's phone-shaped frame rather than stretching the
+   layout wide — one layout serves both, and the web build looks like the
+   app. The topbar and carousel normally break out to 100vw to sit flush
+   with a phone's screen edges; inside a boxed frame there are no screen
+   edges to reach, and a 100vw child of a 430px frame throws off the
+   carousel's centring math, so both revert to plain full-width. */
+.rl-root.rl-web{ --rl-max-width:430px; }
+/* .rl-root qualifier is load-bearing, not decoration: the breakout rules
+   these undo live further down the file at equal specificity, so without
+   the extra class they'd lose on source order. */
+.rl-root.rl-web [data-rl-screen="start"] [data-rl-topbar],
+.rl-root.rl-web [data-rl-screen="start"] [data-rl-carousel]{
+  left:auto; transform:none; width:100%;
+}
 
-.rl-native [data-rl-screen="start"] .rl-tier-note,
-.rl-native [data-rl-screen="start"] .rl-check-row small,
-.rl-native [data-rl-screen="start"] .rl-h1{
+/* ---------- web-only suppressions ----------
+   Everything here is app-shell functionality with no browser equivalent, so
+   the affordance is hidden rather than left to fail on tap:
+   - rate bubble points at an Android Play Store listing
+   - Get More Rebels / Claim a Code run on Play Billing
+   - vibration is a Capacitor Haptics call */
+.rl-web .rl-corner-btn-right,
+.rl-web [data-rl-get-more-rebels],
+.rl-web [data-rl-shop-claim-code],
+.rl-web [data-rl-screen="settings"] .rl-check-row:has(input[data-rl-vibration]){
+  display:none !important;
+}
+/* Google Identity Services renders its own button (see mountWebSignInButton
+   in engine.js); this just centres it and gives it the same rhythm as the
+   buttons it sits among. */
+.rl-gis-slot{ display:flex; justify-content:center; margin-top:15px; }
+.rl-gis-slot:empty{ margin-top:0; }
+
+.rl-appui [data-rl-screen="start"] .rl-tier-note,
+.rl-appui [data-rl-screen="start"] .rl-check-row small,
+.rl-appui [data-rl-screen="start"] .rl-h1{
   display:none;
 }
-.rl-native [data-rl-screen="start"] .rl-sub{
+.rl-appui [data-rl-screen="start"] .rl-sub{
   margin:14px 18px 12px; text-align:left; font-size:12.5px;
 }
 /* .rl-screen is display:flex/flex-direction:column already — removing its
@@ -339,8 +371,8 @@
    of fighting the padding with margins/absolute-positioning tricks that
    still get clipped by the screen's own overflow. Screen-inner picks the
    padding back up for everything below the bar. */
-.rl-native [data-rl-screen="start"].rl-screen{ padding:0 0 24px; justify-content:flex-start; }
-.rl-native [data-rl-screen="start"] .rl-screen-inner{
+.rl-appui [data-rl-screen="start"].rl-screen{ padding:0 0 24px; justify-content:flex-start; }
+.rl-appui [data-rl-screen="start"] .rl-screen-inner{
   display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0 18px;
   overflow-y:auto; overflow-x:hidden;
 }
@@ -358,7 +390,7 @@
    — default min-height:auto on a flex item stops the buttons being
    squeezed — so the carousel is the only thing that flexes, and nothing
    can get pushed off the bottom of the screen. */
-.rl-native [data-rl-screen="start"] .rl-select-rebel-group{
+.rl-appui [data-rl-screen="start"] .rl-select-rebel-group{
   display:flex; flex-direction:column; flex:1 1 auto; margin:0;
   /* This group must never shrink below its own content. If it does, the
      buttons at the bottom overflow its box silently — the scroll container
@@ -374,7 +406,7 @@
 
 /* ---------- navbar (native only): single icon button, --rl-topbar-h tall ---------- */
 [data-rl-topbar]{ display:none; }
-.rl-native [data-rl-screen="start"] [data-rl-topbar]{
+.rl-appui [data-rl-screen="start"] [data-rl-topbar]{
   display:flex; align-items:center; justify-content:space-between;
   position:relative; left:50%; transform:translateX(-50%);
   flex:0 0 auto; width:100vw; height:var(--rl-topbar-h); padding:0 18px;
@@ -401,7 +433,7 @@
    button (hamburger only, no logo — the big splash logo already covers
    branding), right-aligned. */
 [data-rl-title-topbar]{ display:none; }
-.rl-native [data-rl-screen="title"] [data-rl-title-topbar]{
+.rl-appui [data-rl-screen="title"] [data-rl-title-topbar]{
   display:flex; align-items:center; justify-content:flex-end;
   position:absolute; top:0; left:0; right:0;
   height:var(--rl-topbar-h); padding:0 18px;
@@ -416,7 +448,7 @@
    showScreen() based on whether the game screen is showing) — keeps where
    ice lands clear of the native Android gesture/button bar. Everywhere
    else (home/menu screens) just gets the safety padding reserved for this
-   bar's height (see .rl-native .rl-frame) without the bar itself showing,
+   bar's height (see .rl-appui .rl-frame) without the bar itself showing,
    so the background shows through instead of an empty textured strip
    sitting over nothing. Matches the topbar's texture/z-index treatment. */
 .rl-bottombar{
@@ -439,15 +471,15 @@
   -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
   background:var(--rl-accent); box-shadow:0 1px 3px rgba(0,0,0,.4); cursor:pointer;
 }
-.rl-native [data-rl-screen="start"] .rl-char-grid{ display:none; } /* carousel replaces this natively */
-.rl-native [data-rl-screen="start"] .rl-char-label-row{
+.rl-appui [data-rl-screen="start"] .rl-char-grid{ display:none; } /* carousel replaces this natively */
+.rl-appui [data-rl-screen="start"] .rl-char-label-row{
   margin:0 18px 6px; font-family:var(--rl-font-body);
 }
-.rl-native [data-rl-screen="start"] .rl-check-row{ margin:8px 0; padding:9px 12px; }
+.rl-appui [data-rl-screen="start"] .rl-check-row{ margin:8px 0; padding:9px 12px; }
 
 /* ---------- character select carousel (native only) ---------- */
 [data-rl-carousel]{ display:none; }
-.rl-native [data-rl-screen="start"] [data-rl-carousel]{
+.rl-appui [data-rl-screen="start"] [data-rl-carousel]{
   display:flex; align-items:center; gap:4px; margin:4px 0 14px;
   /* Escape .rl-screen-inner's 18px padding so the track's centering math
      (.rl-carousel-spacer below) is computed against the TRUE screen width,
@@ -457,6 +489,14 @@
      same escape-hatch pattern already used for [data-rl-topbar] above. */
   position:relative; left:50%; transform:translateX(-50%);
   width:100vw; padding:0 12px; box-sizing:border-box;
+  /* Contains the cards' z-index (engine.js gives the centred card up to
+     z-index:100 so it paints over its neighbours) inside this element's own
+     stacking context. Without it those values compete with the overlays
+     (z-index:5) and the cards paint on top of open menus, swallowing their
+     clicks. The translateX below happens to create a stacking context too,
+     but relying on that silently broke the moment the transform was turned
+     off for the boxed desktop frame — so it's stated outright. */
+  isolation:isolate;
   /* Mirrors CAROUSEL_MAX_SCALE in engine.js — the factor the centered card
      is scaled up by. The artwork divides the track height by this so that
      at full scale it lands exactly at the track's edges instead of
@@ -545,7 +585,7 @@
 }
 
 /* Gameplay control hint removed on native — the app doesn't need the desktop-style reminder */
-.rl-native .rl-pause-hint{ display:none; }
+.rl-appui .rl-pause-hint{ display:none; }
 
 /* Per-bird accent color highlights the label text on the active carousel
    card. Previously this colored a border+background wash on the card box;
@@ -559,21 +599,21 @@
    background). */
 
 /* Give Casual Mode the same pill-toggle treatment as Rainbow Blizzard, native only */
-.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode],
-.rl-native [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]{
+.rl-appui [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode],
+.rl-appui [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]{
   appearance:none; -webkit-appearance:none; width:40px; height:22px; border-radius:11px;
   background:var(--rl-panel-line); position:relative; cursor:pointer; flex:none;
   transition:background .2s ease; outline:none;
 }
-.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]::before,
-.rl-native [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]::before{
+.rl-appui [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]::before,
+.rl-appui [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]::before{
   content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
   background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.4); transition:transform .2s ease;
 }
-.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked,
-.rl-native [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]:checked{ background:var(--rl-accent); }
-.rl-native [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked::before,
-.rl-native [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]:checked::before{ transform:translateX(18px); }
+.rl-appui [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked,
+.rl-appui [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]:checked{ background:var(--rl-accent); }
+.rl-appui [data-rl-screen="start"] .rl-check-row input[data-rl-kidmode]:checked::before,
+.rl-appui [data-rl-screen="settings"] .rl-check-row input[data-rl-vibration]:checked::before{ transform:translateX(18px); }
 
 /* Rebel Shop — full-height instead of a narrow centered modal, native only */
 .rl-native [data-rl-screen="shop"]{ justify-content:flex-start; }
@@ -715,7 +755,7 @@
    hidden behind the bar. Reserve its height and stop centering (so
    overflow-y:auto above scrolls from a natural top-aligned start) for
    every overlay except those two intentionally-short ones. */
-.rl-native .rl-overlay:not([data-rl-screen="pause"]):not([data-rl-screen="gameover"]){
+.rl-appui .rl-overlay:not([data-rl-screen="pause"]):not([data-rl-screen="gameover"]){
   justify-content:flex-start;
   padding-top:calc(var(--rl-topbar-h) + 26px);
 }

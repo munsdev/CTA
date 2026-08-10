@@ -707,12 +707,27 @@
     var soundPlayer = makeSoundPlayer(SOUND_BASE);
     var playSound = soundPlayer.play;
 
-    // ---------- bird flock (native app only — off by default, on via data-rl-shop="1") ----------
-    // No payment wired yet: tapping a bird in the shop just adds it, as a
-    // stand-in for the real Play Billing flow that'll replace this call later.
-    // Only the Capacitor wrapper sets data-rl-shop; the Webflow embed never
-    // does, so this whole feature is inert on the live web game.
+    // ---------- platform flags ----------
+    // Two separate things that used to be conflated under one flag:
+    //
+    //   shopEnabled — genuinely native-only capability. Play Billing, the
+    //     bird shop, haptics and the in-app review prompt all go through
+    //     Capacitor plugins that simply do not exist in a browser. Set by
+    //     the native wrapper via data-rl-shop="1"; the Webflow embed never
+    //     sets it.
+    //
+    //   appUi — the app's look and navigation (title screen, navbar,
+    //     carousel, corner buttons). None of that needs Capacitor, so it
+    //     runs everywhere and the web embed gets the same UI as the app.
+    //     Anything under it that DOES need the native shell stays gated on
+    //     shopEnabled individually.
+    //
+    // The CSS mirrors the split: .rl-appui for presentation (always on),
+    // .rl-native reserved for shop-only rules.
     var shopEnabled = mount.getAttribute('data-rl-shop') === '1';
+    var appUi = true;
+    mount.classList.add('rl-appui');
+    if (!shopEnabled) mount.classList.add('rl-web');
     if (shopEnabled) {
       mount.classList.add('rl-native');
 
@@ -791,14 +806,23 @@
     function isSignedIn() {
       return IDENTITY != null && IDENTITY.indexOf('goog_') === 0;
     }
-    var IDENTITY = shopEnabled ? (loadSignedInUserId() || GUEST_IDENTITY) : null;
-    // Forward declaration: assigned once inside the shopEnabled block below
+    // Web gets a real identity too now (it used to be null there, which is
+    // why web players could never save a leaderboard score): a signed-in
+    // Google id if there is one, otherwise the guest placeholder. The
+    // Worker's requireSignedIn still rejects anything that isn't a verified
+    // goog_ id, so a guest identity grants nothing on its own.
+    var IDENTITY = loadSignedInUserId() || GUEST_IDENTITY;
+    // Forward declaration: assigned once inside the UI block below
     // (where GoogleSignIn/GOOGLE_SIGNIN_CLIENT_ID/refreshAccountUi live) —
     // lets code outside that block (promptSignIn, called from gated
     // purchase/coupon buttons) trigger a real sign-in directly instead of
     // only being able to navigate to wherever the Sign In button happens
     // to live.
     var triggerGoogleSignIn = function () { return Promise.resolve(false); };
+    // Assigned near the gameover screen's wiring; called after a web
+    // (Google Identity Services) sign-in completes, since that flow bypasses
+    // the gameover sign-in button's own click handler.
+    var onSignedInFromGis = function () {};
     var couponRebels = []; // rebel codes granted via coupon redemption (D1), separate from the local shop flock
     function loadCouponEntitlements() {
       if (!IDENTITY) return Promise.resolve();
@@ -1055,7 +1079,7 @@
 
     function selectCard(card) {
       charGrid.querySelectorAll('.rl-char-card').forEach(function (c) { c.classList.toggle('rl-selected', c === card); });
-      if (shopEnabled) updateMenuBg(card.getAttribute('data-rl-char'));
+      if (appUi) updateMenuBg(card.getAttribute('data-rl-char'));
     }
 
     function updateMenuBg(code) {
@@ -1077,8 +1101,8 @@
       }
       roster.forEach(preloadChar);
 
-      if (!shopEnabled) {
-        // ---- unchanged web/original behavior ----
+      if (!appUi) {
+        // ---- legacy plain 3-up grid, kept as a fallback path ----
         charGrid.innerHTML = '';
         roster.forEach(function (ch, i) {
           var card = document.createElement('button');
@@ -1101,7 +1125,7 @@
         return;
       }
 
-      // ---- native: build the carousel instead of the char-grid ----
+      // ---- carousel replaces the char-grid (both app and web) ----
       var og = rosterByCode(OG_CODE) || roster[0];
       var lastChar = loadLastCharPref();
       var owned = ownedRebelCodes();
@@ -1830,7 +1854,7 @@
         .catch(function (err) { devLog('restore: getPurchases caught error = ' + (err && err.message)); return 0; });
     }
 
-    if (shopEnabled) {
+    if (appUi) {
       var closeShopBtn = mount.querySelector('[data-rl-close-shop]');
       if (closeShopBtn) closeShopBtn.addEventListener('click', function () { closeShopDetail(); pendingPurchase = null; showScreen('shop-close'); });
 
@@ -2001,6 +2025,7 @@
         if (menuSignInBtn) menuSignInBtn.hidden = signedIn;
         if (menuSignOutBtn) menuSignOutBtn.hidden = !signedIn;
         if (menuAccountEmailEl) menuAccountEmailEl.textContent = signedIn ? (email || '') : '';
+        syncGisSlots();
       }
       refreshAccountUi();
       if (menuSignInBtn) {
@@ -2018,6 +2043,36 @@
         });
       }
 
+      // Shared tail of every sign-in path, native or web: hand the idToken
+      // to the Worker, which verifies its signature against Google's JWKS
+      // and returns the canonical user id. The client-side token is never
+      // trusted directly for anything.
+      function adoptIdToken(idToken, email) {
+        return fetch(BASE + '/api/auth/google', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: idToken })
+        })
+          .then(function (r) {
+            devLog('sign-in: /api/auth/google status = ' + r.status);
+            if (!r.ok) return r.text().then(function (t) { devLog('sign-in: error body = ' + t); throw new Error('verify failed'); });
+            return r.json();
+          })
+          .then(function (data) {
+            devLog('sign-in: verify response ok = ' + !!(data && data.ok) + ', userId = ' + ((data && data.userId) || 'none'));
+            if (!data || !data.ok) return false;
+            IDENTITY = data.userId;
+            saveSignedInIdentity(data.userId, email || null);
+            refreshAccountUi();
+            // IDENTITY just changed from the guest placeholder to the
+            // real signed-in identity — anything already fetched
+            // during boot (roster, coupon entitlements) used the OLD
+            // value, so coupon-granted birds would stay invisible
+            // until the app restarted without this. Re-run and
+            // re-render now that IDENTITY is correct.
+            return loadCouponEntitlements().then(function () { devLog('sign-in: coupon entitlements re-fetched, complete'); renderCharGrid(); return true; });
+          });
+      }
+
       function doGoogleSignIn() {
         devLog('sign-in: starting');
         if (!GoogleSignIn) { devLog('sign-in: GoogleSignIn plugin not found'); return Promise.resolve(false); }
@@ -2029,36 +2084,105 @@
           .then(function (result) {
             devLog('sign-in: signIn() returned, idToken present = ' + !!(result && result.idToken) + ', email = ' + ((result && result.email) || 'none'));
             if (!result || !result.idToken) return false;
-            // Never trust the client-side idToken/userId directly — the
-            // Worker verifies the token's signature against Google before
-            // this identity is actually used for anything.
-            return fetch(BASE + '/api/auth/google', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken: result.idToken })
-            })
-              .then(function (r) {
-                devLog('sign-in: /api/auth/google status = ' + r.status);
-                if (!r.ok) return r.text().then(function (t) { devLog('sign-in: error body = ' + t); throw new Error('verify failed'); });
-                return r.json();
-              })
-              .then(function (data) {
-                devLog('sign-in: verify response ok = ' + !!(data && data.ok) + ', userId = ' + ((data && data.userId) || 'none'));
-                if (!data || !data.ok) return false;
-                IDENTITY = data.userId;
-                saveSignedInIdentity(data.userId, result.email || null);
-                refreshAccountUi();
-                // IDENTITY just changed from the guest placeholder to the
-                // real signed-in identity — anything already fetched
-                // during boot (roster, coupon entitlements) used the OLD
-                // value, so coupon-granted birds would stay invisible
-                // until the app restarted without this. Re-run and
-                // re-render now that IDENTITY is correct.
-                return loadCouponEntitlements().then(function () { devLog('sign-in: coupon entitlements re-fetched, complete'); renderCharGrid(); return true; });
-              });
+            return adoptIdToken(result.idToken, result.email);
           })
           .catch(function (err) { devLog('sign-in: caught error = ' + (err && err.message)); return false; });
       }
-      triggerGoogleSignIn = doGoogleSignIn;
+      if (shopEnabled) triggerGoogleSignIn = doGoogleSignIn;
+
+      // ---- Web sign-in (Google Identity Services) ----
+      // The Capacitor plugin above only exists inside the native shell, so
+      // the browser uses GIS instead. Both end at the same Worker endpoint,
+      // so a web player and an app player with the same Google account get
+      // the same identity — and therefore the same birds and the same
+      // leaderboard entries.
+      var GIS_SRC = 'https://accounts.google.com/gsi/client';
+      var gisPromise = null;
+      function loadGis() {
+        if (gisPromise) return gisPromise;
+        gisPromise = new Promise(function (resolve, reject) {
+          if (window.google && window.google.accounts && window.google.accounts.id) return resolve();
+          var s = document.createElement('script');
+          s.src = GIS_SRC; s.async = true; s.defer = true;
+          s.onload = function () { resolve(); };
+          s.onerror = function () { reject(new Error('GIS script failed to load')); };
+          document.head.appendChild(s);
+        });
+        return gisPromise;
+      }
+      // Display only — the email shown next to "Sign Out". The Worker does
+      // the real verification, so a garbled decode here is cosmetic.
+      function emailFromIdToken(idToken) {
+        try {
+          var part = idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          return JSON.parse(decodeURIComponent(escape(atob(part)))).email || null;
+        } catch (e) { return null; }
+      }
+      // Swaps one of our styled sign-in buttons for Google's own rendered
+      // button. GIS only issues an ID token through its own button or One
+      // Tap — One Tap can be silently suppressed by the browser, so the
+      // rendered button is the path that always works.
+      var gisButtonSlots = [];
+      function mountWebSignInButton(ourBtn) {
+        if (!ourBtn || ourBtn.dataset.gisMounted) return;
+        ourBtn.dataset.gisMounted = '1';
+        var slot = document.createElement('div');
+        slot.className = 'rl-gis-slot';
+        ourBtn.parentNode.insertBefore(slot, ourBtn.nextSibling);
+        ourBtn.style.display = 'none';
+        gisButtonSlots.push({ slot: slot, ourBtn: ourBtn });
+        loadGis().then(function () {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_SIGNIN_CLIENT_ID,
+            callback: function (resp) {
+              if (!resp || !resp.credential) return;
+              adoptIdToken(resp.credential, emailFromIdToken(resp.credential))
+                .then(function (ok) {
+                  toast(ok ? 'Signed in!' : 'Sign-in didn\'t complete — try again.');
+                  if (ok) {
+                    syncGisSlots();
+                    // Dismiss the first-launch prompt if that's where this
+                    // sign-in came from, and reveal the score form if the
+                    // player signed in from the gameover screen.
+                    var welcome = mount.querySelector('[data-rl-welcome-signin]');
+                    if (welcome && !welcome.hidden) { markWelcomeSignInShown(); welcome.hidden = true; }
+                    onSignedInFromGis();
+                  }
+                })
+                .catch(function () { toast('Sign-in didn\'t complete — try again.'); });
+            }
+          });
+          window.google.accounts.id.renderButton(slot, {
+            theme: 'filled_black', size: 'large', shape: 'pill',
+            text: 'signin_with', width: 260
+          });
+        }).catch(function () {
+          // No GIS (offline, blocked, CSP) — restore our own button so the
+          // spot isn't just empty, even though tapping it can't complete.
+          ourBtn.style.display = '';
+          slot.remove();
+        });
+      }
+      // Google's rendered buttons live outside refreshAccountUi's control,
+      // so their containers follow whatever our own button's state is.
+      function syncGisSlots() {
+        // Hoisting means refreshAccountUi can reach this before the slot
+        // list exists (it runs once during setup, above) — nothing to sync
+        // yet at that point.
+        if (!gisButtonSlots) return;
+        var signedIn = !!loadSignedInUserId();
+        gisButtonSlots.forEach(function (e) { e.slot.hidden = signedIn; });
+      }
+      // Web only: Google's button replaces ours everywhere we offer sign-in.
+      if (!shopEnabled) {
+        [
+          '[data-rl-signin-btn]',        // Settings → Account
+          '[data-rl-menu-signin]',       // megamenu
+          '[data-rl-gameover-signin]',   // "sign in to save your score"
+          '[data-rl-welcome-signin-yes]' // first-launch prompt
+        ].forEach(function (sel) { mountWebSignInButton(mount.querySelector(sel)); });
+        syncGisSlots();
+      }
 
       if (signInBtn) {
         signInBtn.addEventListener('click', function () {
@@ -2408,11 +2532,11 @@
     if (titlePlayBtn) titlePlayBtn.addEventListener('click', function () { hideTitleScreen(); });
     if (backToTitleBtn) backToTitleBtn.addEventListener('click', function () { showTitleAgain(); });
     function maybeShowWelcomeSignIn() {
-      if (!shopEnabled || hasShownWelcomeSignIn() || isSignedIn()) return;
+      if (!appUi || hasShownWelcomeSignIn() || isSignedIn()) return;
       var modal = mount.querySelector('[data-rl-welcome-signin]');
       if (modal) modal.hidden = false;
     }
-    if (shopEnabled && splashEl) {
+    if (appUi && splashEl) {
       splashEl.hidden = false;
       // Starts on a plain black+texture frame (opacity:0 on the logo by
       // default in CSS), then fades the logo in shortly after boot.
@@ -3846,6 +3970,20 @@
 
     // Signing in right from the gameover screen (instead of backing out to
     // the menu) reveals the normal submit UI in place, same score intact.
+    // Swaps the "sign in to save your score" note for the actual submit form
+    // once an identity exists. Shared because sign-in can now complete two
+    // different ways from this screen: the native button below, or Google's
+    // own web button, whose callback lives far away in the account section
+    // (see onSignedInFromGis).
+    function revealScoreSubmitIfEligible() {
+      if (!S || !isSignedIn()) return;
+      if (!S.cfg.kidMode && S.melted >= MIN_LEADERBOARD_SCORE) {
+        signinNote.hidden = true;
+        scoreSubmitBlock.hidden = false;
+        scoreSaved = false;
+      }
+    }
+    onSignedInFromGis = revealScoreSubmitIfEligible;
     if (gameoverSigninBtn) {
       gameoverSigninBtn.addEventListener('click', function () {
         triggerGoogleSignIn().then(function (ok) {
@@ -3853,11 +3991,7 @@
           toast('Signed in!');
           restoreGooglePlayPurchases();
           renderCharGrid();
-          if (!S.cfg.kidMode && S.melted >= MIN_LEADERBOARD_SCORE) {
-            signinNote.hidden = true;
-            scoreSubmitBlock.hidden = false;
-            scoreSaved = false;
-          }
+          revealScoreSubmitIfEligible();
         });
       });
     }
