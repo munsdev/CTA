@@ -2081,7 +2081,19 @@
             // value, so coupon-granted birds would stay invisible
             // until the app restarted without this. Re-run and
             // re-render now that IDENTITY is correct.
-            return loadCouponEntitlements().then(function () { devLog('sign-in: coupon entitlements re-fetched, complete'); renderCharGrid(); return true; });
+            // The roster itself has to be re-fetched too, not just the
+            // entitlements: it was loaded as a guest, so any bird that's
+            // visible = 0 and unlocked only by ownership simply wasn't in
+            // it. Refreshing with the real identity is what makes purchases
+            // appear without needing a reload.
+            return loadCouponEntitlements()
+              .then(function () {
+                return fetch(BASE + '/api/characters?device=' + encodeURIComponent(IDENTITY))
+                  .then(function (r) { return r.json(); })
+                  .then(function (list) { if (Array.isArray(list) && list.length) { roster = list; saveRosterCache(list); } })
+                  .catch(function () {});
+              })
+              .then(function () { devLog('sign-in: entitlements + roster re-fetched, complete'); renderCharGrid(); return true; });
           });
       }
 
@@ -2637,7 +2649,12 @@
 
     Promise.all([
       loadCouponEntitlements(),
-      fetch(BASE + '/api/characters' + (shopEnabled && IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
+      // device is sent whenever there's an identity at all, web included:
+      // the Worker uses it to return birds the player owns but which are
+      // marked visible = 0 in D1. Gating this on shopEnabled meant web never
+      // sent it, so anything bought in the app was missing from the roster
+      // entirely once you signed in on the site.
+      fetch(BASE + '/api/characters' + (IDENTITY ? '?device=' + encodeURIComponent(IDENTITY) : ''))
         .then(function (r) { if (!r.ok) throw new Error('bad response'); return r.json(); })
         .then(function (list) { saveRosterCache(list); return list; })
         .catch(function () {
