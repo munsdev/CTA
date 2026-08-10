@@ -22,3 +22,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/bird-rebels-ice-blaster
+          # The action defaults to wrangler 3.x, which doesn't understand
+          # run_worker_first in wrangler.toml — it warned and ignored it on
+          # every deploy. Ignored, static files are served straight off the
+          # asset layer and never pass through the Worker, so the
+          # Access-Control-Allow-Origin header it sets never reaches them.
+          # That broke sound effects on the web build: SFX load via fetch()
+          # + decodeAudioData (Web Audio), which requires CORS, unlike the
+          # music, which uses an Audio element and doesn't. It also meant
+          # the no-cache headers on engine.js/styles.css never applied, so
+          # updates could sit behind a stale cache.
+          wranglerVersion: "4"

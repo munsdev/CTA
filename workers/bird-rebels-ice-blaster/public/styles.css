@@ -334,6 +334,14 @@
 .rl-corner-btn:active{ transform:scale(.94); }
 .rl-corner-btn-left{ left:14px; }
 .rl-corner-btn-right{ right:14px; color:#ffd23d; }
+/* Menu (title screen) and Back (setup screen) replace what used to be a
+   full-width textured navbar. Same floating treatment as the help/rate
+   bubbles, pinned to the top instead of the bottom, so the artwork keeps
+   the whole screen. */
+.rl-corner-btn-menu,
+.rl-corner-btn-back{ top:14px; bottom:auto; }
+.rl-corner-btn-menu{ right:14px; font-size:19px; }
+.rl-corner-btn-back{ left:14px; font-size:24px; line-height:0; padding-bottom:3px; }
 /* Desktop keeps the app's phone-shaped frame rather than stretching the
    layout wide — one layout serves both, and the web build looks like the
    app. The topbar and carousel normally break out to 100vw to sit flush
@@ -344,7 +352,6 @@
 /* .rl-root qualifier is load-bearing, not decoration: the breakout rules
    these undo live further down the file at equal specificity, so without
    the extra class they'd lose on source order. */
-.rl-root.rl-web [data-rl-screen="start"] [data-rl-topbar],
 .rl-root.rl-web [data-rl-screen="start"] [data-rl-carousel]{
   left:auto; transform:none; width:100%;
 }
@@ -375,14 +382,14 @@
 .rl-appui [data-rl-screen="start"] .rl-sub{
   margin:14px 18px 12px; text-align:left; font-size:12.5px;
 }
-/* .rl-screen is display:flex/flex-direction:column already — removing its
-   own padding lets the topbar sit truly flush with the real edges, instead
-   of fighting the padding with margins/absolute-positioning tricks that
-   still get clipped by the screen's own overflow. Screen-inner picks the
-   padding back up for everything below the bar. */
+/* .rl-screen is display:flex/flex-direction:column already. Its own padding
+   is dropped so children can reach the real screen edges; screen-inner picks
+   it back up, plus a top inset so the heading clears the floating Back
+   button pinned above it. */
 .rl-appui [data-rl-screen="start"].rl-screen{ padding:0 0 24px; justify-content:flex-start; }
 .rl-appui [data-rl-screen="start"] .rl-screen-inner{
-  display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0 18px;
+  display:flex; flex-direction:column; flex:1 1 auto; min-height:0;
+  padding:var(--rl-topbar-h) 18px 0;
   overflow-y:auto; overflow-x:hidden;
 }
 /* Whole Select Your Rebel section (heading through Start Game, wrapped as
@@ -413,45 +420,10 @@
   min-height:min-content;
 }
 
-/* ---------- navbar (native only): single icon button, --rl-topbar-h tall ---------- */
-[data-rl-topbar]{ display:none; }
-.rl-appui [data-rl-screen="start"] [data-rl-topbar]{
-  display:flex; align-items:center; justify-content:space-between;
-  position:relative; left:50%; transform:translateX(-50%);
-  flex:0 0 auto; width:100vw; height:var(--rl-topbar-h); padding:0 18px;
-  background-color:#0a0a0a;
-  background-image:url('textures/knobs.png');
-  background-repeat:repeat;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  /* A transform (translateX, used for centering) creates its own stacking
-     context — without an explicit z-index here, the megamenu button and
-     anything that later overlays this bar could end up painted behind
-     other transformed elements on the page (e.g. the scaled carousel
-     cards) purely due to DOM/paint order, not intent. */
-  z-index:20;
-}
-.rl-topbar-menu-btn{
-  appearance:none; cursor:pointer; background:transparent; border:none;
-  color:#fff; font-size:28px; line-height:1; width:44px; height:44px;
-  display:flex; align-items:center; justify-content:center; flex:none;
-}
-/* Title screen's topbar: same look as the setup screen's, but pinned with
-   position:absolute instead of sitting in normal flow — .rl-splash centers
-   its children as a column, so an in-flow bar here would land in the
-   middle of that stack instead of pinned to the actual top edge. Single
-   button (hamburger only, no logo — the big splash logo already covers
-   branding), right-aligned. */
-[data-rl-title-topbar]{ display:none; }
-.rl-appui [data-rl-screen="title"] [data-rl-title-topbar]{
-  display:flex; align-items:center; justify-content:flex-end;
-  position:absolute; top:0; left:0; right:0;
-  height:var(--rl-topbar-h); padding:0 18px;
-  background-color:#0a0a0a;
-  background-image:url('textures/knobs.png');
-  background-repeat:repeat;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  z-index:20;
-}
+/* The textured navbar is gone entirely — menu and back are floating icon
+   buttons now (see .rl-corner-btn), so the artwork gets the full screen and
+   there's no heavy bar competing with the logo. --rl-topbar-h is kept only
+   as the top inset overlays use to clear those floating buttons. */
 
 /* Empty bottom bar, visible only during actual gameplay (toggled via JS in
    showScreen() based on whether the game screen is showing) — keeps where
@@ -755,15 +727,11 @@
    it like every other overlay, which sits above the setup screen (z-index
    5) but below the title screen (z-index 200). */
 .rl-overlay[data-rl-screen="help"]{ z-index:205; }
-/* The native topbar (see [data-rl-topbar] rules) belongs to the start
-   screen, which stays rendered underneath every overlay (showScreen()
-   doesn't hide it) — its higher z-index means it paints on top of
-   whatever's here. For short dialogs (pause/gameover) that's invisible
-   since they're vertically centered well below it, but any overlay with
-   enough content to reach the top of the screen would get that content
-   hidden behind the bar. Reserve its height and stop centering (so
-   overflow-y:auto above scrolls from a natural top-aligned start) for
-   every overlay except those two intentionally-short ones. */
+/* Keeps overlay content clear of the floating menu/back buttons pinned near
+   the top of the screen, and stops centering so overflow-y:auto above
+   scrolls from a natural top-aligned start. Short dialogs (pause/gameover)
+   are excluded — they're vertically centered well clear of those buttons
+   and look better staying that way. */
 .rl-appui .rl-overlay:not([data-rl-screen="pause"]):not([data-rl-screen="gameover"]){
   justify-content:flex-start;
   padding-top:calc(var(--rl-topbar-h) + 26px);

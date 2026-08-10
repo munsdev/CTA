@@ -373,21 +373,20 @@
   var TEMPLATE = ''
     + '<div class="rl-frame">'
     + '  <div class="rl-splash" data-rl-splash data-rl-screen="title" hidden>'
-    + '    <div class="rl-topbar" data-rl-title-topbar hidden>'
-    + '      <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu" title="Menu">&#9776;</button>'
-    + '    </div>'
-    + '    <img class="rl-splash-logo" src="logo/ice-blaster-logo-round.png" alt="Bird Rebels: Ice Blaster">'
+    // src is set at boot from ASSET_BASE, not hardcoded here: on web the
+    // page lives on caseytheamerican.com while the art lives on the Worker,
+    // so a page-relative path resolves against the wrong origin and 404s.
+    + '    <img class="rl-splash-logo" data-rl-asset="logo/ice-blaster-logo-round.png" alt="Bird Rebels: Ice Blaster">'
     + '    <div class="rl-title-actions" data-rl-title-actions hidden>'
     + '      <button type="button" class="rl-btn" data-rl-title-play data-i18n="titlePlay">Play</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-title-howto data-i18n="howToPlay">How to Play</button>'
     + '    </div>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-menu" data-rl-menu-btn hidden aria-label="Menu" title="Menu">&#9776;</button>'
     + '    <button type="button" class="rl-corner-btn rl-corner-btn-left" data-rl-help-btn hidden aria-label="Help" title="Help">?</button>'
     + '    <button type="button" class="rl-corner-btn rl-corner-btn-right" data-rl-rate-btn hidden aria-label="Rate this app" title="Rate this app">&#9733;</button>'
     + '  </div>'
     + '  <div class="rl-screen" data-rl-screen="start">'
-    + '    <div class="rl-topbar" data-rl-topbar>'
-    + '      <button class="rl-topbar-menu-btn" data-rl-back-to-title type="button" aria-label="Back" title="Back">&#8249;</button>'
-    + '    </div>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-back" data-rl-back-to-title aria-label="Back" title="Back">&#8249;</button>'
     + '    <div class="rl-screen-inner">'
     + '      <div class="rl-select-rebel-group" data-rl-select-rebel-group>'
     + '        <div class="rl-char-label-row rl-field-label rl-field-label-lg" data-i18n="selectYourRebel">Select Your Rebel</div>'
@@ -702,8 +701,21 @@
     // so it keeps loading sounds from BASE exactly as before.
     var SOUND_BASE = mount.getAttribute('data-rl-sound-base');
     if (SOUND_BASE == null) SOUND_BASE = BASE;
+    // Where bundled art (logo, skyline) is served from. Same split as sounds
+    // above: the native wrapper ships these inside the app and points at its
+    // own folder, while web has to load them from the Worker. This can't be
+    // a page-relative path in the markup, because on web the page is
+    // caseytheamerican.com and the art is on the Worker — relative would
+    // resolve against the site and 404.
+    var ASSET_BASE = mount.getAttribute('data-rl-asset-base');
+    if (ASSET_BASE == null) ASSET_BASE = mount.getAttribute('data-rl-sound-base');
+    if (ASSET_BASE == null) ASSET_BASE = BASE;
+    function assetUrl(path) { return String(ASSET_BASE).replace(/\/+$/, '') + '/' + path; }
     mount.classList.add('rl-root');
     mount.appendChild(el(TEMPLATE));
+    mount.querySelectorAll('[data-rl-asset]').forEach(function (n) {
+      n.src = assetUrl(n.getAttribute('data-rl-asset'));
+    });
     var soundPlayer = makeSoundPlayer(SOUND_BASE);
     var playSound = soundPlayer.play;
 
@@ -2468,7 +2480,7 @@
     var splashEl = mount.querySelector('[data-rl-splash]');
     var splashLogoEl = mount.querySelector('.rl-splash-logo');
     var titleActionsEl = mount.querySelector('[data-rl-title-actions]');
-    var titleTopbarEl = mount.querySelector('[data-rl-title-topbar]');
+    var titleMenuBtn = mount.querySelector('[data-rl-menu-btn]');
     var titlePlayBtn = mount.querySelector('[data-rl-title-play]');
     var titleHowToBtn = mount.querySelector('[data-rl-title-howto]');
     var backToTitleBtn = mount.querySelector('[data-rl-back-to-title]');
@@ -2485,7 +2497,7 @@
           requestAnimationFrame(function () { titleActionsEl.classList.add('rl-title-actions-visible'); });
         });
       }
-      if (titleTopbarEl) titleTopbarEl.hidden = false;
+      if (titleMenuBtn) titleMenuBtn.hidden = false;
       if (helpBtn) helpBtn.hidden = false;
       if (rateBtn) rateBtn.hidden = hasRated();
     }
@@ -2510,7 +2522,7 @@
         setTimeout(function () {
           splashEl.hidden = true;
           if (titleActionsEl) titleActionsEl.hidden = true;
-          if (titleTopbarEl) titleTopbarEl.hidden = true;
+          if (titleMenuBtn) titleMenuBtn.hidden = true;
           if (helpBtn) helpBtn.hidden = true;
           if (rateBtn) rateBtn.hidden = true;
           maybeShowWelcomeSignIn();
@@ -3467,7 +3479,7 @@
     // and drawProjectiles in the render loop). Shared across every scene,
     // Rainbow Blizzard included.
     var skylineImg = new Image();
-    skylineImg.src = 'img/skyline-regular.png';
+    skylineImg.src = assetUrl('img/skyline-regular.png');
     function drawSkyline() {
       if (!skylineImg.complete || !skylineImg.naturalWidth) return;
       var drawH = W * (skylineImg.naturalHeight / skylineImg.naturalWidth);
