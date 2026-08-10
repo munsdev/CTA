@@ -15,6 +15,10 @@
 
   --rl-max-width: none;
   --rl-height: var(--_primitives---gamewindow, calc(100dvh - 6rem));
+  /* Native navbar height. Single source of truth: the title screen's bar,
+     the setup screen's bar, and the top padding overlays use to clear the
+     bar all read from this, so the three can't drift apart. */
+  --rl-topbar-h:4rem;
 
   --rl-bg-top:#0a1420; --rl-bg-bottom:#16283c;
   --rl-panel:#0d1c2c; --rl-panel-line:#233649;
@@ -235,7 +239,7 @@
      flow regardless, so without this padding the play area extends
      straight underneath it, and the bar visually overlays the gameplay
      instead of the stage correctly stopping above it. */
-  padding-bottom:calc(32px + env(safe-area-inset-bottom));
+  padding-bottom:calc(16px + env(safe-area-inset-bottom));
 }
 /* Setup screen only: solid black instead of the themed navy gradient, to
    match the site (birdrebels.art uses near-black, not blue). Higher
@@ -273,6 +277,7 @@
    shown on top of everything while the app boots ---------- */
 .rl-splash{
   display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center;
+  flex-direction:column; gap:28px;
   background-color:var(--rl-menu-bg);
   background-image:url('textures/diamonds-dark.png');
   background-size:220px 220px;
@@ -296,6 +301,30 @@
   opacity:0; transition:opacity .6s ease;
 }
 .rl-splash-logo.rl-splash-visible{ opacity:1; }
+/* Title-screen Play/How to Play — revealed once loading finishes instead of
+   the splash auto-advancing on its own; fades in the same way the logo
+   does, just as a second, later beat. */
+.rl-title-actions{
+  display:flex; flex-direction:column; gap:12px; width:min(70vw, 260px);
+  opacity:0; transition:opacity .5s ease;
+}
+.rl-title-actions.rl-title-actions-visible{ opacity:1; }
+/* Bottom-corner help/rate bubbles on the main rebel-select screen — native
+   only, same reasoning as the rest of the shop/review UI (no Play Store
+   listing to rate from the Webflow embed). Sit above the reserved
+   bottom-bar padding automatically since .rl-frame is their containing
+   block. */
+.rl-corner-btn{
+  display:none; position:absolute; bottom:14px;
+  width:40px; height:40px; border-radius:50%; align-items:center; justify-content:center;
+  background:rgba(10,14,20,.72); border:1px solid var(--rl-panel-line); color:var(--rl-ink);
+  font-family:var(--rl-font-display); font-weight:800; font-size:17px; cursor:pointer;
+  z-index:15; box-shadow:0 4px 14px rgba(0,0,0,.35); padding:0;
+}
+.rl-native .rl-corner-btn{ display:flex; }
+.rl-corner-btn:active{ transform:scale(.94); }
+.rl-corner-btn-left{ left:14px; }
+.rl-corner-btn-right{ right:14px; color:#ffd23d; }
 
 .rl-native [data-rl-screen="start"] .rl-tier-note,
 .rl-native [data-rl-screen="start"] .rl-check-row small,
@@ -322,13 +351,33 @@
    child centers it within whatever space .rl-screen-inner has left after
    the navbar. */
 .rl-select-rebel-group{ margin:auto 0; max-width:100%; overflow-x:hidden; }
+/* Native only: make this group a flex column that fills the screen, so the
+   carousel inside it can be the one element that absorbs (or gives up)
+   whatever vertical space is left after the heading, name label, pickers
+   and buttons have taken theirs. Everything else keeps its natural height
+   — default min-height:auto on a flex item stops the buttons being
+   squeezed — so the carousel is the only thing that flexes, and nothing
+   can get pushed off the bottom of the screen. */
+.rl-native [data-rl-screen="start"] .rl-select-rebel-group{
+  display:flex; flex-direction:column; flex:1 1 auto; margin:0;
+  /* This group must never shrink below its own content. If it does, the
+     buttons at the bottom overflow its box silently — the scroll container
+     above still measures the shrunken height, so there's nothing to scroll
+     to and they end up simply unreachable.
+     min-content has to be stated explicitly rather than relying on the
+     min-height:auto default, because that default only applies to flex
+     items whose overflow is visible — and this group sets
+     overflow-x:hidden (see the base rule above), which silently drops its
+     automatic minimum size to zero. */
+  min-height:min-content;
+}
 
-/* ---------- navbar (native only): logo left, menu icon right, ~6rem tall ---------- */
+/* ---------- navbar (native only): single icon button, --rl-topbar-h tall ---------- */
 [data-rl-topbar]{ display:none; }
 .rl-native [data-rl-screen="start"] [data-rl-topbar]{
   display:flex; align-items:center; justify-content:space-between;
   position:relative; left:50%; transform:translateX(-50%);
-  flex:0 0 auto; width:100vw; height:6rem; padding:0 18px;
+  flex:0 0 auto; width:100vw; height:var(--rl-topbar-h); padding:0 18px;
   background-color:#0a0a0a;
   background-image:url('textures/knobs.png');
   background-repeat:repeat;
@@ -340,11 +389,27 @@
      cards) purely due to DOM/paint order, not intent. */
   z-index:20;
 }
-.rl-topbar-logo{ height:calc(6rem - 28px); width:auto; display:block; }
 .rl-topbar-menu-btn{
   appearance:none; cursor:pointer; background:transparent; border:none;
   color:#fff; font-size:28px; line-height:1; width:44px; height:44px;
   display:flex; align-items:center; justify-content:center; flex:none;
+}
+/* Title screen's topbar: same look as the setup screen's, but pinned with
+   position:absolute instead of sitting in normal flow — .rl-splash centers
+   its children as a column, so an in-flow bar here would land in the
+   middle of that stack instead of pinned to the actual top edge. Single
+   button (hamburger only, no logo — the big splash logo already covers
+   branding), right-aligned. */
+[data-rl-title-topbar]{ display:none; }
+.rl-native [data-rl-screen="title"] [data-rl-title-topbar]{
+  display:flex; align-items:center; justify-content:flex-end;
+  position:absolute; top:0; left:0; right:0;
+  height:var(--rl-topbar-h); padding:0 18px;
+  background-color:#0a0a0a;
+  background-image:url('textures/knobs.png');
+  background-repeat:repeat;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  z-index:20;
 }
 
 /* Empty bottom bar, visible only during actual gameplay (toggled via JS in
@@ -356,7 +421,7 @@
    sitting over nothing. Matches the topbar's texture/z-index treatment. */
 .rl-bottombar{
   position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-  width:100vw; height:calc(32px + env(safe-area-inset-bottom));
+  width:100vw; height:calc(16px + env(safe-area-inset-bottom));
   background-color:#0a0a0a;
   background-image:url('textures/knobs.png');
   background-repeat:repeat;
@@ -392,12 +457,32 @@
      same escape-hatch pattern already used for [data-rl-topbar] above. */
   position:relative; left:50%; transform:translateX(-50%);
   width:100vw; padding:0 12px; box-sizing:border-box;
+  /* Mirrors CAROUSEL_MAX_SCALE in engine.js — the factor the centered card
+     is scaled up by. The artwork divides the track height by this so that
+     at full scale it lands exactly at the track's edges instead of
+     overflowing them. Keep the two in sync if the peak scale changes. */
+  --rl-carousel-peak-scale:1.75;
+  /* The one flexible element on this screen: it takes whatever vertical
+     space is left over rather than declaring a height of its own, so the
+     artwork gets as big as the device allows and never pushes the buttons
+     below it off-screen. min-height:0 is what actually permits shrinking
+     (flex items default to min-height:auto, which refuses to go below
+     content size); the floor keeps it from collapsing to nothing on very
+     short screens, where .rl-screen-inner's overflow-y:auto takes over. */
+  flex:1 1 auto; min-height:8rem;
 }
 [data-rl-get-more-rebels]{ display:none; }
 .rl-native [data-rl-screen="start"] [data-rl-get-more-rebels]{ display:block; margin-bottom:10px; }
 
 .rl-carousel-track{
-  flex:1; height:clamp(210px, 34vh, 290px); display:flex; align-items:center;
+  /* Fills whatever height its parent flexed to (see [data-rl-carousel]
+     above) instead of declaring one. Any fixed height here is wrong on
+     some device: too small and the centered card gets clipped by the
+     overflow-y:hidden, too large and it pushes the buttons below off the
+     bottom of the screen. The artwork sizes itself off this height (see
+     .rl-carousel-card img), so the whole thing scales to the device
+     rather than the device having to match a number. */
+  flex:1; height:100%; display:flex; align-items:center;
   overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
@@ -427,11 +512,32 @@
      usage elsewhere keeps its normal card chrome; this override is scoped
      to .rl-carousel-card specifically so it can't leak anywhere else. */
   border:none; background:transparent; padding:0;
+  /* Full track height, artwork centred inside it — scale() transforms grow
+     from the centre, so the art needs equal room above and below to expand
+     into rather than sitting at the top of the box. */
+  height:100%; display:flex; align-items:center; justify-content:center;
+}
+/* Artwork derives its size from the track height rather than a fixed
+   number: at 1/peak-scale of the track, a card scaled to full size lands
+   exactly at the track's top and bottom edges — no clipping, on any screen
+   height. max-width caps it at the card's layout width on tall screens
+   (aspect-ratio then pulls the height down to match), which is what keeps
+   neighbouring cards from colliding. */
+.rl-carousel-card img,
+.rl-carousel-card .rl-char-emblem{
+  height:calc(100% / var(--rl-carousel-peak-scale));
+  width:auto; max-width:100%; margin-bottom:0;
 }
 .rl-carousel-card img{
   background:transparent; border-radius:0;
 }
-.rl-carousel-card span{ font-size:11px; margin-top:4px; color:var(--tile-accent, var(--rl-accent)); }
+/* Shared name label, kept in sync with whichever card is centered (see
+   setActiveCarouselCard in engine.js) — deliberately NOT inside a card, so
+   it has a constant size and never gets dragged into the scale animation. */
+.rl-carousel-selected-label{
+  text-align:center; font-size:15px; font-weight:700; margin:4px 0 14px;
+  color:var(--tile-accent, var(--rl-accent)); min-height:1.2em;
+}
 .rl-carousel-arrow{
   flex:0 0 auto; width:34px; height:34px; border-radius:50%; appearance:none; cursor:pointer;
   border:1px solid var(--rl-panel-line); background:rgba(255,255,255,.03); color:var(--rl-ink);
@@ -586,9 +692,20 @@
 /* ---------- overlays: pause / game over / leaderboard ---------- */
 .rl-overlay{
   position:absolute; inset:0; z-index:5; display:flex; flex-direction:column;
-  justify-content:center; padding:26px 22px; background:rgba(8,14,22,.92); backdrop-filter:blur(2px);
+  /* Fully opaque now (was rgba(8,14,22,.92) + a blur) — the game's
+     background art was still bleeding through enough to make text hard to
+     read, so this just solidly covers it instead of trying to blur it
+     into submission. Matches --rl-panel, the same solid tone every other
+     panel/modal in the app already uses. */
+  justify-content:center; padding:26px 22px; background:var(--rl-panel);
   overflow-y:auto;
 }
+/* Help is the one overlay reachable only from the title screen, and it must
+   render as a layer directly on top of it (see engine.js openHelp/closeHelp
+   — no showScreen(), title stays untouched underneath) rather than behind
+   it like every other overlay, which sits above the setup screen (z-index
+   5) but below the title screen's splash (z-index 50). */
+.rl-overlay[data-rl-screen="help"]{ z-index:55; }
 /* The native topbar (see [data-rl-topbar] rules) belongs to the start
    screen, which stays rendered underneath every overlay (showScreen()
    doesn't hide it) — its higher z-index means it paints on top of
@@ -600,7 +717,7 @@
    every overlay except those two intentionally-short ones. */
 .rl-native .rl-overlay:not([data-rl-screen="pause"]):not([data-rl-screen="gameover"]){
   justify-content:flex-start;
-  padding-top:calc(6rem + 26px);
+  padding-top:calc(var(--rl-topbar-h) + 26px);
 }
 .rl-overlay h2{
   font-family:var(--rl-font-display); font-size:33px; font-weight:800; text-align:center; margin:0 0 4px;

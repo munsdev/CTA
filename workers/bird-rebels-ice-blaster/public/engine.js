@@ -67,10 +67,13 @@
       sortBy: 'Sort by', sortScore: 'Score', sortAccuracy: 'Accuracy', sortName: 'Name', sortDate: 'Date',
       loading: 'Loading…', loadMore: 'Load More', back: 'Back',
       about: 'About',
-      aboutIce: 'Ice cubes are falling — laser them down before they reach the bottom.',
-      aboutSpeed: 'Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
-      aboutCasual: '<b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.',
-      aboutBlizzard: '<b>Rainbow Blizzard</b> — your laser turns rainbow, rockets keep their toy look, adds a separate leaderboard.',
+      helpObjective: 'Ice cubes fall from the top of the screen — melt them with your laser before they reach the bottom. Move to aim, tap/click/space to fire.',
+      helpLives: 'You\'ve got 3 lives. Let a cube reach the bottom and you lose one — run out and it\'s game over.',
+      helpPowerups: 'Grab powerups mid-run for a temporary edge, like Triple Laser — three shots at once instead of one.',
+      helpDifficulty: 'Easy, Medium, and Hard control how fast and how often cubes fall. Speed and frequency climb through the whole run either way — Hard just starts faster and climbs quicker.',
+      helpCasual: '<b>Casual Mode</b> — no life bar, no penalty for missed cubes, just relaxed practice. Powerups still work, but Casual runs don\'t count for the leaderboard.',
+      helpBlizzard: '<b>Rainbow Blizzard</b> — a separate scene with its own leaderboard. Your laser turns into a rainbow beam, and wind pushes falling cubes sideways.',
+      helpLeaderboard: 'Sign in with Google and melt at least 5 cubes to save your score. Each difficulty and scene keeps its own board.',
       credits: 'Credits',
       creditsTheme: 'Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -84,7 +87,10 @@
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
       casualModeLabel: 'Casual Mode<small>No life bar, no penalty for missed cubes — weapon powerups still work normally. Casual Mode runs are not eligible for the leaderboard.</small>',
-      menu: 'Menu'
+      menu: 'Menu',
+      titlePlay: 'Play', howToPlay: 'How to Play',
+      enjoyingGame: 'Enjoying Bird Rebels: Ice Blaster?', yesBtn: 'Yes', noBtn: 'No',
+      notLikingTitle: 'Sorry to hear that', notLikingSub: 'Tell us what\'s wrong and we\'ll take a look.', sendFeedbackBtn: 'Send Feedback'
     },
     de: {
       selectYourRebel: 'Wähle deinen Rebellen', loadingRoster: 'Lade Vogelliste…', offlineModeNote: 'OFFLINE-MODUS — EINIGE FUNKTIONEN DEAKTIVIERT',
@@ -100,10 +106,13 @@
       sortBy: 'Sortieren nach', sortScore: 'Punktzahl', sortAccuracy: 'Genauigkeit', sortName: 'Name', sortDate: 'Datum',
       loading: 'Lädt…', loadMore: 'Mehr laden', back: 'Zurück',
       about: 'Über',
-      aboutIce: 'Eiswürfel fallen herab — schieß sie ab, bevor sie den Boden erreichen.',
-      aboutSpeed: 'Geschwindigkeit & Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
-      aboutCasual: '<b>Entspannter Modus</b> — keine Lebensanzeige, keine Strafe für verpasste Würfel. Waffen-Powerups funktionieren normal.',
-      aboutBlizzard: '<b>Regenbogen-Blizzard</b> — dein Laser wird zum Regenbogen, Raketen behalten ihren Spielzeug-Look, eigene Bestenliste.',
+      helpObjective: 'Eiswürfel fallen von oben herab — schmilz sie mit deinem Laser, bevor sie den Boden erreichen. Bewege dich zum Zielen, tippen/klicken/Leertaste zum Feuern.',
+      helpLives: 'Du hast 3 Leben. Erreicht ein Würfel den Boden, verlierst du eins — sind alle weg, ist das Spiel vorbei.',
+      helpPowerups: 'Sammle Powerups während des Laufs für einen kurzzeitigen Vorteil, z. B. den Dreifach-Laser — drei Schüsse auf einmal statt einem.',
+      helpDifficulty: 'Leicht, Mittel und Schwer bestimmen, wie schnell und wie häufig Würfel fallen. Geschwindigkeit und Häufigkeit steigen bei allen dreien im Laufe des Spiels — Schwer startet einfach schneller und steigert sich schneller.',
+      helpCasual: '<b>Entspannter Modus</b> — keine Lebensanzeige, keine Strafe für verpasste Würfel, einfach entspannt üben. Powerups funktionieren weiterhin, aber Läufe im entspannten Modus zählen nicht für die Bestenliste.',
+      helpBlizzard: '<b>Regenbogen-Blizzard</b> — eine eigene Szene mit eigener Bestenliste. Dein Laser wird zum Regenbogenstrahl, und Wind schiebt fallende Würfel zur Seite.',
+      helpLeaderboard: 'Melde dich mit Google an und schmilz mindestens 5 Würfel, um deinen Highscore zu speichern. Jede Schwierigkeit und Szene hat ihre eigene Bestenliste.',
       credits: 'Mitwirkende',
       creditsTheme: 'Regenbogen-Blizzard-Musik: bearbeitet nach einem Stück von <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'OG-Rebel-Loon-Design von <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -117,7 +126,10 @@
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit & Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
       casualModeLabel: 'Entspannter Modus<small>Keine Lebensanzeige, keine Strafe für verpasste Würfel — Waffen-Powerups funktionieren normal. Läufe im entspannten Modus zählen nicht für die Bestenliste.</small>',
-      menu: 'Menü'
+      menu: 'Menü',
+      titlePlay: 'Spielen', howToPlay: 'Wie man spielt',
+      enjoyingGame: 'Gefällt dir Bird Rebels: Ice Blaster?', yesBtn: 'Ja', noBtn: 'Nein',
+      notLikingTitle: 'Das tut uns leid', notLikingSub: 'Sag uns, was nicht stimmt — wir schauen es uns an.', sendFeedbackBtn: 'Feedback senden'
     },
     fr: {
       selectYourRebel: 'Choisis ton rebelle', loadingRoster: 'Chargement de la liste…', offlineModeNote: 'MODE HORS LIGNE — CERTAINES FONCTIONS DÉSACTIVÉES',
@@ -133,10 +145,13 @@
       sortBy: 'Trier par', sortScore: 'Score', sortAccuracy: 'Précision', sortName: 'Nom', sortDate: 'Date',
       loading: 'Chargement…', loadMore: 'Charger plus', back: 'Retour',
       about: 'À propos',
-      aboutIce: 'Des glaçons tombent — détruis-les avant qu\'ils n\'atteignent le sol.',
-      aboutSpeed: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
-      aboutCasual: '<b>Mode Détente</b> — pas de barre de vie, aucune pénalité pour les glaçons manqués. Les bonus d\'armes fonctionnent normalement.',
-      aboutBlizzard: '<b>Blizzard Arc-en-ciel</b> — ton laser devient arc-en-ciel, les roquettes gardent leur look jouet, classement séparé.',
+      helpObjective: 'Des glaçons tombent du haut de l\'écran — fais-les fondre avec ton laser avant qu\'ils n\'atteignent le sol. Bouge pour viser, touche / clique / espace pour tirer.',
+      helpLives: 'Tu as 3 vies. Si un glaçon atteint le sol, tu en perds une — plus de vies, partie terminée.',
+      helpPowerups: 'Ramasse des bonus pendant la partie pour un avantage temporaire, comme le Laser Triple — trois tirs à la fois au lieu d\'un.',
+      helpDifficulty: 'Facile, Moyen et Difficile déterminent la vitesse et la fréquence des glaçons. Les deux augmentent tout au long de la partie dans les trois cas — Difficile commence juste plus vite et progresse plus rapidement.',
+      helpCasual: '<b>Mode Détente</b> — pas de barre de vie, aucune pénalité pour les glaçons manqués, juste pour s\'entraîner tranquillement. Les bonus fonctionnent toujours, mais les parties en Mode Détente ne comptent pas pour le classement.',
+      helpBlizzard: '<b>Blizzard Arc-en-ciel</b> — une scène à part avec son propre classement. Ton laser devient un rayon arc-en-ciel, et le vent pousse les glaçons qui tombent sur le côté.',
+      helpLeaderboard: 'Connecte-toi avec Google et fais fondre au moins 5 glaçons pour enregistrer ton score. Chaque difficulté et scène a son propre classement.',
       credits: 'Crédits',
       creditsTheme: 'Thème musical du Blizzard Arc-en-ciel : adapté d\'un morceau de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'Design original du Rebel Loon par <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -150,7 +165,10 @@
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
       casualModeLabel: 'Mode Détente<small>Pas de barre de vie, aucune pénalité pour les glaçons manqués — les bonus d\'armes fonctionnent normalement. Les parties en Mode Détente ne comptent pas pour le classement.</small>',
-      menu: 'Menu'
+      menu: 'Menu',
+      titlePlay: 'Jouer', howToPlay: 'Comment jouer',
+      enjoyingGame: 'Bird Rebels : Ice Blaster te plaît ?', yesBtn: 'Oui', noBtn: 'Non',
+      notLikingTitle: 'Désolé de l\'entendre', notLikingSub: 'Dis-nous ce qui ne va pas, on va y jeter un œil.', sendFeedbackBtn: 'Envoyer un commentaire'
     },
     es: {
       selectYourRebel: 'Elige a tu rebelde', loadingRoster: 'Cargando la lista…', offlineModeNote: 'MODO SIN CONEXIÓN — ALGUNAS FUNCIONES DESACTIVADAS',
@@ -166,10 +184,13 @@
       sortBy: 'Ordenar por', sortScore: 'Puntuación', sortAccuracy: 'Precisión', sortName: 'Nombre', sortDate: 'Fecha',
       loading: 'Cargando…', loadMore: 'Cargar más', back: 'Atrás',
       about: 'Acerca de',
-      aboutIce: 'Están cayendo cubos de hielo — destrúyelos antes de que lleguen al suelo.',
-      aboutSpeed: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
-      aboutCasual: '<b>Modo Casual</b> — sin barra de vida, sin penalización por cubos perdidos. Las mejoras de armas funcionan con normalidad.',
-      aboutBlizzard: '<b>Ventisca Arcoíris</b> — tu láser se vuelve arcoíris, los cohetes mantienen su look de juguete, clasificación aparte.',
+      helpObjective: 'Caen cubos de hielo desde arriba — derrítelos con tu láser antes de que lleguen al suelo. Muévete para apuntar, toca / haz clic / pulsa espacio para disparar.',
+      helpLives: 'Tienes 3 vidas. Si un cubo llega al suelo, pierdes una — si se acaban, se termina la partida.',
+      helpPowerups: 'Recoge mejoras durante la partida para una ventaja temporal, como el Láser Triple: tres disparos a la vez en lugar de uno.',
+      helpDifficulty: 'Fácil, Medio y Difícil determinan la velocidad y frecuencia de los cubos. Ambas aumentan durante toda la partida en los tres casos — Difícil solo empieza más rápido y aumenta más deprisa.',
+      helpCasual: '<b>Modo Casual</b> — sin barra de vida, sin penalización por cubos perdidos, solo para practicar con calma. Las mejoras siguen funcionando, pero las partidas en Modo Casual no cuentan para la clasificación.',
+      helpBlizzard: '<b>Ventisca Arcoíris</b> — una escena aparte con su propia clasificación. Tu láser se convierte en un rayo arcoíris, y el viento empuja los cubos que caen hacia los lados.',
+      helpLeaderboard: 'Inicia sesión con Google y derrite al menos 5 cubos para guardar tu puntuación. Cada dificultad y escena tiene su propia clasificación.',
       credits: 'Créditos',
       creditsTheme: 'Tema de la Ventisca Arcoíris: adaptado de una pista de <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.',
       creditsArtOg: 'Diseño original de Rebel Loon por <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.',
@@ -183,7 +204,10 @@
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
       casualModeLabel: 'Modo Casual<small>Sin barra de vida, sin penalización por cubos perdidos — las mejoras de armas funcionan con normalidad. Las partidas en Modo Casual no se añaden a la clasificación.</small>',
-      menu: 'Menú'
+      menu: 'Menú',
+      titlePlay: 'Jugar', howToPlay: 'Cómo jugar',
+      enjoyingGame: '¿Te está gustando Bird Rebels: Ice Blaster?', yesBtn: 'Sí', noBtn: 'No',
+      notLikingTitle: 'Lamentamos escuchar eso', notLikingSub: 'Cuéntanos qué anda mal y le echaremos un vistazo.', sendFeedbackBtn: 'Enviar comentarios'
     }
   };
   var LANG_KEY = 'rl_lang_v1';
@@ -348,13 +372,21 @@
 
   var TEMPLATE = ''
     + '<div class="rl-frame">'
-    + '  <div class="rl-splash" data-rl-splash hidden>'
+    + '  <div class="rl-splash" data-rl-splash data-rl-screen="title" hidden>'
+    + '    <div class="rl-topbar" data-rl-title-topbar hidden>'
+    + '      <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu" title="Menu">&#9776;</button>'
+    + '    </div>'
     + '    <img class="rl-splash-logo" src="logo/ice-blaster-logo-round.png" alt="Bird Rebels: Ice Blaster">'
+    + '    <div class="rl-title-actions" data-rl-title-actions hidden>'
+    + '      <button type="button" class="rl-btn" data-rl-title-play data-i18n="titlePlay">Play</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-title-howto data-i18n="howToPlay">How to Play</button>'
+    + '    </div>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-left" data-rl-help-btn hidden aria-label="Help" title="Help">?</button>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-right" data-rl-rate-btn hidden aria-label="Rate this app" title="Rate this app">&#9733;</button>'
     + '  </div>'
     + '  <div class="rl-screen" data-rl-screen="start">'
     + '    <div class="rl-topbar" data-rl-topbar>'
-    + '      <img class="rl-topbar-logo" src="logo/ice-blaster-logo.png" alt="Bird Rebels: Ice Blaster">'
-    + '      <button class="rl-topbar-menu-btn" data-rl-menu-btn type="button" aria-label="Menu" title="Menu">&#9776;</button>'
+    + '      <button class="rl-topbar-menu-btn" data-rl-back-to-title type="button" aria-label="Back" title="Back">&#8249;</button>'
     + '    </div>'
     + '    <div class="rl-screen-inner">'
     + '      <div class="rl-select-rebel-group" data-rl-select-rebel-group>'
@@ -365,6 +397,7 @@
     + '          <div class="rl-carousel-track" data-rl-carousel-track></div>'
     + '          <button type="button" class="rl-carousel-arrow rl-carousel-next" data-rl-carousel-next aria-label="Next rebel">&#8250;</button>'
     + '        </div>'
+    + '        <div class="rl-carousel-selected-label" data-rl-carousel-label></div>'
     + '        <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels data-i18n="getMoreRebels">Get More Rebels</button>'
     + '        <div class="rl-picker-row">'
     + '          <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
@@ -473,14 +506,23 @@
     + '    </div>'
     + '  </div>'
 
+    + '  <div class="rl-overlay" data-rl-screen="help" hidden>'
+    + '    <div class="rl-screen-inner">'
+    + '      <h2 data-i18n="howToPlay">How to Play</h2>'
+    + '      <p class="rl-info-block" data-i18n="helpObjective">Ice cubes fall from the top of the screen — melt them with your laser before they reach the bottom. Move to aim, tap/click/space to fire.</p>'
+    + '      <p class="rl-info-block" data-i18n="helpLives">You\'ve got 3 lives. Let a cube reach the bottom and you lose one — run out and it\'s game over.</p>'
+    + '      <p class="rl-info-block" data-i18n="helpPowerups">Grab powerups mid-run for a temporary edge, like Triple Laser — three shots at once instead of one.</p>'
+    + '      <p class="rl-info-block" data-i18n="helpDifficulty">Easy, Medium, and Hard control how fast and how often cubes fall. Speed and frequency climb through the whole run either way — Hard just starts faster and climbs quicker.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="helpCasual"><b>Casual Mode</b> — no life bar, no penalty for missed cubes, just relaxed practice. Powerups still work, but Casual runs don\'t count for the leaderboard.</p>'
+    + '      <p class="rl-info-block" data-i18n-html="helpBlizzard"><b>Rainbow Blizzard</b> — a separate scene with its own leaderboard. Your laser turns into a rainbow beam, and wind pushes falling cubes sideways.</p>'
+    + '      <p class="rl-info-block" data-i18n="helpLeaderboard">Sign in with Google and melt at least 5 cubes to save your score. Each difficulty and scene keeps its own board.</p>'
+    + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-close-help data-i18n="back">Back</button>'
+    + '    </div>'
+    + '  </div>'
+
     + '  <div class="rl-overlay" data-rl-screen="info" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="about">About</h2>'
-    + '      <p class="rl-info-block" data-i18n="aboutIce">Ice cubes are falling — laser them down before they reach the bottom.</p>'
-    + '      <p class="rl-info-block" data-i18n="aboutSpeed">Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.</p>'
-    + '      <p class="rl-info-block" data-i18n-html="aboutCasual"><b>Casual Mode</b> — no life bar, no penalty for missed cubes. Weapon powerups still work normally.</p>'
-    + '      <p class="rl-info-block" data-i18n-html="aboutBlizzard"><b>Rainbow Blizzard</b> — swaps your laser for rockets, adds a separate leaderboard.</p>'
-    + '      <div class="rl-info-divider"></div>'
     + '      <h3 class="rl-info-subhead" data-i18n="credits">Credits</h3>'
     + '      <p class="rl-info-block" data-i18n-html="creditsTheme">Rainbow Blizzard theme: chopped & modified from a track by <a href="https://soundcloud.com/edrootsmusic" target="_blank" rel="noopener">Emmett Doyle</a>.</p>'
     + '      <p class="rl-info-block" data-i18n-html="creditsArtOg">OG Rebel Loon design by <a href="https://www.reddit.com/r/minnesota/comments/1qhjp16/minnesota_rebel_alliance_logo/" target="_blank" rel="noopener">Bernardo Anderson</a>.</p>'
@@ -601,6 +643,23 @@
     + '      <p class="rl-sub" data-i18n="welcomeSignInSub">Save your rebels to your account so they\'re never lost, even on a new device.</p>'
     + '      <button class="rl-btn" data-rl-welcome-signin-yes data-i18n="signInGoogle">Sign in with Google</button>'
     + '      <button class="rl-btn rl-btn-ghost rl-btn-back" data-rl-welcome-signin-no data-i18n="notNow">Not Now</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-unlock-modal" data-rl-rate-prompt hidden>'
+    + '    <div class="rl-unlock-panel">'
+    + '      <h3 data-i18n="enjoyingGame">Enjoying Bird Rebels: Ice Blaster?</h3>'
+    + '      <button type="button" class="rl-btn" data-rl-rate-prompt-yes data-i18n="yesBtn">Yes</button>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-btn-back" data-rl-rate-prompt-no data-i18n="noBtn">No</button>'
+    + '    </div>'
+    + '  </div>'
+
+    + '  <div class="rl-unlock-modal" data-rl-feedback-prompt hidden>'
+    + '    <div class="rl-unlock-panel">'
+    + '      <h3 data-i18n="notLikingTitle">Sorry to hear that</h3>'
+    + '      <p class="rl-sub" data-i18n="notLikingSub">Tell us what\'s wrong and we\'ll take a look.</p>'
+    + '      <a class="rl-btn" data-rl-send-feedback-link href="#" target="_blank" rel="noopener" data-i18n="sendFeedbackBtn">Send Feedback</a>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-btn-back" data-rl-feedback-close data-i18n="back">Back</button>'
     + '    </div>'
     + '  </div>'
 
@@ -1071,6 +1130,7 @@
     // clone-of-first, spacer]. Landing on a clone (however you got there)
     // triggers an instant, invisible jump to the matching real card.
     var carouselTrack = mount.querySelector('[data-rl-carousel-track]');
+    var carouselLabelEl = mount.querySelector('[data-rl-carousel-label]');
     var carouselPrevBtn = mount.querySelector('[data-rl-carousel-prev]');
     var carouselNextBtn = mount.querySelector('[data-rl-carousel-next]');
     var carouselSettleTimer = null;
@@ -1093,6 +1153,15 @@
       card.type = 'button';
       card.className = 'rl-char-card rl-carousel-card';
       card.setAttribute('data-rl-char', item.code);
+      // Name used to render as a <span> inside the card and scale up right
+      // alongside the artwork (peak 1.75x, see CAROUSEL_MAX_SCALE) — at
+      // that size the combined card routinely needed ~300px of vertical
+      // room, which is what was clipping the name off the bottom of the
+      // carousel track. It's stashed as a data attribute instead and shown
+      // in a single shared label below the track (see
+      // [data-rl-carousel-label], kept in sync by setActiveCarouselCard)
+      // that never scales, so the track only has to fit the artwork.
+      card.setAttribute('data-rl-label', item.label);
       if (item.isRandom) {
         card.classList.add('rl-char-random');
         var box = document.createElement('div');
@@ -1109,9 +1178,6 @@
         img.src = item.imgSrc;
         card.appendChild(img);
       }
-      var span = document.createElement('span');
-      span.textContent = item.label;
-      card.appendChild(span);
       return card;
     }
 
@@ -1197,6 +1263,11 @@
       // so the per-bird accent-color-on-label CSS rule still knows which
       // card is the selected one.
       carouselTrack.querySelectorAll('.rl-carousel-card').forEach(function (c) { c.classList.toggle('rl-carousel-active', c === card); });
+      if (carouselLabelEl && card) {
+        carouselLabelEl.textContent = card.getAttribute('data-rl-label') || '';
+        var accent = card.style.getPropertyValue('--tile-accent');
+        carouselLabelEl.style.color = accent || '';
+      }
     }
 
     function selectCarouselItem(code) {
@@ -1771,11 +1842,13 @@
       // ---- Setup screen: hamburger opens the full-screen megamenu
       // (About [includes Credits], Settings, Leaderboard) — tapping it
       // again while open closes it too, same as the Back button.
+      // Hamburger now lives on the title screen — tapping it commits off the
+      // title screen (same fade as Play) and lands on the setup screen with
+      // the megamenu already open on top of it.
       var menuBtn = mount.querySelector('[data-rl-menu-btn]');
       if (menuBtn) {
         menuBtn.addEventListener('click', function () {
-          var isOpen = screens.menu && !screens.menu.hidden;
-          showScreen(isOpen ? 'menu-close' : 'menu-from-start');
+          hideTitleScreen(function () { showScreen('menu-from-start'); });
         });
       }
       var closeMenuBtn = mount.querySelector('[data-rl-close-menu]');
@@ -2270,24 +2343,70 @@
 
     var splashEl = mount.querySelector('[data-rl-splash]');
     var splashLogoEl = mount.querySelector('.rl-splash-logo');
+    var titleActionsEl = mount.querySelector('[data-rl-title-actions]');
+    var titleTopbarEl = mount.querySelector('[data-rl-title-topbar]');
+    var titlePlayBtn = mount.querySelector('[data-rl-title-play]');
+    var titleHowToBtn = mount.querySelector('[data-rl-title-howto]');
+    var backToTitleBtn = mount.querySelector('[data-rl-back-to-title]');
     var splashMinTimePassed = false;
     var splashLoadDone = false;
+    // The title screen is a permanent, revisitable home now (not a one-time
+    // boot splash) — Play/menu/etc. only ever fade it away, never destroy
+    // it, so backing out of Setup can bring it right back.
+    function revealTitleChrome() {
+      if (!splashEl) return;
+      if (titleActionsEl) {
+        titleActionsEl.hidden = false;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { titleActionsEl.classList.add('rl-title-actions-visible'); });
+        });
+      }
+      if (titleTopbarEl) titleTopbarEl.hidden = false;
+      if (helpBtn) helpBtn.hidden = false;
+      if (rateBtn) rateBtn.hidden = hasRated();
+    }
+    // Once the initial load finishes, the splash stops auto-advancing and
+    // instead reveals Play/How to Play — the title screen waits for a tap
+    // instead of cross-fading into the setup screen on its own.
     function maybeHideSplash() {
       if (!splashEl || !splashMinTimePassed || !splashLoadDone) return;
-      // Fade the logo out first, then fade the whole overlay away once
-      // that's finished — "fade the logo out and the regular game session
-      // in" as two beats, not an instant cut once loading's done.
+      revealTitleChrome();
+    }
+    function hideTitleScreen(onDone) {
+      if (!splashEl) { if (onDone) onDone(); return; }
+      // Fade the logo/buttons out first, then fade the whole overlay away
+      // once that's finished — "fade the title out and the regular game
+      // session in" as two beats, not an instant cut.
       if (splashLogoEl) splashLogoEl.classList.remove('rl-splash-visible');
+      if (titleActionsEl) titleActionsEl.classList.remove('rl-title-actions-visible');
       setTimeout(function () {
         splashEl.classList.add('rl-splash-hide');
         // Actually detach after the fade transition finishes, so it isn't
         // sitting invisibly on top of the game intercepting taps.
         setTimeout(function () {
           splashEl.hidden = true;
+          if (titleActionsEl) titleActionsEl.hidden = true;
+          if (titleTopbarEl) titleTopbarEl.hidden = true;
+          if (helpBtn) helpBtn.hidden = true;
+          if (rateBtn) rateBtn.hidden = true;
           maybeShowWelcomeSignIn();
+          if (onDone) onDone();
         }, 550);
       }, 350);
     }
+    // Used by Setup's back button (and the hardware back button) to return
+    // to the title screen — skips the fade-in choreography above since
+    // there's no loading wait on a return trip, just the CSS opacity
+    // transition already built into .rl-splash/.rl-splash-logo.
+    function showTitleAgain() {
+      if (!splashEl) return;
+      splashEl.hidden = false;
+      splashEl.classList.remove('rl-splash-hide');
+      if (splashLogoEl) splashLogoEl.classList.add('rl-splash-visible');
+      revealTitleChrome();
+    }
+    if (titlePlayBtn) titlePlayBtn.addEventListener('click', function () { hideTitleScreen(); });
+    if (backToTitleBtn) backToTitleBtn.addEventListener('click', function () { showTitleAgain(); });
     function maybeShowWelcomeSignIn() {
       if (!shopEnabled || hasShownWelcomeSignIn() || isSignedIn()) return;
       var modal = mount.querySelector('[data-rl-welcome-signin]');
@@ -2307,6 +2426,78 @@
       splashMinTimePassed = true;
       splashLoadDone = true;
     }
+
+    // ---------- rate / feedback ----------
+    var RATE_KEY = 'rl_has_rated_v1';
+    var ASKED_LIKING_KEY = 'rl_asked_liking_v1';
+    var PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.caseytheamerican.iceblaster';
+    var FEEDBACK_MAILTO = 'mailto:casey@muns.dev?subject=' + encodeURIComponent('Bird Rebels: Ice Blaster feedback');
+    function hasRated() { try { return localStorage.getItem(RATE_KEY) === '1'; } catch (e) { return false; } }
+    function markRated() { try { localStorage.setItem(RATE_KEY, '1'); } catch (e) {} }
+    function hasAskedLiking() { try { return localStorage.getItem(ASKED_LIKING_KEY) === '1'; } catch (e) { return true; } }
+    function markAskedLiking() { try { localStorage.setItem(ASKED_LIKING_KEY, '1'); } catch (e) {} }
+    var rateBtn = mount.querySelector('[data-rl-rate-btn]');
+    var helpBtn = mount.querySelector('[data-rl-help-btn]');
+    // Prefers the native in-app review prompt (Capacitor community
+    // in-app-review plugin, if the wrapper has it installed) over sending
+    // the player all the way out to the Play Store listing. Google's own
+    // API deliberately never reports back whether the person actually left
+    // a rating (anti-abuse), so "goes away after rating" really means
+    // "goes away once they've gone through this flow" — that's the closest
+    // signal we're able to get.
+    function requestNativeReview() {
+      markRated();
+      if (rateBtn) rateBtn.hidden = true;
+      try {
+        var plugins = window.Capacitor && window.Capacitor.Plugins;
+        if (plugins && plugins.InAppReview && plugins.InAppReview.requestReview) {
+          plugins.InAppReview.requestReview();
+          return;
+        }
+      } catch (e) {}
+      try { window.open(PLAY_STORE_URL, '_blank'); } catch (e) {}
+    }
+    if (rateBtn) rateBtn.addEventListener('click', function () { requestNativeReview(); });
+    // Help pops up as a layer directly on top of the title screen (it's
+    // styled with a z-index above .rl-splash) rather than routing through
+    // showScreen() — tapping it must never leave the title screen behind,
+    // and closing it must land right back on title exactly as it was.
+    var helpOverlayEl = screens.help;
+    function openHelp() { if (helpOverlayEl) helpOverlayEl.hidden = false; }
+    function closeHelp() { if (helpOverlayEl) helpOverlayEl.hidden = true; }
+    if (helpBtn) helpBtn.addEventListener('click', openHelp);
+    if (titleHowToBtn) titleHowToBtn.addEventListener('click', openHelp);
+    var closeHelpBtn = mount.querySelector('[data-rl-close-help]');
+    if (closeHelpBtn) closeHelpBtn.addEventListener('click', closeHelp);
+
+    var ratePromptModal = mount.querySelector('[data-rl-rate-prompt]');
+    var ratePromptYes = mount.querySelector('[data-rl-rate-prompt-yes]');
+    var ratePromptNo = mount.querySelector('[data-rl-rate-prompt-no]');
+    var feedbackPromptModal = mount.querySelector('[data-rl-feedback-prompt]');
+    var feedbackLink = mount.querySelector('[data-rl-send-feedback-link]');
+    var feedbackCloseBtn = mount.querySelector('[data-rl-feedback-close]');
+    if (feedbackLink) feedbackLink.href = FEEDBACK_MAILTO;
+    // Fires once ever, right after the player's first leaderboard-qualifying
+    // score save — not on every high score, so it never turns into a nag.
+    function maybeShowRatePrompt() {
+      if (!shopEnabled || hasAskedLiking() || hasRated()) return;
+      if (ratePromptModal) ratePromptModal.hidden = false;
+    }
+    if (ratePromptYes) {
+      ratePromptYes.addEventListener('click', function () {
+        markAskedLiking();
+        ratePromptModal.hidden = true;
+        requestNativeReview();
+      });
+    }
+    if (ratePromptNo) {
+      ratePromptNo.addEventListener('click', function () {
+        markAskedLiking();
+        ratePromptModal.hidden = true;
+        if (feedbackPromptModal) feedbackPromptModal.hidden = false;
+      });
+    }
+    if (feedbackCloseBtn) feedbackCloseBtn.addEventListener('click', function () { feedbackPromptModal.hidden = true; });
 
     Promise.all([
       loadCouponEntitlements(),
@@ -3149,13 +3340,11 @@
 
     // Baseline skyline overlay — sits above the background gradient/glow but
     // below the rebel and every gameplay entity (drawn between drawBackground
-    // and drawProjectiles in the render loop). Regular scene only for now;
-    // Blizzard and any future scene get their own baseline art later, hence
-    // the scene-specific filename rather than one shared image.
+    // and drawProjectiles in the render loop). Shared across every scene,
+    // Rainbow Blizzard included.
     var skylineImg = new Image();
     skylineImg.src = 'img/skyline-regular.png';
     function drawSkyline() {
-      if (S.cfg.blizzard) return;
       if (!skylineImg.complete || !skylineImg.naturalWidth) return;
       var drawH = W * (skylineImg.naturalHeight / skylineImg.naturalWidth);
       ctx.drawImage(skylineImg, 0, H - drawH, W, drawH);
@@ -3647,6 +3836,7 @@
           btn.textContent = 'Saved';
           scoreSaved = true;
           resetRestartConfirm(); // score is safe now, Play Again goes back to a single tap
+          maybeShowRatePrompt();
         })
         .catch(function () {
           submitError.textContent = 'Network error — try again.';
