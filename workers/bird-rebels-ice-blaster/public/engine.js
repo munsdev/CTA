@@ -83,6 +83,7 @@
       settings: 'Settings', soundEffects: 'Sound Effects', music: 'Music', language: 'Language', vibration: 'Vibration', account: 'Account', notSignedIn: 'Not signed in — sign in with Google to unlock rebels.', signInGoogle: 'Sign in with Google', signOut: 'Sign Out', notNow: 'Not Now', welcomeSignInTitle: 'Sign in with Google', welcomeSignInSub: 'Save your rebels to your account so they\'re never lost, even on a new device.',
       rebelShop: 'Rebel Shop', rebelShopSub: 'Add a rebel to your flock. It\'s yours from here on out.',
       claimCode: 'Claim a Code', purchase: 'Purchase',
+      buyInAppNote: 'Want the whole flock? Every rebel is available to buy in the <a href="https://play.google.com/store/apps/details?id=com.caseytheamerican.iceblaster" target="_blank" rel="noopener">Android app</a>.',
       selectScene: 'Select Scene', selectSceneSub: 'Pick which look you want to play.', confirm: 'Confirm',
       difficultySub: 'Pick a challenge level and any extra options.',
       difficultyNote: 'Speed & frequency climb the whole run — faster on Hard, gentler on Easy. Cube size shrinks to its smallest setting, then holds.',
@@ -122,6 +123,7 @@
       settings: 'Einstellungen', soundEffects: 'Soundeffekte', music: 'Musik', language: 'Sprache', vibration: 'Vibration', account: 'Konto', notSignedIn: 'Nicht angemeldet — mit Google anmelden, um Rebellen freizuschalten.', signInGoogle: 'Mit Google anmelden', signOut: 'Abmelden', notNow: 'Nicht jetzt', welcomeSignInTitle: 'Mit Google anmelden', welcomeSignInSub: 'Speichere deine Rebellen in deinem Konto, damit sie nie verloren gehen — auch auf einem neuen Gerät nicht.',
       rebelShop: 'Rebellen-Shop', rebelShopSub: 'Füge deinem Schwarm einen Rebellen hinzu. Er gehört dir für immer.',
       claimCode: 'Code einlösen', purchase: 'Kaufen',
+      buyInAppNote: 'Willst du den ganzen Schwarm? Alle Rebellen kannst du in der <a href="https://play.google.com/store/apps/details?id=com.caseytheamerican.iceblaster" target="_blank" rel="noopener">Android-App</a> kaufen.',
       selectScene: 'Szene auswählen', selectSceneSub: 'Wähle den Look, mit dem du spielen möchtest.', confirm: 'Bestätigen',
       difficultySub: 'Wähle eine Schwierigkeitsstufe und weitere Optionen.',
       difficultyNote: 'Geschwindigkeit & Häufigkeit steigen während des Laufs — schneller bei Schwer, sanfter bei Leicht. Die Würfelgröße schrumpft bis zu einem Minimum und bleibt dann.',
@@ -161,6 +163,7 @@
       settings: 'Paramètres', soundEffects: 'Effets sonores', music: 'Musique', language: 'Langue', vibration: 'Vibration', account: 'Compte', notSignedIn: 'Non connecté — connectez-vous avec Google pour débloquer des rebelles.', signInGoogle: 'Se connecter avec Google', signOut: 'Se déconnecter', notNow: 'Pas maintenant', welcomeSignInTitle: 'Se connecter avec Google', welcomeSignInSub: 'Enregistrez vos rebelles sur votre compte pour ne jamais les perdre, même sur un nouvel appareil.',
       rebelShop: 'Boutique des Rebelles', rebelShopSub: 'Ajoute un rebelle à ta troupe. Il est à toi pour de bon.',
       claimCode: 'Utiliser un code', purchase: 'Acheter',
+      buyInAppNote: 'Tu veux toute la troupe ? Tous les rebelles sont en vente dans l\'<a href="https://play.google.com/store/apps/details?id=com.caseytheamerican.iceblaster" target="_blank" rel="noopener">application Android</a>.',
       selectScene: 'Choisir une scène', selectSceneSub: 'Choisis l\'apparence avec laquelle tu veux jouer.', confirm: 'Confirmer',
       difficultySub: 'Choisis un niveau de difficulté et des options supplémentaires.',
       difficultyNote: 'La vitesse et la fréquence augmentent tout au long de la partie — plus rapide en Difficile, plus douce en Facile. La taille des glaçons diminue jusqu\'à un minimum, puis se stabilise.',
@@ -200,6 +203,7 @@
       settings: 'Ajustes', soundEffects: 'Efectos de sonido', music: 'Música', language: 'Idioma', vibration: 'Vibración', account: 'Cuenta', notSignedIn: 'No has iniciado sesión — inicia sesión con Google para desbloquear rebeldes.', signInGoogle: 'Iniciar sesión con Google', signOut: 'Cerrar sesión', notNow: 'Ahora no', welcomeSignInTitle: 'Iniciar sesión con Google', welcomeSignInSub: 'Guarda tus rebeldes en tu cuenta para que nunca se pierdan, incluso en un dispositivo nuevo.',
       rebelShop: 'Tienda de Rebeldes', rebelShopSub: 'Añade un rebelde a tu bandada. Es tuyo para siempre.',
       claimCode: 'Canjear un código', purchase: 'Comprar',
+      buyInAppNote: '¿Quieres la bandada completa? Todos los rebeldes están a la venta en la <a href="https://play.google.com/store/apps/details?id=com.caseytheamerican.iceblaster" target="_blank" rel="noopener">aplicación de Android</a>.',
       selectScene: 'Elegir escena', selectSceneSub: 'Elige el aspecto con el que quieres jugar.', confirm: 'Confirmar',
       difficultySub: 'Elige un nivel de dificultad y opciones adicionales.',
       difficultyNote: 'La velocidad y la frecuencia aumentan durante toda la partida — más rápido en Difícil, más suave en Fácil. El tamaño del cubo se reduce hasta un mínimo y luego se mantiene.',
@@ -398,6 +402,13 @@
     + '        </div>'
     + '        <div class="rl-carousel-selected-label" data-rl-carousel-label></div>'
     + '        <button class="rl-btn rl-btn-ghost" data-rl-get-more-rebels data-i18n="getMoreRebels">Get More Rebels</button>'
+    // Web stand-in for the shop, which needs Play Billing and so can't run in
+    // a browser. Redeeming a code only needs a signed-in identity, all of it
+    // server-side, so that part works here exactly as it does in the app.
+    + '        <div class="rl-web-more" data-rl-web-more>'
+    + '          <button class="rl-btn rl-btn-ghost" data-rl-web-claim-code data-i18n="claimCode">Claim a Code</button>'
+    + '          <p class="rl-web-more-note" data-i18n-html="buyInAppNote">Want the whole flock? Every rebel is available to buy in the <a href="https://play.google.com/store/apps/details?id=com.caseytheamerican.iceblaster" target="_blank" rel="noopener">Android app</a>.</p>'
+    + '        </div>'
     + '        <div class="rl-picker-row">'
     + '          <button type="button" class="rl-scene-btn" data-rl-difficulty-btn>'
     + '            <span class="rl-scene-btn-label" data-i18n="difficulty">Difficulty</span>'
@@ -2251,6 +2262,15 @@
     // that's a confusing detour for something that should just be a
     // single native prompt.
     function promptSignIn() {
+      // On web there's no plugin to call: Google only issues an ID token
+      // through its own rendered button (see mountWebSignInButton), and the
+      // first-launch modal already hosts one. Showing that modal IS the
+      // prompt here — triggerGoogleSignIn is a no-op stub on web and would
+      // just toast a failure.
+      if (!shopEnabled) {
+        var welcome = mount.querySelector('[data-rl-welcome-signin]');
+        if (welcome) { welcome.hidden = false; return; }
+      }
       triggerGoogleSignIn().then(function (ok) {
         if (ok) {
           toast('Signed in!');
@@ -2409,6 +2429,10 @@
     }
 
     if (claimShopBtn) claimShopBtn.addEventListener('click', openClaimModal);
+    // Same modal, reached from the setup screen instead of the shop, since
+    // the shop itself is hidden on web.
+    var webClaimBtn = mount.querySelector('[data-rl-web-claim-code]');
+    if (webClaimBtn) webClaimBtn.addEventListener('click', openClaimModal);
     if (claimCancelBtn) claimCancelBtn.addEventListener('click', closeClaimModal);
     if (claimPickerCancelBtn) claimPickerCancelBtn.addEventListener('click', closeClaimModal);
     if (claimSubmitBtn) {

@@ -494,6 +494,15 @@
 }
 [data-rl-get-more-rebels]{ display:none; }
 .rl-native [data-rl-screen="start"] [data-rl-get-more-rebels]{ display:block; margin-bottom:10px; }
+/* Web-only counterpart to Get More Rebels: redeem a code (works in a
+   browser — it's all server-side) plus a pointer to the app for buying,
+   which needs Play Billing and can't happen here. */
+[data-rl-web-more]{ display:none; }
+.rl-web [data-rl-screen="start"] [data-rl-web-more]{ display:block; margin-bottom:10px; }
+.rl-web-more-note{
+  margin:8px 0 0; text-align:center; font-size:11.5px; line-height:1.5; color:var(--rl-dim);
+}
+.rl-web-more-note a{ color:var(--rl-accent); }
 
 .rl-carousel-track{
   /* Fills whatever height its parent flexed to (see [data-rl-carousel]
