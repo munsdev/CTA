@@ -385,12 +385,13 @@
     + '      <button type="button" class="rl-btn" data-rl-title-play data-i18n="titlePlay">Play</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost" data-rl-title-howto data-i18n="howToPlay">How to Play</button>'
     + '    </div>'
-    + '    <button type="button" class="rl-corner-btn rl-corner-btn-menu" data-rl-menu-btn hidden aria-label="Menu" title="Menu">&#9776;</button>'
-    + '    <button type="button" class="rl-corner-btn rl-corner-btn-left" data-rl-help-btn hidden aria-label="Help" title="Help">?</button>'
-    + '    <button type="button" class="rl-corner-btn rl-corner-btn-right" data-rl-rate-btn hidden aria-label="Rate this app" title="Rate this app">&#9733;</button>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-menu" data-rl-menu-btn data-rl-title-menu-btn data-rl-title-chrome hidden aria-label="Menu" title="Menu">&#9776;</button>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-left" data-rl-help-btn data-rl-title-chrome hidden aria-label="Help" title="Help">?</button>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-right" data-rl-rate-btn data-rl-title-chrome hidden aria-label="Rate this app" title="Rate this app">&#9733;</button>'
     + '  </div>'
     + '  <div class="rl-screen" data-rl-screen="start">'
-    + '    <button type="button" class="rl-corner-btn rl-corner-btn-back" data-rl-back-to-title aria-label="Back" title="Back">&#8249;</button>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-back" data-rl-back-to-title data-rl-setup-chrome aria-label="Back" title="Back">&#8249;</button>'
+    + '    <button type="button" class="rl-corner-btn rl-corner-btn-menu" data-rl-menu-btn data-rl-setup-chrome aria-label="Menu" title="Menu">&#9776;</button>'
     + '    <div class="rl-screen-inner">'
     + '      <div class="rl-select-rebel-group" data-rl-select-rebel-group>'
     + '        <div class="rl-char-label-row rl-field-label rl-field-label-lg" data-i18n="selectYourRebel">Select Your Rebel</div>'
@@ -925,29 +926,50 @@
     // Capacitor App plugin's appStateChange event, same
     // window.Capacitor.Plugins.X bridge pattern as Haptics above.
     (function wireAppLifecycleMusicPause() {
-      var App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
-      if (!App || !App.addListener) return;
-      var pausedTrack = null; // which track (if any) we paused on backgrounding
-      App.addListener('appStateChange', function (state) {
+      // Every track we paused on backgrounding, so the same ones resume.
+      // Deliberately a list rather than the single track this used to
+      // assume: "only one is ever unpaused" holds only as long as every
+      // transition is perfectly balanced, and if two ever overlap, pausing
+      // just the first leaves the other audible with the app in the
+      // background — exactly the symptom this is meant to prevent.
+      var pausedTracks = [];
+      function pauseForBackground() {
         try {
-          if (!state || !state.isActive) {
-            // Going to background — remember and pause whichever one is
-            // actually playing (menu music, standard theme, or blizzard
-            // theme; only one should ever be unpaused at a time).
-            if (!blizzardTheme.paused) pausedTrack = blizzardTheme;
-            else if (!standardTheme.paused) pausedTrack = standardTheme;
-            else if (!menuMusic.paused) pausedTrack = menuMusic;
-            else pausedTrack = null;
-            if (pausedTrack) pausedTrack.pause();
-          } else if (pausedTrack) {
-            // Coming back to foreground — resume the same track, not
-            // whatever screen happens to be showing now.
-            var p = pausedTrack.play();
-            if (p && p.catch) p.catch(function () {});
-            pausedTrack = null;
-          }
+          if (pausedTracks.length) return; // already backgrounded
+          [blizzardTheme, standardTheme, menuMusic].forEach(function (t) {
+            if (t && !t.paused) { t.pause(); pausedTracks.push(t); }
+          });
         } catch (e) {}
+      }
+      function resumeFromBackground() {
+        try {
+          // Resume exactly what we paused, not whatever screen happens to
+          // be showing now — and never anything we didn't pause ourselves.
+          var list = pausedTracks;
+          pausedTracks = [];
+          list.forEach(function (t) {
+            var p = t.play();
+            if (p && p.catch) p.catch(function () {});
+          });
+        } catch (e) {}
+      }
+      var App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (App && App.addListener) {
+        App.addListener('appStateChange', function (state) {
+          if (!state || !state.isActive) pauseForBackground(); else resumeFromBackground();
+        });
+      }
+      // Browsers get no appStateChange, so music kept playing after the tab
+      // was hidden or the browser was sent to the background — it only
+      // stopped once the page was fully torn down. visibilitychange covers
+      // tab switches, minimising and screen-off; pagehide covers closing or
+      // navigating away. Wired unconditionally rather than as an else, so
+      // the WebView gets the same safety net if a lifecycle event is ever
+      // missed there.
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) pauseForBackground(); else resumeFromBackground();
       });
+      window.addEventListener('pagehide', pauseForBackground);
     })();
 
     // Vibration, native only. Defaults true so it works before Settings has
@@ -1038,6 +1060,34 @@
       // background through instead of an empty strip with nothing behind
       // it.
       if (bottomBarEl) bottomBarEl.hidden = screens.game.hidden;
+      // The setup screen's floating Back/Menu buttons are its DOM children
+      // but sit above the overlays in z-order, so without this they'd hover
+      // on top of an open menu or Settings panel and swallow taps meant for
+      // it. Same reasoning as the bottom bar above: state it explicitly
+      // rather than relying on stacking.
+      var anyOverlayOpen = !screens.leaderboard.hidden
+        || (screens.shop && !screens.shop.hidden)
+        || (screens.scenes && !screens.scenes.hidden)
+        || (screens.difficulty && !screens.difficulty.hidden)
+        || (screens.info && !screens.info.hidden)
+        || (screens.help && !screens.help.hidden)
+        || (screens.settings && !screens.settings.hidden)
+        || (screens.menu && !screens.menu.hidden)
+        || (screens.devlog && !screens.devlog.hidden);
+      var setupChromeShown = !screens.start.hidden && !anyOverlayOpen;
+      mount.querySelectorAll('[data-rl-setup-chrome]').forEach(function (n) {
+        n.hidden = !setupChromeShown;
+      });
+      // The title screen's own floating buttons need the same treatment now
+      // that the menu opens over the title rather than navigating away from
+      // it — otherwise they sit there under an open panel, relying purely on
+      // the overlay being opaque enough to hide them.
+      var titleShowing = splashEl && !splashEl.hidden;
+      mount.querySelectorAll('[data-rl-title-chrome]').forEach(function (n) {
+        var show = titleShowing && !anyOverlayOpen;
+        if (show && n.hasAttribute('data-rl-rate-btn') && hasRated()) show = false;
+        n.hidden = !show;
+      });
     }
 
     // ---------- character roster (live from the API) ----------
@@ -1889,15 +1939,19 @@
       // ---- Setup screen: hamburger opens the full-screen megamenu
       // (About [includes Credits], Settings, Leaderboard) — tapping it
       // again while open closes it too, same as the Back button.
-      // Hamburger now lives on the title screen — tapping it commits off the
-      // title screen (same fade as Play) and lands on the setup screen with
-      // the megamenu already open on top of it.
-      var menuBtn = mount.querySelector('[data-rl-menu-btn]');
-      if (menuBtn) {
-        menuBtn.addEventListener('click', function () {
-          hideTitleScreen(function () { showScreen('menu-from-start'); });
+      // One hamburger per screen (title and setup), both opening the same
+      // menu as a layer over wherever you already are. It deliberately does
+      // NOT navigate: opening the menu from the title screen used to fade
+      // the title away and land you on the setup screen underneath, so
+      // closing the menu dumped you somewhere you'd never asked to go —
+      // and going back to the title then straight into Play showed the
+      // menu again, because it had been left open under there.
+      mount.querySelectorAll('[data-rl-menu-btn]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var isOpen = screens.menu && !screens.menu.hidden;
+          showScreen(isOpen ? 'menu-close' : 'menu-from-start');
         });
-      }
+      });
       var closeMenuBtn = mount.querySelector('[data-rl-close-menu]');
       if (closeMenuBtn) closeMenuBtn.addEventListener('click', function () { showScreen('menu-close'); });
       var menuAboutBtn = mount.querySelector('[data-rl-menu-about]');
@@ -2516,7 +2570,7 @@
     var splashEl = mount.querySelector('[data-rl-splash]');
     var splashLogoEl = mount.querySelector('.rl-splash-logo');
     var titleActionsEl = mount.querySelector('[data-rl-title-actions]');
-    var titleMenuBtn = mount.querySelector('[data-rl-menu-btn]');
+    var titleMenuBtn = mount.querySelector('[data-rl-title-menu-btn]');
     var titlePlayBtn = mount.querySelector('[data-rl-title-play]');
     var titleHowToBtn = mount.querySelector('[data-rl-title-howto]');
     var backToTitleBtn = mount.querySelector('[data-rl-back-to-title]');
@@ -2572,6 +2626,12 @@
     // transition already built into .rl-splash/.rl-splash-logo.
     function showTitleAgain() {
       if (!splashEl) return;
+      // Reset what's underneath before covering it. The setup screen stays
+      // rendered beneath the title, so an overlay left open down there (the
+      // menu, most obviously) would still be sitting on it the next time
+      // Play uncovered it — which looked like Play opening the menu.
+      showScreen('start');
+      closeHelp();
       splashEl.hidden = false;
       splashEl.classList.remove('rl-splash-hide');
       if (splashLogoEl) splashLogoEl.classList.add('rl-splash-visible');

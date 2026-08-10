@@ -736,6 +736,12 @@
    it like every other overlay, which sits above the setup screen (z-index
    5) but below the title screen (z-index 200). */
 .rl-overlay[data-rl-screen="help"]{ z-index:205; }
+/* While the title screen is up, anything opened from it (menu, and whatever
+   the menu leads to — About, Settings, Leaderboard) has to clear it too,
+   otherwise it opens silently behind and looks like nothing happened. The
+   title screen and these overlays are siblings, so a sibling combinator can
+   scope this to exactly "title currently showing". */
+.rl-splash:not([hidden]) ~ .rl-overlay{ z-index:205; }
 /* Keeps overlay content clear of the floating menu/back buttons pinned near
    the top of the screen, and stops centering so overflow-y:auto above
    scrolls from a natural top-aligned start. Short dialogs (pause/gameover)
