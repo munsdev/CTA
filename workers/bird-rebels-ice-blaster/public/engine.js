@@ -909,15 +909,42 @@
     function stopStandardTheme() { try { standardTheme.pause(); standardTheme.currentTime = 0; } catch (e) {} }
     function stopMenuMusic() { try { menuMusic.pause(); menuMusic.currentTime = 0; } catch (e) {} }
     function playMenuMusic() { try { var p = menuMusic.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
-    // Autoplay is blocked without a user gesture in most WebViews (same
-    // reason soundPlayer.unlock() exists for sound effects) — try
-    // immediately in case this context allows it, and otherwise catch it
-    // on whatever the very first tap anywhere turns out to be.
-    playMenuMusic();
-    mount.addEventListener('pointerdown', function firstTouchStartsMenuMusic() {
-      mount.removeEventListener('pointerdown', firstTouchStartsMenuMusic);
-      if (menuMusic.paused && !(S && S.running)) playMenuMusic();
-    }, { once: true });
+    // Autoplay is blocked without a user gesture in most browsers and
+    // WebViews (same reason soundPlayer.unlock() exists for sound effects).
+    // Try immediately in case this context allows it, then keep retrying on
+    // each interaction until one actually succeeds.
+    //
+    // This used to be a single {once:true} pointerdown listener that removed
+    // itself on the first tap whether or not playback had started. After an
+    // ordinary page refresh — where autoplay IS blocked — that gave the
+    // music exactly one chance, and if the browser refused it, the page
+    // stayed silent for good; refreshing again just re-rolled the same
+    // one-shot. Retrying until a play() promise actually resolves, across
+    // the same event types the SFX unlock already listens for, takes the
+    // guesswork out of it.
+    var MUSIC_RETRY_EVENTS = ['pointerdown', 'touchstart', 'mousedown', 'click', 'keydown'];
+    function detachMenuMusicRetry() {
+      MUSIC_RETRY_EVENTS.forEach(function (evt) {
+        window.removeEventListener(evt, tryStartMenuMusic, true);
+      });
+    }
+    function tryStartMenuMusic() {
+      // Never fight the game: during a run the menu track is meant to be off.
+      if (S && S.running) return;
+      if (!menuMusic.paused) { detachMenuMusicRetry(); return; }
+      try {
+        var p = menuMusic.play();
+        // Only stop retrying once playback is actually confirmed — a
+        // rejected promise means the gesture wasn't accepted, so keep
+        // listening rather than giving up silently.
+        if (p && p.then) p.then(detachMenuMusicRetry, function () {});
+        else detachMenuMusicRetry();
+      } catch (e) {}
+    }
+    MUSIC_RETRY_EVENTS.forEach(function (evt) {
+      window.addEventListener(evt, tryStartMenuMusic, true);
+    });
+    tryStartMenuMusic();
 
     // Pause whichever track is currently playing when the app goes to the
     // background (Home button, app switcher, screen lock) and resume that
@@ -970,6 +997,12 @@
         if (document.hidden) pauseForBackground(); else resumeFromBackground();
       });
       window.addEventListener('pagehide', pauseForBackground);
+      // Coming back from the back/forward cache: the page was never torn
+      // down, so it resumes exactly as pagehide left it — paused — and no
+      // visibilitychange necessarily follows to undo that.
+      window.addEventListener('pageshow', function (e) {
+        if (e && e.persisted) resumeFromBackground();
+      });
     })();
 
     // Vibration, native only. Defaults true so it works before Settings has
