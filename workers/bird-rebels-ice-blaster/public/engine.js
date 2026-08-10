@@ -626,6 +626,7 @@
     + '  <div class="rl-overlay" data-rl-screen="menu" hidden>'
     + '    <div class="rl-screen-inner">'
     + '      <h2 data-i18n="menu">Menu</h2>'
+    + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-help data-i18n="howToPlay">How to Play</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-about data-i18n="about">About</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-settings data-i18n="settings">Settings</button>'
     + '      <button type="button" class="rl-btn rl-btn-ghost rl-menu-list-item" data-rl-menu-signin data-i18n="signInGoogle" hidden>Sign in with Google</button>'
@@ -1987,6 +1988,17 @@
       });
       var closeMenuBtn = mount.querySelector('[data-rl-close-menu]');
       if (closeMenuBtn) closeMenuBtn.addEventListener('click', function () { showScreen('menu-close'); });
+      // Help is reachable from the menu as well as the title screen's "?"
+      // bubble. It isn't a showScreen() destination (it layers over whatever
+      // is underneath — see openHelp), so the menu closes first and the help
+      // panel opens on top of whichever screen the menu was called from.
+      var menuHelpBtn = mount.querySelector('[data-rl-menu-help]');
+      if (menuHelpBtn) {
+        menuHelpBtn.addEventListener('click', function () {
+          showScreen('menu-close');
+          openHelp();
+        });
+      }
       var menuAboutBtn = mount.querySelector('[data-rl-menu-about]');
       var menuSettingsBtn = mount.querySelector('[data-rl-menu-settings]');
       if (menuAboutBtn) menuAboutBtn.addEventListener('click', function () { showScreen('info-from-menu'); });
