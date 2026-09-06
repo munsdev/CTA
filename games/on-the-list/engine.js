@@ -2141,6 +2141,112 @@ window.PW = window.PW || {};
 
   window.OnTheList = window.OnTheList || {};
 
+
+  /* ------------------------------------------------------------- the roster ---
+
+     Admin control from the page, so characters can be changed without a
+     rebuild. Set window.OTL_ROSTER before the loader runs:
+
+       officers / execs           replace a whole cast
+       addOfficers / addExecs     append to it
+       removeOfficers / removeExecs   drop entries, by id
+       editOfficers / editExecs   merge fields into an entry, keyed by id
+
+     window.OTL_OFFICERS is still honoured as a shorthand for addOfficers.
+     Anything malformed is skipped with a warning rather than breaking the
+     game, and a cast that would end up empty keeps what it had. */
+
+  function valid(d) {
+    return d && typeof d === 'object' && !Array.isArray(d) &&
+      typeof d.name === 'string' && d.name &&
+      typeof d.shirt === 'string' && d.shirt;
+  }
+
+  function slug(name) {
+    return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function clean(list, where) {
+    var out = [];
+    (list || []).forEach(function (d, i) {
+      if (!valid(d)) {
+        console.warn('On the List: skipping ' + where + '[' + i + '] - needs at least a name and a shirt colour.', d);
+        return;
+      }
+      if (!d.id) d.id = slug(d.name) || 'character';
+      out.push(d);
+    });
+    return out;
+  }
+
+  function applyOne(list, cfg, key, where) {
+    var next = list;
+    if (Array.isArray(cfg[key])) {
+      var replaced = clean(cfg[key], key);
+      if (replaced.length) next = replaced;
+      else console.warn('On the List: ' + key + ' had nothing usable, keeping the built-in ' + where + '.');
+    }
+    var addKey = 'add' + key.charAt(0).toUpperCase() + key.slice(1);
+    var adds = clean(cfg[addKey], addKey);
+    if (adds.length) next = next.concat(adds);
+
+    var edits = cfg['edit' + key.charAt(0).toUpperCase() + key.slice(1)];
+    if (edits && typeof edits === 'object') {
+      next = next.map(function (d) {
+        var patch = edits[d.id];
+        if (!patch || typeof patch !== 'object') return d;
+        var merged = {};
+        Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+        Object.keys(patch).forEach(function (k) { merged[k] = patch[k]; });
+        return merged;
+      });
+      Object.keys(edits).forEach(function (id) {
+        if (!next.some(function (d) { return d.id === id; })) {
+          console.warn('On the List: no ' + where + ' with id "' + id + '" to edit.');
+        }
+      });
+    }
+
+    var drop = cfg['remove' + key.charAt(0).toUpperCase() + key.slice(1)];
+    if (Array.isArray(drop) && drop.length) {
+      var kept = next.filter(function (d) { return drop.indexOf(d.id) === -1; });
+      drop.forEach(function (id) {
+        if (!next.some(function (d) { return d.id === id; })) {
+          console.warn('On the List: no ' + where + ' with id "' + id + '" to remove.');
+        }
+      });
+      if (kept.length) next = kept;
+      else console.warn('On the List: removing every ' + where + ' would leave none, so none were removed.');
+    }
+    return next;
+  }
+
+  var rosterApplied = false;
+  function applyRoster() {
+    if (rosterApplied) return;
+    rosterApplied = true;
+    var cfg = window.OTL_ROSTER;
+    if (Array.isArray(window.OTL_OFFICERS)) {
+      cfg = cfg && typeof cfg === 'object' ? cfg : {};
+      cfg.addOfficers = (cfg.addOfficers || []).concat(window.OTL_OFFICERS);
+    }
+    if (!cfg || typeof cfg !== 'object') return;
+    PW.PLAYERS = applyOne(PW.PLAYERS, cfg, 'officers', 'officer');
+    PW.EXECS = applyOne(PW.EXECS, cfg, 'execs', 'executive');
+    PW.OFFICER = PW.PLAYERS[0];
+  }
+
+  /* Prints the live roster as pasteable source, so an admin can copy a
+     character out of the console, edit it, and put it back through the CMS. */
+  window.OnTheList.roster = function () {
+    function block(label, list) {
+      return label + ': [\n' + list.map(function (d) { return PW.CHAR.source(d); }).join('\n') + '\n]';
+    }
+    var text = block('officers', PW.PLAYERS) + ',\n' + block('execs', PW.EXECS);
+    console.log(text);
+    return text;
+  };
+
   window.OnTheList.init = function (root, base) {
     if (!root || root.dataset.booted) return;
     root.dataset.booted = '1';
@@ -2174,16 +2280,7 @@ window.PW = window.PW || {};
     PW.UI.accent = token('--gm-primary', PW.UI.accent);
     PW.UI.danger = token('--gm-bad', PW.UI.danger);
 
-    /* The CMS embed can add officers without a rebuild: set window.OTL_OFFICERS
-       to an array of character objects before the loader runs, and they join
-       the line-up for everyone. */
-    if (!PW._extraOfficers && Array.isArray(window.OTL_OFFICERS)) {
-      PW._extraOfficers = true;
-      window.OTL_OFFICERS.forEach(function (d) {
-        if (d && typeof d === 'object' && d.shirt && d.name) PW.PLAYERS.push(d);
-      });
-    }
-
+    applyRoster();
     PW.bakeAll();
 
     /* The RichText embed nests the game several levels deep; each wrapper has
