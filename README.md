@@ -16,6 +16,8 @@ via jsDelivr:
 https://cdn.jsdelivr.net/gh/{user}/CTA@main/games/{slug}/engine.js
 
 - `dc-lagoon` — The DC Lagoon (Reflecting Pool project)
+- `on-the-list` — On the List (Casey The American). Built from `munsdev/games`
+  via `node tools/build-cta.js`; edit there, not here.
 - `the-quota` — The Quota (Casey The American)
 - `history-or-headlines` — History or Headlines (Casey The American)
 - `know-your-rights` — (planned)

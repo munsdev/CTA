@@ -1,0 +1,228 @@
+/* On the List — @property defaults, CMS slots, --gm-* tokens, colour ramp,
+   shared shell, then this game's own .ol- styles. Prefix is .ol-; the shell
+   owns .gm-* and this engine never redefines it. */
+
+@property --cms-primary { syntax: '<color>'; inherits: true; initial-value: #f5b942; }
+@property --cms-surface { syntax: '<color>'; inherits: true; initial-value: #0a0d13; }
+@property --cms-ink     { syntax: '<color>'; inherits: true; initial-value: #dfe6f2; }
+@property --cms-accent  { syntax: '<color>'; inherits: true; initial-value: #6b7f9e; }
+
+.gm-root.ol {
+  /* CMS slots — an empty field falls back to the @property initial-value. */
+  --cms-primary: /*CMS:primary*/ ;
+  --cms-surface: /*CMS:surface*/ ;
+  --cms-ink:     /*CMS:ink*/     ;
+  --cms-accent:  /*CMS:accent*/  ;
+
+  --gm-primary: var(--cms-primary);
+  --gm-surface: var(--cms-surface);
+  --gm-ink:     var(--cms-ink);
+  --gm-accent:  var(--cms-accent);
+
+  --gm-primary-hi:   color-mix(in srgb, var(--gm-primary) 82%, white);
+  --gm-primary-deep: color-mix(in srgb, var(--gm-primary) 62%, black);
+  --gm-surface-2:    color-mix(in srgb, var(--gm-surface) 88%, white);
+  --gm-panel:        color-mix(in srgb, var(--gm-surface) 82%, white);
+  --gm-line:         color-mix(in srgb, var(--gm-surface) 70%, white);
+  --gm-dim:          color-mix(in srgb, var(--gm-ink) 55%, var(--gm-surface));
+
+  --gm-ok: #4a9d6a;
+  --gm-warn: #e0b23e;
+  --gm-bad: #d0492f;
+
+  --gm-radius: 2px;
+  --gm-border: 1px;
+  --gm-pad: 14px;
+
+  --gm-font-display: 'Press Start 2P', monospace;
+  --gm-font-body: var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
+
+  /* Playfield tokens. The engine reads these back through getComputedStyle, so
+     a CMS override reaches the canvas and not just the chrome. */
+  --ol-void: #0a0d13;
+  --ol-frame: #161c26;
+  --ol-frame-edge: #0b0e14;
+  --ol-plaza-a: #232b36;
+  --ol-plaza-b: #1e2530;
+  --ol-grit-a: #28313d;
+  --ol-grit-b: #1b222c;
+  --ol-bar: #141a23;
+
+  color: var(--gm-ink);
+  font-family: var(--gm-font-body);
+  -webkit-tap-highlight-color: transparent;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  background: 0 0;
+  padding: 0;
+}
+
+.gm-root.ol * { box-sizing: border-box; margin: 0; }
+
+/* ---- shell ---------------------------------------------------------------- */
+
+.gm-root.ol .gm-btn {
+  cursor: pointer;
+  font-family: var(--gm-font-display);
+  font-size: clamp(9px, 2.6cqw, 13px);
+  letter-spacing: 1px;
+  line-height: 1.4;
+  color: var(--gm-surface);
+  background: var(--gm-primary);
+  border: none;
+  border-bottom: 4px solid var(--gm-primary-deep);
+  padding: 12px 18px;
+  border-radius: var(--gm-radius);
+  transition: transform .05s;
+}
+.gm-root.ol .gm-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.gm-root.ol .gm-btn.ghost {
+  background: var(--gm-surface-2);
+  color: var(--gm-primary);
+  border-bottom-color: color-mix(in srgb, var(--gm-surface) 60%, #000);
+}
+.gm-root.ol .gm-btn:focus-visible,
+.gm-root.ol .ol-officer:focus-visible,
+.gm-root.ol .ol-fab:focus-visible { outline: 2px solid var(--gm-primary); outline-offset: 2px; }
+
+.gm-root.ol .gm-stamp {
+  font-family: var(--gm-font-display);
+  font-size: clamp(15px, 4.6cqw, 30px);
+  letter-spacing: 2px;
+  line-height: 1.2;
+  color: var(--gm-primary);
+  text-shadow: 0 4px 0 rgba(4, 7, 16, .9);
+}
+.gm-root.ol .gm-truth { font-size: clamp(14px, 3.4cqw, 19px); color: var(--gm-ink); max-width: 42ch; line-height: 1.35; }
+.gm-root.ol .gm-plain { font-size: clamp(12px, 2.9cqw, 16px); color: var(--gm-dim); max-width: 44ch; line-height: 1.4; }
+.gm-root.ol .gm-receipts {
+  display: flex; flex-wrap: wrap; gap: 4px 18px; justify-content: center;
+  font-size: clamp(11px, 2.8cqw, 15px); color: var(--gm-dim);
+}
+.gm-root.ol .gm-receipts b { color: var(--gm-primary); font-weight: 400; }
+
+.gm-root.ol .gm-reward { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.gm-root.ol .gm-reward[hidden] { display: none; }
+.gm-root.ol .gm-reward-desc { font-size: clamp(11px, 2.8cqw, 14px); color: var(--gm-dim); }
+.gm-root.ol .gm-code {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--gm-font-body); font-size: clamp(13px, 3.2cqw, 17px);
+  background: color-mix(in srgb, var(--gm-surface) 70%, #000);
+  border: 1px dashed var(--gm-primary);
+  border-radius: var(--gm-radius);
+  padding: 6px 10px; color: var(--gm-primary); letter-spacing: 1px;
+}
+.gm-root.ol .gm-code button {
+  cursor: pointer; font-family: var(--gm-font-body); font-size: .85em;
+  background: var(--gm-primary); color: var(--gm-surface);
+  border: none; border-radius: 2px; padding: 3px 8px;
+}
+
+.gm-root.ol .gm-toast {
+  position: absolute; left: 50%; bottom: 12px; z-index: 8;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--gm-surface-2); color: var(--gm-ink);
+  border: 1px solid var(--gm-line); border-radius: var(--gm-radius);
+  padding: 6px 12px; font-size: 14px; opacity: 0;
+  transition: opacity .2s, transform .2s; pointer-events: none;
+}
+.gm-root.ol .gm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---- engine --------------------------------------------------------------- */
+
+.gm-root.ol .ol-stage {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  background: var(--ol-void);
+  border: 2px solid var(--gm-line);
+  border-radius: var(--gm-radius);
+  overflow: hidden;
+}
+.gm-root.ol .ol-stage > canvas {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.gm-root.ol .ol-ov {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 13px; padding: 6% 7%;
+  background: radial-gradient(120% 120% at 50% 30%, rgba(6, 10, 20, .78), rgba(4, 7, 16, .96));
+}
+.gm-root.ol .ol-ov[hidden] { display: none; }
+
+.gm-root.ol .ol-eyebrow {
+  font-family: var(--gm-font-display);
+  font-size: clamp(7px, 1.9cqw, 10px);
+  letter-spacing: 2px; color: var(--gm-accent);
+}
+.gm-root.ol .ol-title {
+  font-family: var(--gm-font-display);
+  font-size: clamp(14px, 4.2cqw, 26px);
+  color: var(--gm-primary); line-height: 1.4;
+  text-shadow: 0 4px 0 rgba(4, 7, 16, .9);
+}
+.gm-root.ol .ol-howto {
+  font-size: clamp(11px, 2.7cqw, 15px);
+  color: var(--gm-ink); max-width: 40ch; line-height: 1.4; opacity: .92;
+}
+
+.gm-root.ol .ol-pick { display: flex; flex-direction: column; gap: 7px; align-items: center; }
+.gm-root.ol .ol-pick-lbl {
+  font-family: var(--gm-font-display);
+  font-size: clamp(7px, 1.7cqw, 9px);
+  letter-spacing: 1px; color: var(--gm-dim);
+}
+.gm-root.ol .ol-officers { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.gm-root.ol .ol-officer {
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 5px 7px;
+  background: var(--gm-surface-2);
+  border: 2px solid var(--gm-line);
+  border-radius: var(--gm-radius);
+  font-family: var(--gm-font-display);
+  font-size: clamp(6px, 1.5cqw, 8px);
+  letter-spacing: .5px;
+  color: var(--gm-dim);
+}
+.gm-root.ol .ol-officer canvas { image-rendering: pixelated; display: block; opacity: .6; }
+.gm-root.ol .ol-officer.is-on { border-color: var(--gm-primary); color: var(--gm-primary); }
+.gm-root.ol .ol-officer.is-on canvas { opacity: 1; }
+
+.gm-root.ol .ol-btns { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
+
+.gm-root.ol .ol-fab {
+  position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  cursor: pointer;
+  height: clamp(28px, 7cqw, 36px);
+  padding: 0 clamp(9px, 2.6cqw, 14px);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--gm-font-display);
+  font-size: clamp(7px, 2cqw, 10px); letter-spacing: 1px;
+  background: color-mix(in srgb, var(--gm-surface) 78%, #000);
+  color: var(--gm-primary);
+  border: 2px solid var(--gm-line);
+  border-radius: var(--gm-radius);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .5);
+}
+.gm-root.ol .ol-fab[hidden] { display: none; }
+
+/* The RichText embed nests the game; without a real height it collapses. */
+.games-script { position: relative; }
+.games-script .w-embed,
+.games-script .w-richtext { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+[gm-reset-button] { cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-root.ol * { transition: none !important; }
+}
