@@ -34,6 +34,14 @@
   --gm-border: 1px;
   --gm-pad: 14px;
 
+  /* The shared editor module styles itself through these. */
+  --pwed-edge: color-mix(in srgb, var(--gm-surface) 70%, white);
+  --pwed-sunk: color-mix(in srgb, var(--gm-surface) 70%, #000);
+  --pwed-text: var(--gm-ink);
+  --pwed-dim: var(--gm-dim);
+  --pwed-label: var(--gm-primary);
+  --pwed-accent: var(--gm-primary);
+
   --gm-font-display: 'Press Start 2P', monospace;
   --gm-font-body: var(--_typography---font-styles--body, 'Spline Sans Mono', ui-monospace, monospace);
 
@@ -226,3 +234,62 @@
 @media (prefers-reduced-motion: reduce) {
   .gm-root.ol * { transition: none !important; }
 }
+
+/* ---- make your own -------------------------------------------------------- */
+
+/* The maker is a lot of controls in a small stage, so it owns the overlay and
+   scrolls inside it rather than pushing the game out of the frame. */
+.gm-root.ol .ol-maker {
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 14px 14px 12px;
+  background: linear-gradient(rgba(6, 10, 20, .97), rgba(4, 7, 16, .99));
+}
+.gm-root.ol .ol-maker .ol-title { font-size: clamp(11px, 3cqw, 17px); }
+
+.gm-root.ol .ol-maker-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  text-align: left;
+  padding-right: 4px;
+}
+@container (min-width: 460px) {
+  .gm-root.ol .ol-maker-body { grid-template-columns: minmax(140px, 0.9fr) minmax(200px, 1.4fr); }
+  .gm-root.ol .ol-maker-preview { position: sticky; top: 0; align-self: start; }
+}
+
+.gm-root.ol .ol-maker-body::-webkit-scrollbar { width: 8px; }
+.gm-root.ol .ol-maker-body::-webkit-scrollbar-track { background: transparent; }
+.gm-root.ol .ol-maker-body::-webkit-scrollbar-thumb {
+  background: var(--gm-line); border-radius: 4px;
+}
+.gm-root.ol .ol-maker-body { scrollbar-width: thin; scrollbar-color: var(--gm-line) transparent; }
+
+.gm-root.ol .ol-maker-preview {
+  background: color-mix(in srgb, var(--gm-surface) 70%, #000);
+  border: 1px solid var(--gm-line);
+  border-radius: var(--gm-radius);
+  padding: 8px;
+}
+.gm-root.ol .ol-facings { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.gm-root.ol .ol-facings canvas {
+  image-rendering: pixelated;
+  display: block;
+  background: var(--ol-void);
+  border: 1px solid var(--gm-line);
+}
+.gm-root.ol .ol-maker-note {
+  margin-top: 7px;
+  font-size: clamp(10px, 2.4cqw, 12px);
+  line-height: 1.35;
+  color: var(--gm-dim);
+  text-align: center;
+  min-height: 1.2em;
+}
+.gm-root.ol .ol-maker-form { min-width: 0; }

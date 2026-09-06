@@ -28,7 +28,23 @@
         'each arrest joins the column behind you, and the column is what you have to steer around.</div>' +
       '<div class="ol-pick"><span class="ol-pick-lbl">Who is serving</span>' +
         '<div class="ol-officers" data-el="officers"></div></div>' +
-      '<button class="gm-btn" data-el="btnStart">Start the shift</button>' +
+      '<div class="ol-btns">' +
+        '<button class="gm-btn" data-el="btnStart">Start the shift</button>' +
+        '<button class="gm-btn ghost" data-el="btnMake">Make your own</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="ol-ov ol-maker" data-el="ovMaker" hidden>' +
+      '<div class="ol-title">YOUR OFFICER</div>' +
+      '<div class="ol-maker-body">' +
+        '<div class="ol-maker-preview"><div class="ol-facings" data-el="myFacings"></div>' +
+          '<div class="ol-maker-note" data-el="myNote"></div></div>' +
+        '<form class="ol-maker-form" data-el="myControls" autocomplete="off"></form>' +
+      '</div>' +
+      '<div class="ol-btns">' +
+        '<button class="gm-btn" data-el="btnSaveMine">Save to line-up</button>' +
+        '<button class="gm-btn ghost" data-el="btnClearMine">Remove</button>' +
+        '<button class="gm-btn ghost" data-el="btnMakerBack">Back</button>' +
+      '</div>' +
     '</div>' +
     '<div class="ol-ov" data-el="ovPause" hidden>' +
       '<div class="ol-title">PAUSED</div>' +
