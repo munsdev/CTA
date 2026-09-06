@@ -102,7 +102,15 @@ window.PW = window.PW || {};
       view.style.height = box.height + 'px';
       vctx.imageSmoothingEnabled = false;
 
-      scale = Math.max(1, Math.floor(Math.min(pxW / W, pxH / H)));
+      /* Whole-number scaling keeps every pixel exactly square, but on a phone
+         the next whole step can be a third of the screen away: at dpr 3 on a
+         360px-wide screen a 394px buffer only reaches 2x, so the board draws
+         at 263 CSS px and the characters land at 16px. Above 2x device
+         density a fractional step is not visible, so fill the space instead
+         of throwing a third of it away. */
+      var raw = Math.min(pxW / W, pxH / H);
+      var whole = Math.max(1, Math.floor(raw));
+      scale = (dpr >= 2 && raw - whole > 0.15) ? raw : whole;
       offX = Math.floor((pxW - W * scale) / 2);
       offY = Math.floor((pxH - H * scale) / 2);
     }
@@ -2166,6 +2174,16 @@ window.PW = window.PW || {};
     PW.UI.accent = token('--gm-primary', PW.UI.accent);
     PW.UI.danger = token('--gm-bad', PW.UI.danger);
 
+    /* The CMS embed can add officers without a rebuild: set window.OTL_OFFICERS
+       to an array of character objects before the loader runs, and they join
+       the line-up for everyone. */
+    if (!PW._extraOfficers && Array.isArray(window.OTL_OFFICERS)) {
+      PW._extraOfficers = true;
+      window.OTL_OFFICERS.forEach(function (d) {
+        if (d && typeof d === 'object' && d.shirt && d.name) PW.PLAYERS.push(d);
+      });
+    }
+
     PW.bakeAll();
 
     /* The RichText embed nests the game several levels deep; each wrapper has
@@ -2483,12 +2501,34 @@ window.PW = window.PW || {};
       if (key === 'Escape' && (phase === 'playing' || phase === 'paused')) pause(phase === 'playing');
     });
 
+    /* Swipe is the natural control on a phone; a tap still steers toward the
+       point, which is what a mouse expects. */
+    var SWIPE = 24;
+    var touch = null;
+
     stage.addEventListener('pointerdown', function (ev) {
       if (phase !== 'playing') return;
       ev.preventDefault();
       audio.wake();
-      var p = screen.toBuffer(ev.clientX, ev.clientY);
       if (game.phase !== 'playing') { if (PW.begin(game)) audio.start(); return; }
+      touch = { x: ev.clientX, y: ev.clientY, swiped: false };
+    });
+
+    stage.addEventListener('pointermove', function (ev) {
+      if (!touch || touch.swiped || phase !== 'playing') return;
+      var dx = ev.clientX - touch.x, dy = ev.clientY - touch.y;
+      if (Math.abs(dx) < SWIPE && Math.abs(dy) < SWIPE) return;
+      touch.swiped = true;
+      if (Math.abs(dx) > Math.abs(dy)) steer(Math.sign(dx), 0);
+      else steer(0, Math.sign(dy));
+    });
+
+    function endTouch(ev) {
+      if (!touch) return;
+      var was = touch;
+      touch = null;
+      if (was.swiped || phase !== 'playing' || game.phase !== 'playing') return;
+      var p = screen.toBuffer(ev.clientX, ev.clientY);
       var head = game.body[0];
       var hx = PW.VIEW.px + head.x * PW.VIEW.cell + PW.VIEW.cell / 2;
       var hy = PW.VIEW.py + head.y * PW.VIEW.cell + PW.VIEW.cell / 2;
@@ -2496,7 +2536,9 @@ window.PW = window.PW || {};
       if (Math.abs(dx) < PW.VIEW.cell / 2 && Math.abs(dy) < PW.VIEW.cell / 2) return;
       if (Math.abs(dx) > Math.abs(dy)) steer(Math.sign(dx), 0);
       else steer(0, Math.sign(dy));
-    });
+    }
+    stage.addEventListener('pointerup', endTouch);
+    stage.addEventListener('pointercancel', function () { touch = null; });
     stage.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
 
     el('btnStart').addEventListener('click', startRun);
@@ -2504,6 +2546,16 @@ window.PW = window.PW || {};
     el('btnMakerBack').addEventListener('click', closeMaker);
     el('btnSaveMine').addEventListener('click', saveCustom);
     el('btnClearMine').addEventListener('click', clearCustom);
+    el('btnCopyMine').addEventListener('click', function () {
+      var text = PW.CHAR.source(maker.get());
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () { note('Object copied. Paste it into the roster to make them public.'); },
+          function () { note('Clipboard blocked by the browser.'); });
+      } else {
+        note('Clipboard unavailable in this browser.');
+      }
+    });
     el('btnPause').addEventListener('click', function () { pause(phase === 'playing'); });
     el('btnResume').addEventListener('click', function () { pause(false); });
     el('btnQuit').addEventListener('click', toTitle);

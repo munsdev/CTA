@@ -42,6 +42,7 @@
       '</div>' +
       '<div class="ol-btns">' +
         '<button class="gm-btn" data-el="btnSaveMine">Save to line-up</button>' +
+        '<button class="gm-btn ghost" data-el="btnCopyMine">Copy object</button>' +
         '<button class="gm-btn ghost" data-el="btnClearMine">Remove</button>' +
         '<button class="gm-btn ghost" data-el="btnMakerBack">Back</button>' +
       '</div>' +

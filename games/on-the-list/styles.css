@@ -293,3 +293,21 @@
   min-height: 1.2em;
 }
 .gm-root.ol .ol-maker-form { min-width: 0; }
+
+/* ---- narrow screens ------------------------------------------------------- */
+
+/* On a phone the column is tall and the board is square, so a stage that
+   stretches to fill leaves most of itself empty. Let it take the game's own
+   shape instead and centre it; the leftover column height goes transparent. */
+@container (max-width: 560px) {
+  .gm-root.ol { justify-content: center; }
+  .gm-root.ol .ol-stage {
+    flex: 0 0 auto;
+    width: 100%;
+    aspect-ratio: 394 / 426;
+    max-height: 100%;
+  }
+  .gm-root.ol .ol-ov { gap: 10px; padding: 5% 6%; }
+  .gm-root.ol .ol-officers { gap: 4px; }
+  .gm-root.ol .ol-maker { padding: 10px 10px 9px; }
+}
