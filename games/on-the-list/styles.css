@@ -239,13 +239,15 @@
 
 /* The maker is a lot of controls in a small stage, so it owns the overlay and
    scrolls inside it rather than pushing the game out of the frame. */
-.gm-root.ol .ol-maker {
+.gm-root.ol .ol-maker,
+.gm-root.ol .ol-admin {
   justify-content: flex-start;
   gap: 9px;
   padding: 14px 14px 12px;
   background: linear-gradient(rgba(6, 10, 20, .97), rgba(4, 7, 16, .99));
 }
-.gm-root.ol .ol-maker .ol-title { font-size: clamp(11px, 3cqw, 17px); }
+.gm-root.ol .ol-maker .ol-title,
+.gm-root.ol .ol-admin .ol-title { font-size: clamp(11px, 3cqw, 17px); }
 
 .gm-root.ol .ol-maker-body {
   flex: 1 1 auto;
@@ -309,5 +311,117 @@
   }
   .gm-root.ol .ol-ov { gap: 10px; padding: 5% 6%; }
   .gm-root.ol .ol-officers { gap: 4px; }
-  .gm-root.ol .ol-maker { padding: 10px 10px 9px; }
+  .gm-root.ol .ol-maker,
+  .gm-root.ol .ol-admin { padding: 10px 10px 9px; }
+}
+
+
+/* ---- the roster door ------------------------------------------------------ */
+
+/* Nine taps on the eyebrow open the gate. Nothing here is a security boundary:
+   the whole bundle is public, and the panel can only change this browser's copy
+   of the cast. It keeps the door out of a player's way, not out of their reach. */
+.gm-root.ol .ol-gate-form {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%;
+}
+.gm-root.ol .ol-gate-input {
+  font: inherit;
+  font-size: clamp(9px, 2.4cqw, 13px);
+  letter-spacing: .08em;
+  text-align: center;
+  width: min(240px, 80%);
+  padding: 8px 10px;
+  color: var(--gm-ink);
+  background: color-mix(in srgb, var(--gm-surface) 70%, #000);
+  border: 1px solid var(--gm-line);
+  border-radius: var(--gm-radius);
+}
+.gm-root.ol .ol-gate-input:focus-visible { outline: 2px solid var(--gm-primary); outline-offset: 2px; }
+.gm-root.ol .ol-gate-note { font-size: clamp(7px, 1.8cqw, 10px); color: var(--gm-bad); min-height: 1.2em; }
+
+/* Same two-column shape as the maker: cast on the left, editor on the right. */
+.gm-root.ol .ol-admin-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(110px, 0.7fr) minmax(190px, 1.6fr);
+  gap: 10px;
+  text-align: left;
+}
+.gm-root.ol .ol-admin-side { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.gm-root.ol .ol-admin-tabs { display: flex; gap: 4px; }
+.gm-root.ol .ol-tab {
+  flex: 1 1 0;
+  font: inherit;
+  font-size: clamp(6px, 1.6cqw, 9px);
+  padding: 5px 4px;
+  color: var(--gm-dim);
+  background: transparent;
+  border: 1px solid var(--gm-line);
+  border-radius: var(--gm-radius);
+  cursor: pointer;
+}
+.gm-root.ol .ol-tab.is-on { color: var(--gm-primary); border-color: var(--gm-primary); }
+
+/* The cast scrolls on its own so picking someone never scrolls the editor away. */
+.gm-root.ol .ol-admin-cast {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gm-line) transparent;
+}
+.gm-root.ol .ol-cast-row {
+  display: flex; align-items: center; gap: 6px;
+  font: inherit;
+  font-size: clamp(6px, 1.5cqw, 9px);
+  text-align: left;
+  padding: 3px 5px;
+  color: var(--gm-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--gm-radius);
+  cursor: pointer;
+}
+.gm-root.ol .ol-cast-row canvas { image-rendering: pixelated; display: block; opacity: .65; }
+.gm-root.ol .ol-cast-row.is-on { color: var(--gm-primary); border-color: var(--gm-primary); }
+.gm-root.ol .ol-cast-row.is-on canvas { opacity: 1; }
+.gm-root.ol .ol-admin-add { font-size: clamp(6px, 1.6cqw, 9px); padding: 5px 6px; }
+
+/* The editor pane scrolls independently of the cast list beside it. */
+.gm-root.ol .ol-admin-edit {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gm-line) transparent;
+}
+.gm-root.ol .ol-admin-note {
+  font-size: clamp(6px, 1.6cqw, 9px);
+  color: var(--gm-dim);
+  min-height: 1.2em;
+}
+
+/* Stacked on a phone: two columns inside a 390px stage leaves the editor too
+   narrow to use. Restated after the panel's own rules so it wins on order. */
+@container (max-width: 560px) {
+  .gm-root.ol .ol-admin-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .gm-root.ol .ol-admin-side { min-height: 0; }
+  .gm-root.ol .ol-admin-cast { max-height: 90px; }
+  .gm-root.ol .ol-admin-edit { overflow: visible; }
+  .gm-root.ol .ol-admin .ol-facings canvas { width: 36px; height: 36px; }
 }

@@ -2137,6 +2137,8 @@ window.PW = window.PW || {};
 
   var BEST_KEY = 'otl.best';
   var CUSTOM_KEY = 'otl.custom';
+  var ADMIN_KEY = 'otl.roster.admin';
+  var UNLOCK_KEY = 'otl.roster.open';
   var RETRY_DELAY = 0.6;
 
   window.OnTheList = window.OnTheList || {};
@@ -2236,13 +2238,55 @@ window.PW = window.PW || {};
     PW.OFFICER = PW.PLAYERS[0];
   }
 
+  /* ---- the local override -------------------------------------------------
+
+     What the in-game roster panel saves. It is a whole cast rather than a set
+     of operations, so it round-trips exactly, and it lives in localStorage —
+     which means it changes this browser only. Making a change public is still
+     the CMS paste, which the panel writes out for you. */
+
+  function readAdmin() {
+    try {
+      var raw = window.localStorage.getItem(ADMIN_KEY);
+      if (!raw) return null;
+      var d = JSON.parse(raw);
+      return d && Array.isArray(d.officers) && Array.isArray(d.execs) ? d : null;
+    } catch (e) { return null; }
+  }
+
+  function applyAdmin() {
+    var d = readAdmin();
+    if (!d) return;
+    var officers = clean(d.officers, 'saved officers');
+    var execs = clean(d.execs, 'saved executives');
+    if (officers.length) PW.PLAYERS = officers;
+    if (execs.length) PW.EXECS = execs;
+    PW.OFFICER = PW.PLAYERS[0];
+  }
+
   /* Prints the live roster as pasteable source, so an admin can copy a
      character out of the console, edit it, and put it back through the CMS. */
+  function castSource(label, list) {
+    return '  ' + label + ': [\n' +
+      list.map(function (d) {
+        return PW.CHAR.source(d).replace(/^/gm, '    ');
+      }).join('\n') + '\n  ],';
+  }
+
+  /* The whole live cast as the block an admin pastes above the loader in the
+     CMS. This is the step that makes a change public: everything the panel
+     saves is local until this lands in the embed field. */
+  function rosterBlock() {
+    return '<script>\n' +
+      'window.OTL_ROSTER = {\n' +
+      castSource('officers', PW.PLAYERS) + '\n' +
+      castSource('execs', PW.EXECS).replace(/,$/, '') + '\n' +
+      '};\n' +
+      '<\/script>';
+  }
+
   window.OnTheList.roster = function () {
-    function block(label, list) {
-      return label + ': [\n' + list.map(function (d) { return PW.CHAR.source(d); }).join('\n') + '\n]';
-    }
-    var text = block('officers', PW.PLAYERS) + ',\n' + block('execs', PW.EXECS);
+    var text = rosterBlock();
     console.log(text);
     return text;
   };
@@ -2281,6 +2325,7 @@ window.PW = window.PW || {};
     PW.UI.danger = token('--gm-bad', PW.UI.danger);
 
     applyRoster();
+    applyAdmin();
     PW.bakeAll();
 
     /* The RichText embed nests the game several levels deep; each wrapper has
@@ -2465,9 +2510,252 @@ window.PW = window.PW || {};
       note('Removed.');
     }
 
+    // ------------------------------------------------------- the roster door ---
+
+    /* Nine taps on the eyebrow, then a password, opens a panel that edits the
+       cast the game is actually running. Two honest limits, both stated in the
+       panel itself: the password is a latch rather than a lock, since the whole
+       bundle is public source anyone can read; and a save changes this browser
+       only. Neither matters much, because the panel cannot publish — Copy
+       roster block hands you the snippet, and pasting it into the CMS is what
+       makes a change everyone sees. */
+
+    var TAPS_NEEDED = 9;
+    var TAP_GAP = 2500;      // ms; a pause resets the count
+    var PASS_HASH = 3180838820;
+
+    function hash(str) {
+      var h = 5381;
+      for (var i = 0; i < str.length; i += 1) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+      return h;
+    }
+
+    var taps = 0;
+    var lastTap = 0;
+
+    function countTap() {
+      var now = Date.now();
+      taps = (now - lastTap > TAP_GAP) ? 1 : taps + 1;
+      lastTap = now;
+      if (taps < TAPS_NEEDED) return;
+      taps = 0;
+      if (unlocked()) openAdmin();
+      else openGate();
+    }
+
+    function unlocked() {
+      try { return window.sessionStorage.getItem(UNLOCK_KEY) === '1'; }
+      catch (e) { return false; }
+    }
+    function setUnlocked() {
+      try { window.sessionStorage.setItem(UNLOCK_KEY, '1'); } catch (e) { /* private mode */ }
+    }
+
+    function openGate() {
+      show('ovTitle', false);
+      show('ovGate', true);
+      el('gateNote').textContent = '';
+      el('gateInput').value = '';
+      el('gateInput').focus();
+    }
+
+    function closeGate() {
+      show('ovGate', false);
+      show('ovTitle', true);
+    }
+
+    function trySignIn() {
+      if (hash(el('gateInput').value) !== PASS_HASH) {
+        el('gateNote').textContent = 'Not on the roster.';
+        el('gateInput').value = '';
+        el('gateInput').focus();
+        return;
+      }
+      setUnlocked();
+      show('ovGate', false);
+      openAdmin();
+    }
+
+    // ---- the panel ----
+
+    var adminEditor = null;
+    var adminCast = 'officers';   // officers | execs
+    var adminIndex = 0;
+
+    function cast() { return adminCast === 'officers' ? PW.PLAYERS : PW.EXECS; }
+
+    function adminNote(msg) {
+      var n = el('adminNote');
+      if (n) n.textContent = msg || '';
+    }
+
+    function drawFacings(box, def) {
+      var art = PW.bake(def, { cuffed: false });
+      box.innerHTML = '';
+      ['front', 'side', 'back'].forEach(function (f) {
+        var wrap = document.createElement('div');
+        var cv = document.createElement('canvas');
+        cv.width = PW.SPRITE * 3;
+        cv.height = PW.SPRITE * 3;
+        var c = cv.getContext('2d');
+        c.imageSmoothingEnabled = false;
+        c.drawImage(art[f], 0, 0, cv.width, cv.height);
+        wrap.appendChild(cv);
+        box.appendChild(wrap);
+      });
+    }
+
+    function renderCast() {
+      var wrap = el('adminCast');
+      wrap.innerHTML = '';
+      cast().forEach(function (d, i) {
+        var row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'ol-cast-row' + (i === adminIndex ? ' is-on' : '');
+        var cv = document.createElement('canvas');
+        cv.width = PW.SPRITE;
+        cv.height = PW.SPRITE;
+        var c = cv.getContext('2d');
+        c.imageSmoothingEnabled = false;
+        c.drawImage(PW.bake(d, { cuffed: false }).front, 0, 0, cv.width, cv.height);
+        var label = document.createElement('span');
+        label.textContent = d.name;
+        row.appendChild(cv);
+        row.appendChild(label);
+        row.addEventListener('click', function () { selectCast(i); });
+        wrap.appendChild(row);
+      });
+    }
+
+    function selectCast(i) {
+      adminIndex = i;
+      renderCast();
+      adminEditor.set(cast()[i]);
+      adminNote('');
+    }
+
+    function openAdmin() {
+      audio.wake();
+      show('ovTitle', false);
+      show('ovAdmin', true);
+      if (!adminEditor) {
+        var box = el('adminFacings');
+        adminEditor = PW.createEditor(el('adminControls'), {
+          value: cast()[adminIndex],
+          onChange: function (def) { drawFacings(box, def); }
+        });
+      }
+      if (adminIndex >= cast().length) adminIndex = 0;
+      renderCast();
+      adminEditor.set(cast()[adminIndex]);
+      adminNote(readAdmin() ? 'Editing your local copy of the cast.' : 'Editing the published cast.');
+    }
+
+    function closeAdmin() {
+      show('ovAdmin', false);
+      show('ovTitle', true);
+    }
+
+    /* Every change re-bakes and re-renders, so the picker and the playfield
+       show the new cast without a reload. */
+    function refreshFromCast() {
+      PW.OFFICER = PW.PLAYERS[0];
+      PW.bakeAll();
+      entries = buildEntries();
+      if (ui.selectIndex >= entries.length) ui.selectIndex = 0;
+      ui.playerArt = entries[ui.selectIndex].art;
+      renderOfficers();
+      renderCast();
+    }
+
+    function persistCast() {
+      try {
+        window.localStorage.setItem(ADMIN_KEY, JSON.stringify({
+          officers: PW.PLAYERS, execs: PW.EXECS
+        }));
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function applyEdit() {
+      var def = adminEditor.get();
+      cast()[adminIndex] = def;
+      refreshFromCast();
+      adminNote(persistCast()
+        ? def.name + ' saved here. Copy roster block to publish.'
+        : def.name + ' is live for now; this browser will not keep them.');
+    }
+
+    function addToCast() {
+      var def = PW.CHAR.defaults();
+      def.name = adminCast === 'officers' ? 'NEW OFFICER' : 'NEW NAME';
+      cast().push(PW.CHAR.toDef(def));
+      adminIndex = cast().length - 1;
+      refreshFromCast();
+      adminEditor.set(cast()[adminIndex]);
+      adminNote('Added. Give them a name, then Save.');
+    }
+
+    function dropFromCast() {
+      if (cast().length < 2) {
+        adminNote('Someone has to be left. Add a replacement first.');
+        return;
+      }
+      var gone = cast()[adminIndex].name;
+      cast().splice(adminIndex, 1);
+      if (adminIndex >= cast().length) adminIndex = cast().length - 1;
+      refreshFromCast();
+      adminEditor.set(cast()[adminIndex]);
+      persistCast();
+      adminNote(gone + ' removed. Copy roster block to publish.');
+    }
+
+    function copyBlock() {
+      var text = rosterBlock();
+      function fell() {
+        adminNote('Clipboard blocked. OnTheList.roster() in the console prints it.');
+        console.log(text);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          adminNote('Copied. Paste it above the loader in the CMS embed to publish.');
+        }, fell);
+      } else { fell(); }
+    }
+
+    function resetCast() {
+      try { window.localStorage.removeItem(ADMIN_KEY); } catch (e) { /* private mode */ }
+      adminNote('Cleared. Reload to come back to the published cast.');
+    }
+
+    el('eyebrow').addEventListener('click', countTap);
+    el('gateForm').addEventListener('submit', function (ev) { ev.preventDefault(); trySignIn(); });
+    el('btnGateGo').addEventListener('click', trySignIn);
+    el('btnGateBack').addEventListener('click', closeGate);
+    el('tabOfficers').addEventListener('click', function () { switchTab('officers', this); });
+    el('tabExecs').addEventListener('click', function () { switchTab('execs', this); });
+    el('btnAdminNew').addEventListener('click', addToCast);
+    el('btnAdminApply').addEventListener('click', applyEdit);
+    el('btnAdminDrop').addEventListener('click', dropFromCast);
+    el('btnAdminCopy').addEventListener('click', copyBlock);
+    el('btnAdminReset').addEventListener('click', resetCast);
+    el('btnAdminBack').addEventListener('click', closeAdmin);
+
+    function switchTab(which, btn) {
+      adminCast = which;
+      adminIndex = 0;
+      el('ovAdmin').querySelectorAll('.ol-tab').forEach(function (b) { b.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      renderCast();
+      adminEditor.set(cast()[0]);
+      adminNote('');
+    }
+
     function toTitle() {
       phase = 'title';
       show('ovMaker', false);
+      show('ovGate', false);
+      show('ovAdmin', false);
       game = PW.newGame();
       dust.clear();
       ui.fresh = false;

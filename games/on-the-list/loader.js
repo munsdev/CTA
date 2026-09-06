@@ -22,7 +22,7 @@
 
   var MARKUP =
     '<div class="ol-ov" data-el="ovTitle">' +
-      '<div class="ol-eyebrow">Warrant service &middot; day shift</div>' +
+      '<div class="ol-eyebrow" data-el="eyebrow">Warrant service &middot; day shift</div>' +
       '<div class="ol-title">ON THE LIST</div>' +
       '<div class="ol-howto">Everyone out here is on the list. Cuff them one at a time &mdash; ' +
         'each arrest joins the column behind you, and the column is what you have to steer around.</div>' +
@@ -45,6 +45,44 @@
         '<button class="gm-btn ghost" data-el="btnCopyMine">Copy object</button>' +
         '<button class="gm-btn ghost" data-el="btnClearMine">Remove</button>' +
         '<button class="gm-btn ghost" data-el="btnMakerBack">Back</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="ol-ov ol-gate" data-el="ovGate" hidden>' +
+      '<div class="ol-title">DUTY ROSTER</div>' +
+      '<div class="ol-howto">Staff only.</div>' +
+      '<form class="ol-gate-form" data-el="gateForm" autocomplete="off">' +
+        '<input class="ol-gate-input" data-el="gateInput" type="password" ' +
+          'placeholder="Password" aria-label="Roster password" autocomplete="off">' +
+        '<div class="ol-gate-note" data-el="gateNote"></div>' +
+      '</form>' +
+      '<div class="ol-btns">' +
+        '<button class="gm-btn" data-el="btnGateGo">Sign in</button>' +
+        '<button class="gm-btn ghost" data-el="btnGateBack">Back</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="ol-ov ol-admin" data-el="ovAdmin" hidden>' +
+      '<div class="ol-title">DUTY ROSTER</div>' +
+      '<div class="ol-admin-body">' +
+        '<div class="ol-admin-side">' +
+          '<div class="ol-admin-tabs">' +
+            '<button type="button" class="ol-tab is-on" data-el="tabOfficers">Officers</button>' +
+            '<button type="button" class="ol-tab" data-el="tabExecs">On the list</button>' +
+          '</div>' +
+          '<div class="ol-admin-cast" data-el="adminCast"></div>' +
+          '<button type="button" class="gm-btn ghost ol-admin-add" data-el="btnAdminNew">Add someone</button>' +
+        '</div>' +
+        '<div class="ol-admin-edit">' +
+          '<div class="ol-maker-preview"><div class="ol-facings" data-el="adminFacings"></div></div>' +
+          '<form class="ol-maker-form" data-el="adminControls" autocomplete="off"></form>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ol-admin-note" data-el="adminNote"></div>' +
+      '<div class="ol-btns">' +
+        '<button class="gm-btn" data-el="btnAdminApply">Save</button>' +
+        '<button class="gm-btn ghost" data-el="btnAdminDrop">Remove</button>' +
+        '<button class="gm-btn ghost" data-el="btnAdminCopy">Copy roster block</button>' +
+        '<button class="gm-btn ghost" data-el="btnAdminReset">Reset to published</button>' +
+        '<button class="gm-btn ghost" data-el="btnAdminBack">Close</button>' +
       '</div>' +
     '</div>' +
     '<div class="ol-ov" data-el="ovPause" hidden>' +
