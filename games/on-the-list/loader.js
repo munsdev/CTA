@@ -24,7 +24,7 @@
     '<div class="ol-ov" data-el="ovTitle">' +
       '<div class="ol-eyebrow">Warrant service &middot; day shift</div>' +
       '<div class="ol-title">ON THE LIST</div>' +
-      '<div class="ol-howto">Everyone out here is on the list. Collar them one at a time &mdash; ' +
+      '<div class="ol-howto">Everyone out here is on the list. Cuff them one at a time &mdash; ' +
         'each arrest joins the column behind you, and the column is what you have to steer around.</div>' +
       '<div class="ol-pick"><span class="ol-pick-lbl">Who is serving</span>' +
         '<div class="ol-officers" data-el="officers"></div></div>' +
