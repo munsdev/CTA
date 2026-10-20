@@ -1,0 +1,10 @@
+{
+  // Static-assets-only Worker: the whole game is the built ./dist folder.
+  // Deliberately a NEW Worker name. The old `kyr-content` Worker still serves
+  // the API that the production (v1) embed on /games/prepared depends on, so
+  // it must not be overwritten until that page is switched to this app.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "know-your-rights",
+  "compatibility_date": "2026-10-12",
+  "assets": { "directory": "./dist" },
+}

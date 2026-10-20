@@ -1,0 +1,98 @@
+@import "tailwindcss";
+@import "@fontsource/archivo-narrow/latin-400.css";
+@import "@fontsource/archivo-narrow/latin-700.css";
+@import "@fontsource/spline-sans-mono/latin-400.css";
+@import "@fontsource/spline-sans-mono/latin-600.css";
+
+/*
+ * Tokens. The palette follows the Casey The American minigame contract
+ * (--gm-* names, dark surface, olive primary, amber accent), with the muted
+ * ink raised so every text colour clears WCAG AA (>= 4.5:1) on the surface.
+ */
+:root {
+  --gm-surface: #05070d;
+  --gm-surface-2: #10141d;
+  --gm-panel: #161b26;
+  --gm-line: #2b3240;
+  --gm-ink: #e3e7ee;
+  --gm-dim: #a9b1bf;
+  --gm-primary: #b5bd84;
+  --gm-primary-ink: #0b0d08;
+  --gm-accent: #e0ad4c;
+  --gm-ok: #8fd19e;
+  --gm-bad: #f08a72;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-surface: var(--gm-surface);
+  --color-surface-2: var(--gm-surface-2);
+  --color-panel: var(--gm-panel);
+  --color-line: var(--gm-line);
+  --color-ink: var(--gm-ink);
+  --color-dim: var(--gm-dim);
+  --color-primary: var(--gm-primary);
+  --color-primary-ink: var(--gm-primary-ink);
+  --color-accent: var(--gm-accent);
+  --color-ok: var(--gm-ok);
+  --color-bad: var(--gm-bad);
+  --color-transparent: transparent;
+
+  --font-display: "Archivo Narrow", system-ui, sans-serif;
+  --font-body: "Spline Sans Mono", ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--gm-surface);
+  color: var(--gm-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--gm-accent);
+    outline-offset: 2px;
+  }
+  /* Headings take focus on screen changes for screen readers; they are not controls, so no ring. */
+  [tabindex="-1"]:focus-visible {
+    outline: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes kyr-hint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--gm-accent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--gm-accent);
+  }
+}
+
+@keyframes kyr-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

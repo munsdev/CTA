@@ -1,0 +1,54 @@
+name: Know Your Rights — web app
+
+# Checks every PR that touches the app; deploys to Cloudflare only from main.
+# Deploys the separate `know-your-rights` Worker, not `kyr-content`.
+on:
+  pull_request:
+    paths: ["apps/know-your-rights/**", ".github/workflows/know-your-rights-app.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/know-your-rights/**", ".github/workflows/know-your-rights-app.yml"]
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: apps/know-your-rights
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: apps/know-your-rights/.node-version
+          cache: npm
+          cache-dependency-path: apps/know-your-rights/package-lock.json
+      - run: npm ci
+      - run: npm run verify
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: apps/know-your-rights/test-results
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: apps/know-your-rights/.node-version
+          cache: npm
+          cache-dependency-path: apps/know-your-rights/package-lock.json
+      - run: npm ci && npm run build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/know-your-rights
+          wranglerVersion: "4.151.2"
