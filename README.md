@@ -33,3 +33,10 @@ via the Webflow jsDelivr pattern above) live in `workers/{name}/`:
 - `kyr-content`
 - `storm-watch` — Bird Rebels: Storm Watch, a D1-backed card game
   (`workers/storm-watch/CLAUDE.md` has the dev/build workflow)
+
+## License
+
+Code in this repository is MIT licensed (see `LICENSE`), except:
+
+- `workers/storm-watch` and `workers/bird-rebels-ice-blaster` (Bird Rebels). Their license will be set when they move to their own repository. Until then, all rights reserved.
+- Bird Rebels artwork, wherever it appears, is licensed separately under CC BY-NC 4.0.
